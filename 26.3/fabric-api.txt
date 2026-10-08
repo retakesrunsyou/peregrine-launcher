@@ -1,0 +1,93 @@
+Compiled from "ClientLifecycleEvents.java"
+public final class net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLifecycleEvents {
+  public static final net.fabricmc.fabric.api.event.Event<net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLifecycleEvents$ClientStarted> CLIENT_STARTED;
+  public static final net.fabricmc.fabric.api.event.Event<net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLifecycleEvents$ClientStopping> CLIENT_STOPPING;
+  private net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLifecycleEvents();
+  private static net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLifecycleEvents$ClientStopping lambda$static$2(net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLifecycleEvents$ClientStopping[]);
+  private static void lambda$static$3(net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLifecycleEvents$ClientStopping[], net.minecraft.client.Minecraft);
+  private static net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLifecycleEvents$ClientStarted lambda$static$0(net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLifecycleEvents$ClientStarted[]);
+  private static void lambda$static$1(net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLifecycleEvents$ClientStarted[], net.minecraft.client.Minecraft);
+  static {};
+}
+Compiled from "ClientTickEvents.java"
+public final class net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents {
+  public static final net.fabricmc.fabric.api.event.Event<net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents$StartTick> START_CLIENT_TICK;
+  public static final net.fabricmc.fabric.api.event.Event<net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents$EndTick> END_CLIENT_TICK;
+  public static final net.fabricmc.fabric.api.event.Event<net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents$StartLevelTick> START_LEVEL_TICK;
+  public static final net.fabricmc.fabric.api.event.Event<net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents$EndLevelTick> END_LEVEL_TICK;
+  private net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents();
+  private static net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents$EndLevelTick lambda$static$6(net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents$EndLevelTick[]);
+  private static void lambda$static$7(net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents$EndLevelTick[], net.minecraft.client.multiplayer.ClientLevel);
+  private static net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents$StartLevelTick lambda$static$4(net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents$StartLevelTick[]);
+  private static void lambda$static$5(net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents$StartLevelTick[], net.minecraft.client.multiplayer.ClientLevel);
+  private static net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents$EndTick lambda$static$2(net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents$EndTick[]);
+  private static void lambda$static$3(net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents$EndTick[], net.minecraft.client.Minecraft);
+  private static net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents$StartTick lambda$static$0(net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents$StartTick[]);
+  private static void lambda$static$1(net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents$StartTick[], net.minecraft.client.Minecraft);
+  static {};
+}
+Compiled from "KeyMappingHelper.java"
+public final class net.fabricmc.fabric.api.client.keymapping.v1.KeyMappingHelper {
+  private net.fabricmc.fabric.api.client.keymapping.v1.KeyMappingHelper();
+  public static net.minecraft.client.KeyMapping registerKeyMapping(net.minecraft.client.KeyMapping);
+  public static com.mojang.blaze3d.platform.InputConstants$Key getBoundKeyOf(net.minecraft.client.KeyMapping);
+}
+Compiled from "HudElement.java"
+public interface net.fabricmc.fabric.api.client.rendering.v1.hud.HudElement {
+  public abstract void extractRenderState(net.minecraft.client.gui.GuiGraphicsExtractor, net.minecraft.client.DeltaTracker);
+}
+Compiled from "HudElementRegistry.java"
+public interface net.fabricmc.fabric.api.client.rendering.v1.hud.HudElementRegistry {
+  public static void addFirst(net.minecraft.resources.Identifier, net.fabricmc.fabric.api.client.rendering.v1.hud.HudElement);
+  public static void addLast(net.minecraft.resources.Identifier, net.fabricmc.fabric.api.client.rendering.v1.hud.HudElement);
+  public static void attachElementBefore(net.minecraft.resources.Identifier, net.minecraft.resources.Identifier, net.fabricmc.fabric.api.client.rendering.v1.hud.HudElement);
+  public static void attachElementAfter(net.minecraft.resources.Identifier, net.minecraft.resources.Identifier, net.fabricmc.fabric.api.client.rendering.v1.hud.HudElement);
+  public static void removeElement(net.minecraft.resources.Identifier);
+  public static void replaceElement(net.minecraft.resources.Identifier, java.util.function.Function<net.fabricmc.fabric.api.client.rendering.v1.hud.HudElement, net.fabricmc.fabric.api.client.rendering.v1.hud.HudElement>);
+}
+Compiled from "VanillaHudElements.java"
+public final class net.fabricmc.fabric.api.client.rendering.v1.hud.VanillaHudElements {
+  public static final net.minecraft.resources.Identifier MISC_OVERLAYS;
+  public static final net.minecraft.resources.Identifier CROSSHAIR;
+  public static final net.minecraft.resources.Identifier SPECTATOR_MENU;
+  public static final net.minecraft.resources.Identifier HOTBAR;
+  public static final net.minecraft.resources.Identifier ARMOR_BAR;
+  public static final net.minecraft.resources.Identifier HEALTH_BAR;
+  public static final net.minecraft.resources.Identifier FOOD_BAR;
+  public static final net.minecraft.resources.Identifier AIR_BAR;
+  public static final net.minecraft.resources.Identifier MOUNT_HEALTH;
+  public static final net.minecraft.resources.Identifier INFO_BAR;
+  public static final net.minecraft.resources.Identifier EXPERIENCE_LEVEL;
+  public static final net.minecraft.resources.Identifier HELD_ITEM_TOOLTIP;
+  public static final net.minecraft.resources.Identifier SPECTATOR_TOOLTIP;
+  public static final net.minecraft.resources.Identifier MOB_EFFECTS;
+  public static final net.minecraft.resources.Identifier BOSS_BAR;
+  public static final net.minecraft.resources.Identifier SLEEP;
+  public static final net.minecraft.resources.Identifier DEMO_TIMER;
+  public static final net.minecraft.resources.Identifier SCOREBOARD;
+  public static final net.minecraft.resources.Identifier OVERLAY_MESSAGE;
+  public static final net.minecraft.resources.Identifier TITLE_AND_SUBTITLE;
+  public static final net.minecraft.resources.Identifier CHAT;
+  public static final net.minecraft.resources.Identifier PLAYER_LIST;
+  public static final net.minecraft.resources.Identifier SUBTITLES;
+  private net.fabricmc.fabric.api.client.rendering.v1.hud.VanillaHudElements();
+  static {};
+}
+Compiled from "ScreenEvents.java"
+public final class net.fabricmc.fabric.api.client.screen.v1.ScreenEvents {
+  public static final net.fabricmc.fabric.api.event.Event<net.fabricmc.fabric.api.client.screen.v1.ScreenEvents$BeforeInit> BEFORE_INIT;
+  public static final net.fabricmc.fabric.api.event.Event<net.fabricmc.fabric.api.client.screen.v1.ScreenEvents$AfterInit> AFTER_INIT;
+  public static net.fabricmc.fabric.api.event.Event<net.fabricmc.fabric.api.client.screen.v1.ScreenEvents$Remove> remove(net.minecraft.client.gui.screens.Screen);
+  public static net.fabricmc.fabric.api.event.Event<net.fabricmc.fabric.api.client.screen.v1.ScreenEvents$BeforeExtract> beforeExtract(net.minecraft.client.gui.screens.Screen);
+  public static net.fabricmc.fabric.api.event.Event<net.fabricmc.fabric.api.client.screen.v1.ScreenEvents$AfterBackground> afterBackground(net.minecraft.client.gui.screens.Screen);
+  public static net.fabricmc.fabric.api.event.Event<net.fabricmc.fabric.api.client.screen.v1.ScreenEvents$AfterForeground> afterForeground(net.minecraft.client.gui.screens.Screen);
+  public static net.fabricmc.fabric.api.event.Event<net.fabricmc.fabric.api.client.screen.v1.ScreenEvents$AfterExtract> afterExtract(net.minecraft.client.gui.screens.Screen);
+  public static net.fabricmc.fabric.api.event.Event<net.fabricmc.fabric.api.client.screen.v1.ScreenEvents$BeforeTick> beforeTick(net.minecraft.client.gui.screens.Screen);
+  public static net.fabricmc.fabric.api.event.Event<net.fabricmc.fabric.api.client.screen.v1.ScreenEvents$AfterTick> afterTick(net.minecraft.client.gui.screens.Screen);
+  private net.fabricmc.fabric.api.client.screen.v1.ScreenEvents();
+  private static net.fabricmc.fabric.api.client.screen.v1.ScreenEvents$AfterInit lambda$static$2(net.fabricmc.fabric.api.client.screen.v1.ScreenEvents$AfterInit[]);
+  private static void lambda$static$3(net.fabricmc.fabric.api.client.screen.v1.ScreenEvents$AfterInit[], net.minecraft.client.Minecraft, net.minecraft.client.gui.screens.Screen, int, int);
+  private static net.fabricmc.fabric.api.client.screen.v1.ScreenEvents$BeforeInit lambda$static$0(net.fabricmc.fabric.api.client.screen.v1.ScreenEvents$BeforeInit[]);
+  private static void lambda$static$1(net.fabricmc.fabric.api.client.screen.v1.ScreenEvents$BeforeInit[], net.minecraft.client.Minecraft, net.minecraft.client.gui.screens.Screen, int, int);
+  static {};
+}

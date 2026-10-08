@@ -1,0 +1,24 @@
+/home/runner/work/peregrine-launcher/peregrine-launcher/client/versions/26.2/src/main/java/net/peregrine/client/v26_2/Screens.java:23: error: cannot find symbol
+        return Minecraft.getInstance().hud.isHidden();
+                                      ^
+  symbol:   variable hud
+  location: class Minecraft
+1 error
+
+FAILURE: Build failed with an exception.
+
+* What went wrong:
+Execution failed for task ':compileJava' (registered by plugin class 'org.gradle.api.plugins.JavaBasePlugin').
+> Compilation failed; see the compiler output below.
+  /home/runner/work/peregrine-launcher/peregrine-launcher/client/versions/26.2/src/main/java/net/peregrine/client/v26_2/Screens.java:23: error: cannot find symbol
+          return Minecraft.getInstance().hud.isHidden();
+                                        ^
+    symbol:   variable hud
+    location: class Minecraft
+  1 error
+
+* Try:
+> Check your code and dependencies to fix the compilation error(s)
+> Run with --scan to get full insights from a Build Scan (powered by Develocity).
+
+BUILD FAILED in 8s
