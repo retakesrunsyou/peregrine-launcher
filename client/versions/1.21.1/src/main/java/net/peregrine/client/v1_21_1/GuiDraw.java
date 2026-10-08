@@ -50,4 +50,13 @@ final class GuiDraw implements Draw {
     public void unclip() {
         g.disableScissor();
     }
+
+    @Override
+    public void textScaled(String s, int x, int y, int argb, float scale, boolean shadow) {
+        g.pose().pushPose();
+        g.pose().translate((float) x, (float) y, 0f);
+        g.pose().scale(scale, scale, 1f);
+        g.drawString(font, s, 0, 0, argb, shadow);
+        g.pose().popPose();
+    }
 }

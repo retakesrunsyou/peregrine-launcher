@@ -7,6 +7,19 @@ import java.util.Deque;
 import java.util.List;
 
 import net.peregrine.client.core.modules.ArmorHud;
+import net.peregrine.client.core.modules.BiomeHud;
+import net.peregrine.client.core.modules.CompassHud;
+import net.peregrine.client.core.modules.Flag;
+import net.peregrine.client.core.modules.FoodHud;
+import net.peregrine.client.core.modules.MemoryHud;
+import net.peregrine.client.core.modules.PacksHud;
+import net.peregrine.client.core.modules.PotionCountHud;
+import net.peregrine.client.core.modules.ClockHud;
+import net.peregrine.client.core.modules.DayHud;
+import net.peregrine.client.core.modules.MainMenu;
+import net.peregrine.client.core.modules.PingHud;
+import net.peregrine.client.core.modules.ServerHud;
+import net.peregrine.client.core.modules.SpeedHud;
 import net.peregrine.client.core.modules.CoordsHud;
 import net.peregrine.client.core.modules.CpsHud;
 import net.peregrine.client.core.modules.EffectsHud;
@@ -27,6 +40,7 @@ public final class Peregrine {
     private final Platform platform;
     private final List<Module> modules = new ArrayList<Module>();
     private final Menu menu;
+    private final TitleMenu titleMenu;
     private final Deque<Long> leftClicks = new ArrayDeque<Long>();
     private final Deque<Long> rightClicks = new ArrayDeque<Long>();
     private int accent = Theme.AMBER;
@@ -45,7 +59,39 @@ public final class Peregrine {
         modules.add(new ToggleSprint());
         modules.add(new Zoom());
         modules.add(new Fullbright());
+        modules.add(new ClockHud());
+        modules.add(new PingHud());
+        modules.add(new ServerHud());
+        modules.add(new SpeedHud());
+        modules.add(new DayHud());
+        modules.add(new MainMenu());
+        // Batch 2
+        modules.add(new CompassHud());
+        modules.add(new BiomeHud());
+        modules.add(new MemoryHud());
+        modules.add(new FoodHud());
+        modules.add(new PotionCountHud());
+        modules.add(new PacksHud());
+        modules.add(new OptionModule("toggle_sneak", "Toggle sneak",
+                "Press sneak once to stay crouched, again to stand", Module.Category.UTILITY, Platform.Option.TOGGLE_SNEAK));
+        modules.add(new OptionModule("static_fov", "Static FOV",
+                "Sprinting and speed effects don't stretch your view", Module.Category.VISUALS, Platform.Option.STATIC_FOV));
+        modules.add(new OptionModule("steady_camera", "Steady camera",
+                "No view bobbing or damage tilt", Module.Category.VISUALS, Platform.Option.STEADY_CAMERA));
+        modules.add(new OptionModule("no_menu_blur", "No menu blur",
+                "Menus don't blur the game behind them", Module.Category.VISUALS, Platform.Option.NO_MENU_BLUR));
+        modules.add(new OptionModule("fewer_particles", "Fewer particles",
+                "Minimal particles for more FPS in busy fights", Module.Category.VISUALS, Platform.Option.FEWER_PARTICLES));
+        modules.add(new OptionModule("chunk_borders", "Chunk borders",
+                "Show chunk boundary lines", Module.Category.VISUALS, Platform.Option.CHUNK_BORDERS));
+        modules.add(new OptionModule("hitboxes", "Hitboxes",
+                "Show entity hitboxes without the debug screen", Module.Category.VISUALS, Platform.Option.HITBOXES));
+        modules.add(new Flag("clean_edges", "Clean edges", "Remove the dark vignette around the screen",
+                Module.Category.VISUALS));
+        modules.add(new Flag("clear_weather", "Clear weather", "No rain or snow on your screen (the world isn't changed)",
+                Module.Category.VISUALS));
         this.menu = new Menu(this);
+        this.titleMenu = new TitleMenu(this);
     }
 
     public static Peregrine init(Platform platform) {
@@ -79,6 +125,10 @@ public final class Peregrine {
         return menu;
     }
 
+    public TitleMenu titleMenu() {
+        return titleMenu;
+    }
+
     public int accent() {
         return accent;
     }
@@ -99,7 +149,7 @@ public final class Peregrine {
     public void tick() {
         if (platform.inWorld()) {
             for (Module m : modules) {
-                if (m.enabled()) {
+                if (m.enabled() && platform.supports(m.id)) {
                     m.tick(platform);
                 }
             }
@@ -115,7 +165,7 @@ public final class Peregrine {
             return;
         }
         for (Module m : modules) {
-            if (m.enabled() && m instanceof HudModule) {
+            if (m.enabled() && m instanceof HudModule && platform.supports(m.id)) {
                 ((HudModule) m).renderAt(d, platform);
             }
         }
@@ -142,6 +192,12 @@ public final class Peregrine {
     public double zoomDivisor() {
         Zoom zoom = (Zoom) module("zoom");
         return zoom != null ? zoom.divisor(platform) : 1.0;
+    }
+
+    /** For version adapters' hooks: is this module switched on? */
+    public boolean on(String id) {
+        Module m = module(id);
+        return m != null && m.enabled();
     }
 
     public void shutdown() {

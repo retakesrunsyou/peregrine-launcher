@@ -1,0 +1,13 @@
+# Never commit these
+__pycache__/
+*.pyc
+venv/
+.venv/
+*.zip
+*.part
+
+# Your personal launcher data (logins, settings, worlds) lives in
+# ~/.config/peregrine and ~/.local/share/peregrine, outside this folder.
+# These are here just in case one ever gets copied in by accident:
+accounts.json
+config.json

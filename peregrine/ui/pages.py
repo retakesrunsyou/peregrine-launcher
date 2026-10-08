@@ -470,6 +470,9 @@ class SettingsPage(QWidget):
         perf.row("Use the dedicated GPU", self._check(cfg, "dedicated_gpu"),
                  "For laptops with two graphics chips." +
                  (" NVIDIA detected." if game.has_nvidia() else ""))
+        perf.row("Faster game startup", self._check(cfg, "fast_start"),
+                 "Java remembers what it loaded last time so later launches start quicker. "
+                 "Minecraft 1.20.5 and newer.")
         self.body.addWidget(perf)
 
         # ---- java

@@ -264,6 +264,7 @@ class MainWindow(QMainWindow):
             self.console_btn.setChecked(True)
         task = workers.Task(inst.launch, account, with_progress=True)
         task.log.connect(self.console.appendPlainText)
+        task.log.connect(self._watch_game_log)
         try:
             log = open(inst.log_file, "w", encoding="utf-8", errors="replace")
             task.log.connect(lambda line: log.write(line + "\n"))
@@ -291,8 +292,10 @@ class MainWindow(QMainWindow):
 
     def on_progress(self, done, total, msg):
         if msg == "Starting Minecraft" and self.game_inst:
-            self.bar.hide()
-            self.say(f"Playing {self.game_inst.name}")
+            self.bar.show()
+            self.bar.setMaximum(0)  # moving bar: we can't know how long Minecraft takes
+            self.game_loading = True
+            self.say("Minecraft is loading…")
             self.home.set_state(self.game_inst.folder, "running")
             discord.update("playing", self.game_inst.name, self.game_inst.subtitle())
             mode = config.load()["on_launch"]
@@ -306,11 +309,23 @@ class MainWindow(QMainWindow):
         self.bar.setValue(done if total else 1)
         self.say(f"{msg}  {done} of {total}" if total else msg)
 
+    def _watch_game_log(self, line):
+        """Notice when Minecraft has finished loading, from its own log."""
+        if getattr(self, "game_loading", False) and (
+                "Sound engine started" in line or "Created:" in line and "textures-atlas" in line):
+            self.game_loading = False
+            self.bar.hide()
+            self.bar.setMaximum(1)
+            if self.game_inst:
+                self.say(f"Playing {self.game_inst.name}")
+
     def on_failed(self, msg):
         QMessageBox.warning(self, "Something went wrong", msg)
         self.say("Ready")
 
     def on_finished(self):
+        self.game_loading = False
+        self.bar.setMaximum(1)
         self.bar.hide()
         discord.update("idle")
         if self.game_inst:

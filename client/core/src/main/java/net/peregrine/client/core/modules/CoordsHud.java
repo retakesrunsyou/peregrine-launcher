@@ -7,7 +7,7 @@ import net.peregrine.client.core.Platform;
 public final class CoordsHud extends HudModule {
 
     public CoordsHud() {
-        super("coords", "Coordinates", "Your position and which way you're facing", true, 0f, 0.08f);
+        super("coords", "Coordinates", "Your position and which way you're facing", true, 0f, 0.07f);
     }
 
     private String[] lines(Platform p) {

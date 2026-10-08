@@ -50,6 +50,60 @@ public interface Platform {
 
     Path configFile();
 
+    // ---- added for the main menu and server HUD items
+
+    /** Screens the core can ask the game to open. */
+    enum Screen { SINGLEPLAYER, MULTIPLAYER, OPTIONS, PEREGRINE_MENU, QUIT }
+
+    void openScreen(Screen which);
+
+    /** The signed-in player's name. */
+    String playerName();
+
+    /** e.g. "1.21.1". */
+    String minecraftVersion();
+
+    /** Ping to the current server in ms, or -1 in singleplayer. */
+    int ping();
+
+    /** Address of the current server, or null in singleplayer. */
+    String serverAddress();
+
+    /** In-game day number, starting at 1. */
+    long worldDay();
+
+    // ---- added in batch 2
+
+    /** Time of day in ticks, 0-23999 (0 = sunrise). */
+    long worldTime();
+
+    /** Biome id at the player, like "minecraft:plains". */
+    String biome();
+
+    /** Horizontal look direction in Minecraft degrees (0 = south, 90 = west). */
+    float yaw();
+
+    int food();
+
+    float saturation();
+
+    /** Number of potions (drinkable, splash and lingering) in the inventory. */
+    int potionCount();
+
+    /** Active resource packs, top of the list first. */
+    List<String> resourcePacks();
+
+    /** Built-in Minecraft settings that modules can switch. */
+    enum Option { TOGGLE_SNEAK, STATIC_FOV, STEADY_CAMERA, NO_MENU_BLUR, FEWER_PARTICLES, CHUNK_BORDERS, HITBOXES }
+
+    /** Turns an option on, or back to Minecraft's default when off. */
+    void setOption(Option option, boolean on);
+
+    /** False for features this Minecraft version can't do; they're hidden from the menu. */
+    default boolean supports(String moduleId) {
+        return true;
+    }
+
     final class ItemInfo {
         public final Object stack; // the version's ItemStack, passed back to Draw.item
         public final int damage;

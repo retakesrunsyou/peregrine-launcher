@@ -29,6 +29,7 @@ DEFAULTS = {
     "gc": "auto",             # auto (tuned G1) or zgc
     "driver_boost": True,     # threaded OpenGL for Mesa / NVIDIA
     "dedicated_gpu": False,   # laptops with two GPUs
+    "fast_start": True,       # Java class snapshot for quicker game startup
     # Extras
     "discord": True,          # show what you're playing on Discord
     "ingame_menu": True,      # install Peregrine Client (Right Shift menu) in Fabric instances

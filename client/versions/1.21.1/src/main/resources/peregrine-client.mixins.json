@@ -4,10 +4,13 @@
 	"compatibilityLevel": "JAVA_21",
 	"client": [
 		"GameRendererMixin",
+		"GuiMixin",
+		"LevelMixin",
+		"MinecraftMixin",
 		"MouseHandlerMixin",
 		"OptionInstanceAccessor"
 	],
 	"injectors": {
-		"defaultRequire": 1
+		"defaultRequire": 0
 	}
 }

@@ -8,6 +8,7 @@ import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.screens.TitleScreen;
 import net.peregrine.client.core.Peregrine;
 import org.lwjgl.glfw.GLFW;
 
@@ -33,6 +34,9 @@ public final class PeregrineClientMod implements ClientModInitializer {
                 if (mc.screen == null) {
                     mc.setScreen(new PeregrineScreen());
                 }
+            }
+            if (mc.screen instanceof TitleScreen && Peregrine.get().titleMenu().enabled()) {
+                mc.setScreen(new PeregrineTitleScreen());
             }
             Peregrine.get().tick();
         });

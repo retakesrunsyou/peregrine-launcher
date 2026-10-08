@@ -1,0 +1,25 @@
+{
+	"schemaVersion": 1,
+	"id": "peregrine-client",
+	"version": "${version}",
+	"name": "Peregrine Client",
+	"description": "Peregrine's in-game menu: press Right Shift for HUD, zoom, toggle sprint and more.",
+	"authors": ["Peregrine"],
+	"contact": {
+		"homepage": "https://github.com/retakesrunsyou/peregrine-launcher",
+		"sources": "https://github.com/retakesrunsyou/peregrine-launcher"
+	},
+	"license": "MIT",
+	"icon": "assets/peregrine-client/icon.png",
+	"environment": "client",
+	"entrypoints": {
+		"client": ["net.peregrine.client.v26_1.PeregrineClientMod"]
+	},
+	"mixins": ["peregrine-client.mixins.json"],
+	"depends": {
+		"fabricloader": ">=0.16.0",
+		"minecraft": "${minecraft}",
+		"java": ">=25",
+		"fabric-api": "*"
+	}
+}

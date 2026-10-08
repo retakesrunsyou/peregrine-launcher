@@ -20,7 +20,8 @@ final class PeregrineScreen extends Screen {
     @Override
     public void render(GuiGraphics g, int mouseX, int mouseY, float partialTick) {
         if (menu.wantsShade()) {
-            g.fill(0, 0, width, height, Theme.MENU_SHADE);
+            int alpha = Math.round(((Theme.MENU_SHADE >>> 24) & 0xFF) * menu.fade());
+            g.fill(0, 0, width, height, (alpha << 24) | (Theme.MENU_SHADE & 0xFFFFFF));
         }
         menu.render(new GuiDraw(g), mouseX, mouseY);
     }
@@ -66,6 +67,17 @@ final class PeregrineScreen extends Screen {
     @Override
     public boolean charTyped(char c, int modifiers) {
         return menu.charTyped(c) || super.charTyped(c, modifiers);
+    }
+
+    @Override
+    public void onClose() {
+        net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
+        if (mc.level == null) {
+            // Opened from the main menu: go back to it (or to Minecraft's, if switched off).
+            mc.setScreen(Peregrine.get().titleMenu().enabled() ? new PeregrineTitleScreen() : null);
+        } else {
+            super.onClose();
+        }
     }
 
     @Override

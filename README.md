@@ -18,8 +18,9 @@ play: more FPS, smoother frames and fewer lag spikes, out of the box.
 **In-game menu (Peregrine Client)**
 - Press **Right Shift** in game for a see-through menu: search features and switch them on or off
 - FPS, coordinates, keystrokes, CPS, armor status and potion timers, placed anywhere you drag them
-- Zoom, toggle sprint and fullbright
-- Added to Fabric instances automatically (turn it off in Settings)
+- Zoom, toggle sprint and sneak, fullbright, compass, biome, memory, clear weather and 20 more
+- A Peregrine main menu in place of Minecraft's title screen
+- Works on every Minecraft version from 1.21 to 26.3, added to Fabric instances automatically (turn it off in Settings)
 
 **Makes playing easier**
 - Separate **instances**, each with its own version, mods, worlds, color and memory
