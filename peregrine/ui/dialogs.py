@@ -163,6 +163,7 @@ class NewInstanceDialog(QDialog):
         self.resize(480, 0)
 
         self.fabric_versions = frozenset()
+        self.versions_loaded = False
         self.load_versions()
         workers.run(fabric.supported_game_versions, done=self.got_fabric)
 
@@ -189,7 +190,7 @@ class NewInstanceDialog(QDialog):
         self.update_options()
 
     def update_options(self):
-        if not getattr(self, "versions_loaded", False):
+        if not self.versions_loaded:
             return  # still showing "Loading versions…"
         v = self.version.currentText()
         fabric_ok = not self.fabric_versions or v in self.fabric_versions

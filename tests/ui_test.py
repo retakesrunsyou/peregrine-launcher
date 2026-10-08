@@ -27,6 +27,7 @@ os.environ["XDG_CONFIG_HOME"] = str(OUT / "home" / "config")
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
+from PySide6.QtCore import QEvent  # noqa: E402
 from PySide6.QtWidgets import QApplication  # noqa: E402
 
 from peregrine import auth, client_mod, config, instances, paths  # noqa: E402
@@ -35,6 +36,14 @@ from peregrine.ui.dialogs import InstanceSettingsDialog, NewInstanceDialog  # no
 from peregrine.ui.theme import Theme  # noqa: E402
 
 problems, lines = [], []
+
+
+def write_summary():
+    (OUT / "summary.txt").write_text("\n".join(lines) + "\n")
+
+
+import atexit  # noqa: E402
+atexit.register(write_summary)
 
 
 def note(kind, text):
@@ -80,6 +89,7 @@ def pump(seconds, until=None):
     end = time.time() + seconds
     while time.time() < end:
         app.processEvents()
+        app.sendPostedEvents(None, QEvent.DeferredDelete)  # what app.exec() would do
         if until and until():
             return True
         time.sleep(0.03)
@@ -94,13 +104,15 @@ def shot(widget, name):
 pump(3)
 pages = {0: "home", 4: "modpacks", 2: "settings", 3: "accounts"}
 for theme in ("dusk", "midnight", "light"):
-    Theme.set(theme, cfg["accent"])
+    cfg["theme"] = theme  # the way the Settings page changes it
+    config.save(cfg)
     win.apply_theme()
     for index, name in pages.items():
         win.go(index)
         pump(4 if name == "modpacks" else 1)
         shot(win, f"{theme}-{name}")
-Theme.set("dusk", cfg["accent"])
+cfg["theme"] = "dusk"
+config.save(cfg)
 win.apply_theme()
 note("PASS", "every page opens in every theme")
 
@@ -151,7 +163,7 @@ if log.is_file():
     shutil.copy(log, OUT / "game.log")
 shot(win, "after-play")
 
-(OUT / "summary.txt").write_text("\n".join(lines) + "\n")
+write_summary()
 srv.shutdown()
 print("\n" + ("ALL UI CHECKS PASSED" if not problems else f"{len(problems)} PROBLEM(S)"))
 os._exit(1 if problems else 0)

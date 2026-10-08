@@ -58,9 +58,13 @@ class ResultRow(QFrame):
         top.addWidget(meta)
         top.addStretch()
         col.addLayout(top)
-        desc = QLabel(hit.get("description", ""), objectName="muted")
+        text = " ".join((hit.get("description") or "").split())
+        if len(text) > 140:  # two lines at most; long blurbs were cut off mid-line
+            text = text[:137].rsplit(" ", 1)[0] + "…"
+        desc = QLabel(text, objectName="muted")
         desc.setWordWrap(True)
-        desc.setMaximumHeight(40)
+        desc.setAlignment(Qt.AlignLeft | Qt.AlignTop)
+        desc.setToolTip(hit.get("description", ""))
         col.addWidget(desc)
         h.addLayout(col, 1)
 

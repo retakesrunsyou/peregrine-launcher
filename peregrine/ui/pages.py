@@ -28,9 +28,11 @@ def clear(layout) -> None:
     while layout.count():
         item = layout.takeAt(0)
         if item.widget():
+            item.widget().hide()  # gone at once, not when Qt gets round to deleting it
             item.widget().deleteLater()
         elif item.layout():
             clear(item.layout())
+            item.layout().deleteLater()
 
 
 def icon_button(name: str, tip: str, color: str = None) -> QPushButton:
