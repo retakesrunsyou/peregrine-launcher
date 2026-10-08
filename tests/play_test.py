@@ -148,12 +148,12 @@ def xdo(*args):
     subprocess.run(["xdotool", *map(str, args)], check=False)
 
 
-def handle(command: str, phase_dir: Path):
+def handle(command: str, label: str):
     parts = command.split()
     what = parts[0]
     if what == "shot":
         time.sleep(0.5)
-        subprocess.run(["import", "-window", "root", str(OUT / f"{parts[1]}.png")], check=False)
+        subprocess.run(["import", "-window", "root", str(OUT / f"{label}-{parts[1]}.png")], check=False)
     elif what == "key":
         xdo("key", "--delay", 80, parts[1])
     elif what in ("keydown", "keyup"):
@@ -183,10 +183,10 @@ def handle(command: str, phase_dir: Path):
     time.sleep(0.3)
 
 
-def play(phase: str, extra_game_args: list, timeout: int):
+def play(phase: str, plan: str, extra_game_args: list, timeout: int):
     st = OUT / f"selftest-{phase}"
     st.mkdir()
-    cfg["extra_jvm_args"] = (f"-Dperegrine.selftest={st} -Dperegrine.selftest.phase={phase} "
+    cfg["extra_jvm_args"] = (f"-Dperegrine.selftest={st} -Dperegrine.selftest.phase={plan} "
                              f"-Dperegrine.selftest.width={WIDTH} -Dmixin.debug.countInjections=true")
     account = auth.offline_account("Tester")
     cmd = game.build_command(prof, info, java, account, inst.game_dir, cfg) + extra_game_args
@@ -207,7 +207,7 @@ def play(phase: str, extra_game_args: list, timeout: int):
             if req.name.endswith(".tmp") or req.name in handled:
                 continue
             handled.add(req.name)
-            handle(req.read_text().strip(), st)
+            handle(req.read_text().strip(), phase)
             (st / ("ack-" + req.name.split("-")[1])).write_text("ok\n")
         if time.time() - shot_at > 60:  # a progress picture every minute, for debugging
             shot_at = time.time()
@@ -253,9 +253,18 @@ def check_log(phase: str, text: str):
         note("FAIL", f"{phase}: crash report {c.name}")
 
 
-play("title", [], 900)
+play("title", "title", [], 900)
 if (inst.game_dir / "saves" / "world").is_dir():
-    play("world", ["--quickPlaySingleplayer", "world"], 1500)
+    play("world", "world", ["--quickPlaySingleplayer", "world"], 1500)
+    # Again with the one-click FPS mods, which many players use with Peregrine.
+    try:
+        added = inst.install_performance_mods(progress)
+        note("PASS", "FPS mods installed: " + ", ".join(f for _, f in added))
+        shutil.rmtree(inst.game_dir / "saves" / "world")
+        shutil.copytree(OUT / "server" / "world", inst.game_dir / "saves" / "world")
+        play("fps-mods", "world", ["--quickPlaySingleplayer", "world"], 1500)
+    except Exception as e:
+        note("FAIL", f"couldn't install the FPS mods: {e!r}")
 
 summary = "\n".join(results) + "\n"
 (OUT / "summary.txt").write_text(summary)
