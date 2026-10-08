@@ -147,7 +147,9 @@ win.open_content(inst)
 pump(1)
 shot(win, "content")
 
-# ---- Play
+# ---- Play (skip Minecraft's own first-run accessibility screen, as play_test does)
+inst.game_dir.mkdir(parents=True, exist_ok=True)
+(inst.game_dir / "options.txt").write_text("onboardAccessibility:false\nrenderDistance:4\nsoundCategory_master:0.0\n")
 win.play(inst)
 started = pump(900, lambda: win.game_task is not None and not win.game_task.isRunning())
 note("PASS" if started else "FAIL", "Play: game started and closed again within 15 minutes")
