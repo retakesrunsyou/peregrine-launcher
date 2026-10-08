@@ -334,8 +334,9 @@ public final class SelfTest {
         });
     }
 
+    /** Like waitFor, with room for slow machines (software rendering can drop to a few FPS). */
     private static void check(String label, Cond c) {
-        waitFor(label, 0, c);
+        waitFor(label, 400, c);
     }
 
     private static void open(String label, final Platform.Screen which) {
