@@ -116,7 +116,7 @@ public final class SelfTest {
         open("Options button opens options", Platform.Screen.OPTIONS);
         shot("03-options");
         open("Back to the main menu", Platform.Screen.TITLE);
-        open("Peregrine button opens the menu", Platform.Screen.PEREGRINE_MENU);
+        clickTitle("clicking Peregrine on the main menu opens the menu", Platform.Screen.PEREGRINE_MENU);
         check("menu draws on the main menu", new Cond() {
             public boolean ok() {
                 return get("menu") > 5;
@@ -383,6 +383,23 @@ public final class SelfTest {
         waitAck();
         waitFor(label, 60, expect);
         waitTicks(5);
+    }
+
+    /** Clicks a main menu button with the real mouse. */
+    private static void clickTitle(String label, final Platform.Screen target) {
+        run("click " + target, new Runnable() {
+            public void run() {
+                int[] c = pc.titleMenu().centerOf(target);
+                request("clickat " + px(c[0]) + " " + px(c[1]));
+            }
+        });
+        waitAck();
+        waitFor(label, 100, new Cond() {
+            public boolean ok() {
+                return p.showing(target);
+            }
+        });
+        waitTicks(10);
     }
 
     private static void finish() {

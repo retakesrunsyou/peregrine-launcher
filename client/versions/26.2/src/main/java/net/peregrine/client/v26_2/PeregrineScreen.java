@@ -39,7 +39,7 @@ final class PeregrineScreen extends Screen {
 
     @Override
     public boolean mouseClicked(MouseButtonEvent e, boolean doubleClick) {
-        return menu.mouseClicked((int) e.x(), (int) e.y(), e.button()) || super.mouseClicked(e, doubleClick);
+        return menu.mouseClicked((int) e.x(), (int) e.y(), Screens.button(e.button())) || super.mouseClicked(e, doubleClick);
     }
 
     @Override

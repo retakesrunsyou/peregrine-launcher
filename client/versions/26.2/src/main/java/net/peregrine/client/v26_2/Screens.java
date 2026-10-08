@@ -18,6 +18,23 @@ public final class Screens {
         Minecraft.getInstance().gui.setScreen(screen);
     }
 
+    /**
+     * Mouse button as the core counts them (0 = left, 1 = right, 2 = middle).
+     * 26.3 numbers them the SDL way (left = 1), earlier versions the GLFW way (left = 0).
+     */
+    public static int button(int raw) {
+        if (raw == com.mojang.blaze3d.platform.InputConstants.MOUSE_BUTTON_LEFT) {
+            return 0;
+        }
+        if (raw == com.mojang.blaze3d.platform.InputConstants.MOUSE_BUTTON_RIGHT) {
+            return 1;
+        }
+        if (raw == com.mojang.blaze3d.platform.InputConstants.MOUSE_BUTTON_MIDDLE) {
+            return 2;
+        }
+        return 3 + raw;
+    }
+
     /** True while F1 has hidden the HUD. */
     public static boolean hudHidden() {
         return Minecraft.getInstance().gui.hud.isHidden();

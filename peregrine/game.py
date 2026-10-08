@@ -14,8 +14,11 @@ from typing import Optional
 from . import NAME, VERSION, net, paths
 
 MANIFEST_URL = "https://piston-meta.mojang.com/mc/game/version_manifest_v2.json"
-RUNTIME_INDEX_URL = ("https://launchermeta.mojang.com/v1/products/java-runtime/"
-                     "2ec0cc96c44e5a76b9c8b8c39a2e7a66a4d0f3aa/all.json")
+# Mojang's list of Java runtimes (the old launchermeta address stopped working).
+RUNTIME_INDEX_URLS = [
+    "https://piston-meta.mojang.com/v1/products/java-runtime/2ec0cc96c44e5a76b9c8b8c39a2e7a66a4d0f3aa/all.json",
+    "https://launchermeta.mojang.com/v1/products/java-runtime/2ec0cc96c44e5a76b9c8b8c39a2e7a66a4d0f3aa/all.json",
+]
 RESOURCES_URL = "https://resources.download.minecraft.net"
 MAVEN_CENTRAL = "https://repo1.maven.org/maven2/"
 
@@ -203,7 +206,15 @@ def install_java(component: str, progress=None) -> Optional[Path]:
         return java
     if platform.machine() not in ("x86_64", "AMD64"):
         return None  # Mojang only ships x86_64 Linux runtimes
-    index = net.get_json(RUNTIME_INDEX_URL)
+    index, last_err = None, None
+    for url in RUNTIME_INDEX_URLS:
+        try:
+            index = net.get_json_cached(url, paths.CACHE / "java_runtimes.json", 6 * 3600)
+            break
+        except Exception as e:
+            last_err = e
+    if index is None:
+        raise RuntimeError(f"Couldn't get Mojang's Java list: {last_err}")
     builds = index.get("linux", {}).get(component) or []
     if not builds:
         return None

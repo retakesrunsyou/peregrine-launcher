@@ -18,7 +18,7 @@ public abstract class MouseHandlerMixin {
     private void peregrine$countClick(long window, MouseButtonInfo info, int action, CallbackInfo ci) {
         Peregrine pc = Peregrine.get();
         if (pc != null && action == InputConstants.PRESS && Screens.current() == null) {
-            pc.onMouseButton(info.button());
+            pc.onMouseButton(Screens.button(info.button()));
         }
     }
 }

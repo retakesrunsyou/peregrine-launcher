@@ -130,6 +130,17 @@ public final class TitleMenu {
         return false;
     }
 
+    /** For the self-test: centre of the button that opens that screen, in GUI pixels. */
+    int[] centerOf(Platform.Screen action) {
+        layout(pc.platform());
+        for (Button b : buttons) {
+            if (b.action == action) {
+                return new int[] {b.x + b.w / 2, b.y + b.h / 2};
+            }
+        }
+        return null;
+    }
+
     /** Whether to replace Minecraft's title screen (the "Peregrine main menu" toggle). */
     public boolean enabled() {
         Module m = pc.module("main_menu");
