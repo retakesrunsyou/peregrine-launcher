@@ -88,7 +88,9 @@ jobs:
           print('update applied')
           "
           test -f ~/.local/share/peregrine/instances/keep-me/instance.json
-          QT_QPA_PLATFORM=offscreen timeout 15 ~/.local/bin/peregrine >/dev/null 2>&1; [ $? = 124 ]
+          code=0
+          QT_QPA_PLATFORM=offscreen timeout 15 ~/.local/bin/peregrine >/dev/null 2>&1 || code=$?
+          [ "$code" = 124 ] || { echo "::error::The updated launcher exited by itself with code $code"; exit 1; }
 
   play:
     needs: versions

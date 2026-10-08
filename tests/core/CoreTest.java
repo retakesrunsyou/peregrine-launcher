@@ -93,7 +93,7 @@ public class CoreTest {
         check(t.enabled(), "main menu on by default");
         texts.clear(); t.render(d,0,0);
         check(texts.stream().anyMatch(x->x.startsWith("PEREGRINE@")) && texts.stream().anyMatch(x->x.startsWith("Welcome back, Benjamin@")), "big title + welcome line");
-        check(texts.stream().anyMatch(x->x.startsWith("Peregrine Client 0.2.0 for Minecraft 1.21.1@")), "footer shows versions");
+        check(texts.stream().anyMatch(x->x.startsWith("Peregrine Client " + TitleMenu.CLIENT_VERSION + " for Minecraft 1.21.1@")), "footer shows versions");
         String[] labels={"Singleplayer","Multiplayer","Options","Peregrine","Quit"};
         Platform.Screen[] want={Platform.Screen.SINGLEPLAYER,Platform.Screen.MULTIPLAYER,Platform.Screen.OPTIONS,Platform.Screen.PEREGRINE_MENU,Platform.Screen.QUIT};
         for(int i=0;i<labels.length;i++){ int[] xy=find(labels[i]+"@"); opened=null; t.mouseClicked(xy[0]+1, xy[1]+1, 0); check(opened==want[i], labels[i]+" button opens "+want[i]); }

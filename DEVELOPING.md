@@ -30,15 +30,33 @@ Application ID in `DISCORD_APP_ID` in `peregrine/__init__.py`. Not a secret.
 ## In-game mod (Peregrine Client)
 
 Lives in `client/`; see `client/README.md`. Build with `client/build.sh`
-(needs a Java 21 JDK). Attach the jars from `client/dist/` to each GitHub
-release; the launcher installs the one matching each Fabric instance's
+(Java 21 JDK for 1.21.x, Java 25 for 26.x). Releases build and attach the jars
+automatically; the launcher installs the one matching each Fabric instance's
 Minecraft version.
+
+## Testing
+
+**Actions → Play test → Run workflow** checks everything before a release (about
+30 minutes; leave the box empty for every Minecraft version):
+
+- builds the in-game mod for every version, installs it through the launcher's
+  own code and plays each version on a virtual screen: main menu, its buttons,
+  Right Shift, search, toggles, the HUD editor and dragging, zoom, clicks.
+  Each version is played without and with the one-click FPS mods.
+- opens the launcher window in every theme, makes an instance with the New
+  instance dialog and presses Play.
+- installs the release zip with `install.sh` and runs a self-update over it.
+
+Results, screenshots and logs land on the `test-results` branch (`README.txt`
+there lists failures per version). Quick checks without Minecraft:
+`python3 tests/test_launcher.py`.
 
 ## Releasing a new version
 
-1. Make sure the code on GitHub is up to date.
-2. Set `VERSION` in `peregrine/__init__.py` to the new version (e.g. `0.5.0`) and commit.
-3. On GitHub: **Releases → Draft a new release**, tag it with exactly that version
+1. Run the Play test (above) and make sure it passes.
+2. Make sure the code on GitHub is up to date.
+3. Set `VERSION` in `peregrine/__init__.py` to the new version (e.g. `0.5.0`) and commit.
+4. On GitHub: **Releases → Draft a new release**, tag it with exactly that version
    (`0.5.0`), add a title and notes, and **Publish release**.
 
 GitHub Actions (`.github/workflows/release.yml`) then builds
