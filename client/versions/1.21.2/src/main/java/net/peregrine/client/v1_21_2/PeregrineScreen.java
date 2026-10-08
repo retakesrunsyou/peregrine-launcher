@@ -19,6 +19,9 @@ final class PeregrineScreen extends Screen {
 
     @Override
     public void render(GuiGraphics g, int mouseX, int mouseY, float partialTick) {
+        if (net.minecraft.client.Minecraft.getInstance().level == null) {
+            renderPanorama(g, partialTick);  // opened from the main menu: show the panorama, not black
+        }
         if (menu.wantsShade()) {
             int alpha = Math.round(((Theme.MENU_SHADE >>> 24) & 0xFF) * menu.fade());
             g.fill(0, 0, width, height, (alpha << 24) | (Theme.MENU_SHADE & 0xFFFFFF));

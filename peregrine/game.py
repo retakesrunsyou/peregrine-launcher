@@ -230,22 +230,94 @@ def install_java(component: str, progress=None) -> Optional[Path]:
     return java
 
 
+def java_major(java: str) -> int:
+    """The major version of a java executable (8, 17, 21, 25...), or 0 if it won't run."""
+    import subprocess
+    try:
+        out = subprocess.run([java, "-version"], capture_output=True, text=True, timeout=20).stderr
+    except (OSError, subprocess.SubprocessError):
+        return 0
+    m = re.search(r'version "(\d+)(?:\.(\d+))?', out)
+    if not m:
+        return 0
+    first = int(m.group(1))
+    return int(m.group(2) or 0) if first == 1 else first  # "1.8.0" means Java 8
+
+
+ADOPTIUM = "https://api.adoptium.net/v3/assets/latest/{major}/hotspot"
+
+
+def install_adoptium(major: int, progress=None) -> Optional[Path]:
+    """Download Eclipse Temurin (the standard free Java build) when Mojang has no
+    Linux runtime for this Java version yet. Returns path to java, or None."""
+    import hashlib
+    import tarfile
+    arch = {"x86_64": "x64", "AMD64": "x64", "aarch64": "aarch64", "arm64": "aarch64"}.get(platform.machine())
+    if not arch:
+        return None
+    home = paths.RUNTIMES / f"temurin-{major}"
+    marker = home / ".peregrine-complete"
+    if marker.exists():
+        found = next(home.glob("*/bin/java"), None)
+        if found:
+            return found
+    assets = net.get_json(ADOPTIUM.format(major=major), params={
+        "os": "linux", "architecture": arch, "image_type": "jre", "vendor": "eclipse"})
+    if not assets:
+        return None
+    pkg = assets[0]["binary"]["package"]
+    archive = paths.RUNTIMES / pkg["name"]
+    net.fetch_all([net.Download(pkg["link"], archive, size=pkg.get("size"))], f"Java {major}", progress)
+    digest = hashlib.sha256(archive.read_bytes()).hexdigest()
+    if digest != pkg["checksum"]:
+        archive.unlink()
+        raise RuntimeError(f"The Java {major} download was damaged. Try again.")
+    if home.exists():
+        shutil.rmtree(home)
+    home.mkdir(parents=True)
+    with tarfile.open(archive) as tar:
+        for member in tar.getmembers():
+            if not (home / member.name).resolve().is_relative_to(home.resolve()):
+                raise RuntimeError("The Java download contained unsafe paths.")
+        tar.extractall(home)
+    archive.unlink()
+    marker.touch()
+    return next(home.glob("*/bin/java"), None)
+
+
 def find_java(profile: dict, override: str = "", progress=None) -> str:
+    """Pick a Java that's new enough for this Minecraft version, downloading one if needed."""
+    need = int(profile.get("javaVersion", {}).get("majorVersion", 8))
     if override:
+        have = java_major(override)
+        if have and have < need:
+            raise RuntimeError(f"The Java set in Settings is Java {have}, but this Minecraft version "
+                               f"needs Java {need}. Clear the Java path in Settings to use the "
+                               f"right one automatically.")
         return override
+
+    # 1. Mojang's own runtime (what the official launcher uses).
     component = profile.get("javaVersion", {}).get("component", "jre-legacy")
     try:
         java = install_java(component, progress)
+        if java and java_major(str(java)) >= need:
+            return str(java)
+    except Exception:
+        pass
+    # 2. Eclipse Temurin, for Java versions Mojang hasn't published for Linux.
+    try:
+        java = install_adoptium(need, progress)
         if java:
             return str(java)
     except Exception:
-        pass  # fall back to the system Java below
+        pass
+    # 3. The system's Java, only if it's new enough.
     system = shutil.which("java")
-    if system:
+    if system and java_major(system) >= need:
         return system
-    need = profile.get("javaVersion", {}).get("majorVersion", 8)
-    raise RuntimeError(f"No Java found. Install Java {need} (e.g. openjdk-{need}-jre) "
-                       f"or set a Java path in Settings.")
+    raise RuntimeError(f"This Minecraft version needs Java {need}, and Peregrine couldn't download it. "
+                       f"Check your internet connection, or install it with: "
+                       f"sudo apt install openjdk-{need}-jre")
 
 
 # ----------------------------------------------------------------- profile

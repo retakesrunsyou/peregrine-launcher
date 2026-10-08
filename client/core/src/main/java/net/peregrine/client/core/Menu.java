@@ -233,6 +233,29 @@ public final class Menu {
 
     private void renderEditor(Draw d, int mx, int my, Platform p) {
         int a = pc.accent();
+        if (!p.inWorld()) {
+            // HUD items only exist in a world, so there's nothing to arrange here.
+            String line1 = "Join a world to arrange your HUD";
+            String line2 = "Your HUD items appear here once you're playing.";
+            String done = "Back";
+            int w = Math.max(d.width(line1), d.width(line2)) + 32;
+            int h = 74;
+            int x = (p.screenWidth() - w) / 2;
+            int y = (p.screenHeight() - h) / 2;
+            d.rect(x, y, w, h, Theme.PANEL);
+            d.outline(x, y, w, h, Theme.BORDER);
+            d.rect(x, y, w, 2, a);
+            d.text(line1, x + (w - d.width(line1)) / 2, y + 14, Theme.TEXT, false);
+            d.text(line2, x + (w - d.width(line2)) / 2, y + 28, Theme.MUTED, false);
+            doneW = d.width(done) + 20;
+            doneH = 16;
+            doneX = x + (w - doneW) / 2;
+            doneY = y + h - doneH - 10;
+            boolean hover = in(mx, my, doneX, doneY, doneW, doneH);
+            d.rect(doneX, doneY, doneW, doneH, Theme.withAlpha(a, hover ? 0xFF : 0xDD));
+            d.text(done, doneX + 10, doneY + 4, 0xFF15171C, false);
+            return;
+        }
         for (Module m : pc.modules()) {
             if (!(m instanceof HudModule) || !m.enabled()) {
                 continue;
@@ -278,6 +301,9 @@ public final class Menu {
         if (editingHud) {
             if (in(mx, my, doneX, doneY, doneW, doneH)) {
                 editingHud = false;
+                return true;
+            }
+            if (!p.inWorld()) {
                 return true;
             }
             List<Module> mods = pc.modules();

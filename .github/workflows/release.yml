@@ -6,6 +6,13 @@ name: Build release files
 on:
   release:
     types: [published]
+  # "Run workflow" on the Actions tab: a test build of the in-game mod, no release needed.
+  workflow_dispatch:
+    inputs:
+      minecraft:
+        description: "Only build this Minecraft version (empty = all)"
+        required: false
+        default: ""
 
 permissions:
   contents: write
@@ -19,6 +26,7 @@ jobs:
       # The tag must match VERSION in peregrine/__init__.py, or installed
       # launchers would keep offering the same update forever.
       - name: Check the version number
+        if: github.event_name == 'release'
         run: |
           tag="${{ github.event.release.tag_name }}"
           tag="${tag#v}"
@@ -29,11 +37,13 @@ jobs:
           fi
 
       - name: Build the launcher zip
+        if: github.event_name == 'release'
         run: |
           chmod +x make-release.sh
           ./make-release.sh
 
       - name: Attach the launcher zip
+        if: github.event_name == 'release'
         env:
           GH_TOKEN: ${{ github.token }}
         run: gh release upload "${{ github.event.release.tag_name }}" ../peregrine-launcher.zip --clobber
@@ -48,9 +58,10 @@ jobs:
       - name: Build the in-game mod for every Minecraft version
         run: |
           chmod +x client/build.sh client/gradlew
-          client/build.sh || echo "MOD_BUILD_FAILED=1" >> "$GITHUB_ENV"
+          client/build.sh ${{ github.event.inputs.minecraft }} || echo "MOD_BUILD_FAILED=1" >> "$GITHUB_ENV"
 
       - name: Attach the in-game mod
+        if: github.event_name == 'release'
         env:
           GH_TOKEN: ${{ github.token }}
         run: |

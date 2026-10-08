@@ -38,13 +38,21 @@ for adapter in versions/*/; do
     fi
 
     echo "Building for Minecraft $mc…"
+    log="dist/build-$mc.log"
     if ./gradlew -p "$adapter" clean build --quiet \
-         -Pminecraft_version="$mc" -Pfabric_api_version="$api"; then
+         -Pminecraft_version="$mc" -Pfabric_api_version="$api" > "$log" 2>&1; then
       jar="$(ls "$adapter/build/libs/"*.jar | grep -v -- '-sources' | head -1)"
       cp "$jar" "dist/peregrine-client-$mc.jar"
       built+=("$mc")
+      rm -f "$log"
     else
       failed+=("$mc")
+      cat "$log"
+      # On GitHub, also post the errors as annotations so they're easy to find.
+      if [ -n "${GITHUB_ACTIONS:-}" ]; then
+        { grep -E "error:|e: |What went wrong|Could not|Exception" "$log" || true; } | head -40 |
+          while IFS= read -r line; do echo "::error title=Minecraft $mc::${line//$'\r'/}"; done
+      fi
     fi
   done < "$adapter/targets.txt"
 done

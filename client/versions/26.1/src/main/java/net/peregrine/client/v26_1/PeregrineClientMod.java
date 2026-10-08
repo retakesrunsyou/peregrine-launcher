@@ -44,7 +44,7 @@ public final class PeregrineClientMod implements ClientModInitializer {
 
         HudElementRegistry.addLast(Identifier.fromNamespaceAndPath("peregrine", "hud"), (graphics, tickCounter) -> {
             Minecraft mc = Minecraft.getInstance();
-            if (mc.options.hideGui || mc.getDebugOverlay().showDebugScreen()) {
+            if (mc.options.hideGui || mc.debugEntries.isOverlayVisible()) {
                 return;
             }
             Peregrine.get().renderHud(new GuiDraw(graphics));
