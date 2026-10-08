@@ -23,10 +23,10 @@ public final class PeregrineClientMod implements ClientModInitializer {
         Peregrine.init(new GamePlatform());
 
         menuKey = KeyMappingHelper.registerKeyMapping(new KeyMapping(
-                "key.peregrine.menu", InputConstants.Type.KEYSYM, InputConstants.KEY_RSHIFT,
+                "key.peregrine.menu", InputConstants.KEY_RSHIFT,
                 KeyMapping.Category.MISC));
         zoomKey = KeyMappingHelper.registerKeyMapping(new KeyMapping(
-                "key.peregrine.zoom", InputConstants.Type.KEYSYM, InputConstants.KEY_C,
+                "key.peregrine.zoom", InputConstants.KEY_C,
                 KeyMapping.Category.MISC));
 
         ClientTickEvents.END_CLIENT_TICK.register(mc -> {

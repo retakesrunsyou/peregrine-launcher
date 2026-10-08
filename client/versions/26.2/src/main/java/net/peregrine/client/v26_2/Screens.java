@@ -20,7 +20,7 @@ public final class Screens {
 
     /** True while F1 has hidden the HUD. */
     public static boolean hudHidden() {
-        return Minecraft.getInstance().hud.isHidden();
+        return Minecraft.getInstance().gui.hud.isHidden();
     }
 
     /** Minecraft's Options screen; its constructor differs between versions. */
