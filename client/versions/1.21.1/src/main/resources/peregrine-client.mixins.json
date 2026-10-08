@@ -1,0 +1,13 @@
+{
+	"required": true,
+	"package": "net.peregrine.client.v1_21_1.mixin",
+	"compatibilityLevel": "JAVA_21",
+	"client": [
+		"GameRendererMixin",
+		"MouseHandlerMixin",
+		"OptionInstanceAccessor"
+	],
+	"injectors": {
+		"defaultRequire": 1
+	}
+}
