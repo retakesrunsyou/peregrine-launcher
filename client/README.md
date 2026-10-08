@@ -46,7 +46,8 @@ jar matches its game exactly:
 | `versions/1.21.2` | 1.21.2 – 1.21.5 | zoom uses a different number type |
 | `versions/1.21.6` | 1.21.6 – 1.21.8 | new 2D drawing transforms |
 | `versions/1.21.9` | 1.21.9 – 1.21.11 | new mouse/keyboard events, new debug options |
-| `versions/26.1` | 26.1 – 26.3 | unobfuscated game, renamed drawing system, Java 25 |
+| `versions/26.1` | 26.1 – 26.1.2 | unobfuscated game, renamed drawing system, Java 25 |
+| `versions/26.2` | 26.2 – 26.3 | screens moved to `Minecraft.gui`, SDL input (26.3) |
 
 Each adapter's `targets.txt` lists its versions. To add a new Minecraft
 version, add a line there (or copy the newest adapter if the game changed).

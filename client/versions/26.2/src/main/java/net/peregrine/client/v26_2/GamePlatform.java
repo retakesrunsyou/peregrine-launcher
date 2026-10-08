@@ -1,4 +1,4 @@
-package net.peregrine.client.v26_1;
+package net.peregrine.client.v26_2;
 
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -20,7 +20,7 @@ import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.item.ItemStack;
 import net.peregrine.client.core.Compat;
 import net.peregrine.client.core.Platform;
-import net.peregrine.client.v26_1.mixin.OptionInstanceAccessor;
+import net.peregrine.client.v26_2.mixin.OptionInstanceAccessor;
 
 /** What the shared core needs, read from Minecraft 1.21.1. */
 final class GamePlatform implements Platform {

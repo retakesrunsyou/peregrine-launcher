@@ -1,4 +1,4 @@
-package net.peregrine.client.v26_1;
+package net.peregrine.client.v26_2;
 
 import com.mojang.blaze3d.platform.InputConstants;
 import net.fabricmc.api.ClientModInitializer;

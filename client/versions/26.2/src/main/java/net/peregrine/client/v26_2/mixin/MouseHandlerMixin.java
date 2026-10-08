@@ -1,10 +1,10 @@
-package net.peregrine.client.v26_1.mixin;
+package net.peregrine.client.v26_2.mixin;
 
 import net.minecraft.client.MouseHandler;
 import net.minecraft.client.input.MouseButtonInfo;
 import net.peregrine.client.core.Peregrine;
 import com.mojang.blaze3d.platform.InputConstants;
-import net.peregrine.client.v26_1.Screens;
+import net.peregrine.client.v26_2.Screens;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;

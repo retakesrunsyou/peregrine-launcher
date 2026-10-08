@@ -1,11 +1,11 @@
 {
 	"required": true,
-	"package": "net.peregrine.client.v26_1.mixin",
+	"package": "net.peregrine.client.v26_2.mixin",
 	"compatibilityLevel": "JAVA_25",
 	"client": [
 		"CameraMixin",
 		"LevelMixin",
-		"MinecraftMixin",
+		"GuiScreenMixin",
 		"MouseHandlerMixin",
 		"OptionInstanceAccessor"
 	],
