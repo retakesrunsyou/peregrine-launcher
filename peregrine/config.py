@@ -52,12 +52,16 @@ def save(cfg: dict) -> None:
     cfg = dict(cfg)
     if cfg.get("client_id") == CLIENT_ID:
         cfg["client_id"] = ""  # don't pin the built-in ID; a future release may change it
-    paths.CONFIG_FILE.write_text(json.dumps(cfg, indent=2))
+    tmp = paths.CONFIG_FILE.with_suffix(".tmp")
+    tmp.write_text(json.dumps(cfg, indent=2))
+    os.replace(tmp, paths.CONFIG_FILE)
 
 
 def write_private(path, data) -> None:
     """Write JSON readable only by the current user (used for login tokens)."""
     path.parent.mkdir(parents=True, exist_ok=True)
-    fd = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
+    tmp = path.with_name(path.name + f".{os.getpid()}.tmp")
+    fd = os.open(tmp, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
     with os.fdopen(fd, "w") as f:
         json.dump(data, f, indent=2)
+    os.replace(tmp, path)  # all at once, so a crash can't leave a half-written file

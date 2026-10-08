@@ -69,6 +69,17 @@ class Instance:
     def save(self) -> None:
         _write_json(self.folder / "instance.json", self.data)
 
+    def update(self, **changes) -> None:
+        """Save just these keys, on top of what's on disk now. Used by background
+        tasks, so they don't undo edits made in the settings dialog meanwhile."""
+        try:
+            current = json.loads((self.folder / "instance.json").read_text())
+        except (OSError, ValueError):
+            current = dict(self.data)
+        current.update(changes)
+        self.data.update(changes)
+        _write_json(self.folder / "instance.json", current)
+
     @property
     def icon(self):
         p = self.folder / "icon.png"
@@ -112,7 +123,7 @@ class Instance:
             if f.is_file() and name.lower().endswith(exts):
                 items.append((f, not f.name.endswith(".disabled")))
             elif f.is_dir() and kind != "mods":
-                items.append((f, True))  # unzipped packs
+                items.append((f, not f.name.endswith(".disabled")))  # unzipped packs
         return sorted(items, key=lambda i: i[0].name.lower())
 
     @staticmethod
@@ -131,9 +142,7 @@ class Instance:
             raise ValueError("FPS mods need a Fabric instance.")
         mods = modrinth.install(modrinth.PERFORMANCE_MODS, self.data["mc_version"],
                                 "fabric", self.game_dir / "mods", progress)
-        self.data["performance_mods"] = True
-        self.data["mods_installed"] = [f for _, f in mods]
-        self.save()
+        self.update(performance_mods=True, mods_installed=[f for _, f in mods])
         return mods
 
     # ---- install + launch
@@ -142,8 +151,7 @@ class Instance:
         vanilla = game.version_json(self.data["mc_version"])
         if self.data["loader"] == "fabric":
             if not self.data.get("loader_version"):
-                self.data["loader_version"] = fabric.latest_loader(self.data["mc_version"])
-                self.save()
+                self.update(loader_version=fabric.latest_loader(self.data["mc_version"]))
             return game.merge_profiles(vanilla, fabric.profile(self.data["mc_version"],
                                                                self.data["loader_version"]))
         return vanilla
@@ -154,8 +162,13 @@ class Instance:
             cfg["max_memory_mb"] = self.data["memory_mb"]
         prof = self.profile()
         info = game.install(prof, progress)
-        if self.data.get("performance_mods") and not self.data.get("mods_installed"):
-            self.install_performance_mods(progress)
+        # FPS mods are fetched once ("mods_installed" is saved even if Modrinth had none
+        # for this version yet). A network problem here never stops the game starting.
+        if self.data.get("performance_mods") and "mods_installed" not in self.data:
+            try:
+                self.install_performance_mods(progress)
+            except Exception as e:
+                print(f"[peregrine] FPS mods not installed: {e}")
         try:
             client_mod.sync(self, cfg.get("ingame_menu", True), progress)
         except Exception as e:  # never let the extra mod stop the game from starting

@@ -113,7 +113,7 @@ def minecraft_login(ms_access_token: str) -> dict:
         "type": "msa",
         "name": profile["name"],
         "uuid": profile["id"],
-        "xuid": xbl.get("DisplayClaims", {}).get("xui", [{}])[0].get("uhs", ""),
+        "xuid": "",  # the token only carries the user hash, not the Xbox user id
         "mc_token": mc["access_token"],
         "mc_expires": time.time() + mc.get("expires_in", 86400) - 300,
     }

@@ -66,8 +66,9 @@ def install(project: dict, progress=None) -> "instances.Instance":
             net.fetch_all(downloads, "Modpack files", progress)
 
             # Config files and extras bundled inside the pack.
-            for member in z.namelist():
-                for prefix in ("overrides/", "client-overrides/"):
+            # (client-overrides last, so they win over overrides, as the format says)
+            for prefix in ("overrides/", "client-overrides/"):
+                for member in z.namelist():
                     if member.startswith(prefix) and not member.endswith("/"):
                         dest = _safe_join(game, member[len(prefix):])
                         dest.parent.mkdir(parents=True, exist_ok=True)

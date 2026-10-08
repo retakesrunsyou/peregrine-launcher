@@ -103,8 +103,49 @@ jobs:
           name: play-${{ matrix.minecraft }}
           path: out/${{ matrix.minecraft }}
 
+  ui:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        minecraft: ['1.21.1', '26.3']
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '25'
+          cache: gradle
+      - name: Install the virtual screen and the launcher's libraries
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq xvfb libgl1-mesa-dri libegl1 libxkbcommon0 libxkbcommon-x11-0 libfontconfig1 libxcb-cursor0 imagemagick >/dev/null
+          pip install --quiet -r requirements.txt
+      - name: Build the mod
+        run: |
+          chmod +x client/build.sh client/gradlew
+          client/build.sh ${{ matrix.minecraft }}
+      - name: Use the launcher
+        env:
+          LIBGL_ALWAYS_SOFTWARE: '1'
+          QT_QPA_PLATFORM: offscreen
+        run: xvfb-run -a -s "-screen 0 1280x720x24" python3 tests/ui_test.py "${{ matrix.minecraft }}" client/dist "out/ui-${{ matrix.minecraft }}"
+      - name: Shrink screenshots
+        if: always()
+        run: |
+          d="out/ui-${{ matrix.minecraft }}"
+          mkdir -p "$d"; rm -rf "$d/home"
+          for f in "$d"/*.png; do [ -f "$f" ] && convert "$f" -quality 82 "${f%.png}.jpg" && rm "$f"; done
+          find "$d" -name '*.log' -size +2M -exec sh -c 'tail -c 2000000 "$1" > "$1.tail" && mv "$1.tail" "$1"' _ {} \;
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: play-ui-${{ matrix.minecraft }}
+          path: out/ui-${{ matrix.minecraft }}
+
   save:
-    needs: play
+    needs: [play, ui, unit]
     if: always()
     runs-on: ubuntu-latest
     steps:

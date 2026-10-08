@@ -138,7 +138,8 @@ class NewInstanceDialog(QDialog):
         self.snapshots.toggled.connect(self.load_versions)
 
         self.loader = Segmented([("fabric", "Fabric"), ("vanilla", "Vanilla")], "fabric")
-        self.loader.changed.connect(lambda _: self.update_options())
+        self.wanted_loader = "fabric"  # what the player picked; kept while versions load
+        self.loader.changed.connect(self.pick_loader)
         loaders = QHBoxLayout()
         loaders.addWidget(self.loader)
         loaders.addStretch()
@@ -171,21 +172,30 @@ class NewInstanceDialog(QDialog):
                                                          f"Check your internet connection.\n\n{m}"))
 
     def got_versions(self, versions):
+        self.versions_loaded = False  # ignore the empty/partial states while refilling
         self.version.clear()
         self.version.addItems(versions)
+        self.versions_loaded = True
         self.version.setEnabled(True)
         self.ok.setEnabled(True)
+        self.update_options()
+
+    def pick_loader(self, key):
+        self.wanted_loader = key
+        self.update_options()
 
     def got_fabric(self, versions):
         self.fabric_versions = versions
         self.update_options()
 
     def update_options(self):
+        if not getattr(self, "versions_loaded", False):
+            return  # still showing "Loading versions…"
         v = self.version.currentText()
         fabric_ok = not self.fabric_versions or v in self.fabric_versions
         self.loader.set_enabled("fabric", fabric_ok)
-        if not fabric_ok:
-            self.loader.set("vanilla")
+        # Fabric when the player wants it and this version has it; Vanilla otherwise.
+        self.loader.set("fabric" if fabric_ok and self.wanted_loader == "fabric" else "vanilla")
         self.perf_row.setEnabled(self.loader.value() == "fabric")
 
     def create(self):

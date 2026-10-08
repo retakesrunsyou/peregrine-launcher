@@ -187,7 +187,7 @@ def play(phase: str, plan: str, extra_game_args: list, timeout: int):
     st = OUT / f"selftest-{phase}"
     st.mkdir()
     cfg["extra_jvm_args"] = (f"-Dperegrine.selftest={st} -Dperegrine.selftest.phase={plan} "
-                             f"-Dperegrine.selftest.width={WIDTH} -Dmixin.debug.countInjections=true")
+                             f"-Dperegrine.selftest.width={WIDTH}")
     account = auth.offline_account("Tester")
     cmd = game.build_command(prof, info, java, account, inst.game_dir, cfg) + extra_game_args
     log = open(OUT / f"game-{phase}.log", "w")

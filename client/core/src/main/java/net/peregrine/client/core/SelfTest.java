@@ -79,6 +79,8 @@ public final class SelfTest {
                 steps = new ArrayList<Step>();
                 if (PHASE.equals("world")) {
                     worldSteps();
+                } else if (PHASE.equals("smoke")) {
+                    smokeSteps();
                 } else {
                     titleSteps();
                 }
@@ -134,6 +136,22 @@ public final class SelfTest {
         clickOn("Back button leaves the editor", "done", new Cond() {
             public boolean ok() {
                 return !menu.editingHud();
+            }
+        });
+        finish();
+    }
+
+    /** Quick check with no test script attached: main menu, Right Shift menu, quit. */
+    private static void smokeSteps() {
+        waitFor("Peregrine main menu shows", 2400, new Cond() {
+            public boolean ok() {
+                return p.showing(Platform.Screen.TITLE) && get("title") > 20;
+            }
+        });
+        open("Peregrine menu opens", Platform.Screen.PEREGRINE_MENU);
+        check("menu draws", new Cond() {
+            public boolean ok() {
+                return get("menu") > 5;
             }
         });
         finish();

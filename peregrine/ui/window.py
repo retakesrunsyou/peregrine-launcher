@@ -1,5 +1,6 @@
 """The main window: header, side navigation, pages, and the status footer."""
 
+import os
 import sys
 
 from PySide6.QtCore import QSize, Qt
@@ -465,4 +466,10 @@ def main():
     Theme.set(cfg["theme"], cfg["accent"])
     win = MainWindow()
     win.show()
-    sys.exit(app.exec())
+    code = app.exec()
+    if workers._running:
+        # A game or download is still going. Leave without tearing down its
+        # thread (Qt would abort); the game runs on by itself.
+        sys.stdout.flush()
+        os._exit(code)
+    sys.exit(code)
