@@ -116,6 +116,7 @@ public final class TitleMenu {
     }
 
     public boolean mouseClicked(int mx, int my, int button) {
+        SelfTest.count("titleclick@" + mx + "," + my + "/" + button);
         if (button != 0) {
             return false;
         }

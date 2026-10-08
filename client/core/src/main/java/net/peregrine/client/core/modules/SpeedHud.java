@@ -11,7 +11,7 @@ public final class SpeedHud extends HudModule {
     private double speed;  // blocks per second, smoothed
 
     public SpeedHud() {
-        super("speed", "Speed", "How fast you're moving, in blocks per second", false, 0f, 0.43f);
+        super("speed", "Speed", "How fast you're moving, in blocks per second", false, 0f, 0.385f);
     }
 
     @Override

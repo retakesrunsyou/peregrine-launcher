@@ -192,8 +192,9 @@ public final class SelfTest {
         });
         waitTicks(10);
         shot("14-menu-in-game");
-        ask("type clock");
-        waitFor("typing searches the menu", 60, new Cond() {
+        ask("type clockx");
+        ask("key BackSpace");
+        waitFor("typing and Backspace work in the search box", 60, new Cond() {
             public boolean ok() {
                 return menu.search().equals("clock");
             }

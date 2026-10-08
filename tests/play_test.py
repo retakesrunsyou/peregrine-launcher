@@ -76,6 +76,14 @@ cfg = config.load()
 cfg.update(width=WIDTH, height=HEIGHT, discord=False, check_updates=False, use_gamemode=False)
 config.save(cfg)
 
+# Which Java would Mojang's own runtime give? (Logged so a silent fallback shows up.)
+try:
+    comp = game.version_json(MC).get("javaVersion", {}).get("component", "jre-legacy")
+    j = game.install_java(comp)
+    note("INFO", f"Mojang runtime {comp}: {j} (Java {game.java_major(str(j)) if j else '-'})")
+except Exception as e:
+    note("INFO", f"Mojang runtime unavailable: {e!r}")
+
 inst = instances.create("Test", MC, "fabric")
 t0 = time.time()
 try:
@@ -225,12 +233,15 @@ def play(phase: str, extra_game_args: list, timeout: int):
 
 def check_log(phase: str, text: str):
     """Look for problems the self-test can't see: mixins that didn't apply, crashes."""
+    ours = re.compile(r"net\.peregrine|peregrine-client|peregrine\$|\[peregrine\]", re.I)
     bad = []
     for line in text.splitlines():
         low = line.lower()
-        if "peregrine" in low and ("mixin" in low or "inject" in low) and ("warn" in low or "error" in low):
-            bad.append(line)
-        elif ("exception" in low or "error" in low) and "peregrine" in low and "self-test" not in low:
+        if "self-test" in low:
+            continue
+        if line.strip().startswith("at net.peregrine"):
+            bad.append("stack trace through Peregrine code: " + line.strip())
+        elif ours.search(line) and ("warn" in low or "error" in low or "exception" in low):
             bad.append(line)
         elif "---- minecraft crash report ----" in low:
             bad.append(line)

@@ -48,8 +48,15 @@ def sync(inst, enabled: bool, progress=None) -> str:
     for f in _installed(mods):
         if f != dest:
             f.unlink()  # a copy for another version
+    # Remember which release file we have, so a rebuilt jar of the same size
+    # still gets replaced when a new release comes out.
+    marker = mods / ".peregrine-client"
+    stamp = f"{asset.get('id', '')} {asset.get('updated_at', '')} {asset.get('size', '')}"
+    if dest.exists() and (not marker.is_file() or marker.read_text().strip() != stamp):
+        dest.unlink()
     downloads = [net.Download(asset["browser_download_url"], dest, size=asset.get("size"))]
     net.fetch_all(downloads, "Peregrine Client", progress)
+    marker.write_text(stamp + "\n")
     if not _has_fabric_api(mods):
         modrinth.install(["fabric-api"], inst.data["mc_version"], "fabric", mods, progress)
     return "installed"

@@ -7,7 +7,7 @@ import net.peregrine.client.core.Platform;
 public final class PingHud extends HudModule {
 
     public PingHud() {
-        super("ping", "Ping", "Your connection delay to the server (hidden in singleplayer)", false, 0f, 0.27f);
+        super("ping", "Ping", "Your connection delay to the server (hidden in singleplayer)", false, 0f, 0.245f);
     }
 
     private String value(Platform p) {
@@ -32,5 +32,10 @@ public final class PingHud extends HudModule {
         }
         panel(d, x, y, width(d, p), height(d, p));
         labelled(d, x + 4, y + 4, "Ping", value(p));
+    }
+
+    @Override
+    public boolean hasContent(Platform p) {
+        return p.ping() >= 0;
     }
 }

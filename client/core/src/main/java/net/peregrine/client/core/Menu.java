@@ -295,6 +295,13 @@ public final class Menu {
                 continue;
             }
             boolean hover = h == dragging || h.contains(mx, my);
+            if (!h.hasContent(p)) {
+                // Nothing to show yet (like ping in singleplayer): label the box so it isn't blank.
+                d.rect(h.lastX, h.lastY, h.lastW, h.lastH, Theme.withAlpha(Theme.PANEL, 0x90));
+                String label = d.trim(h.name, Math.max(0, h.lastW - 4));
+                d.text(label, h.lastX + (h.lastW - d.width(label)) / 2,
+                        h.lastY + (h.lastH - d.lineHeight()) / 2 + 1, Theme.MUTED, false);
+            }
             if (hover) {
                 d.rect(h.lastX, h.lastY, h.lastW, h.lastH, Theme.withAlpha(a, 0x30));
                 int ly = h.lastY > 12 ? h.lastY - 11 : h.lastY + h.lastH + 2;
@@ -324,6 +331,7 @@ public final class Menu {
 
     /** Returns true if the click was used. button: 0 = left. */
     public boolean mouseClicked(int mx, int my, int button) {
+        SelfTest.count("click@" + mx + "," + my + "/" + button);
         if (button != 0) {
             return false;
         }

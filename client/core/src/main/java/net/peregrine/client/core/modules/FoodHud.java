@@ -8,7 +8,7 @@ import net.peregrine.client.core.Platform;
 public final class FoodHud extends HudModule {
 
     public FoodHud() {
-        super("food", "Food", "Hunger and the hidden saturation level", false, 0f, 0.67f);
+        super("food", "Food", "Hunger and the hidden saturation level", false, 0f, 0.595f);
     }
 
     private static String value(Platform p) {

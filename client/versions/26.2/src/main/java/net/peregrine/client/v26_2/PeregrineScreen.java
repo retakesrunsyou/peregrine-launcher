@@ -1,5 +1,6 @@
 package net.peregrine.client.v26_2;
 
+import com.mojang.blaze3d.platform.InputConstants;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.input.CharacterEvent;
@@ -58,7 +59,7 @@ final class PeregrineScreen extends Screen {
 
     @Override
     public boolean keyPressed(KeyEvent e) {
-        if (menu.keyPressed(e.key())) {
+        if (menu.keyPressed(menuKey(e.key()))) {
             return true;
         }
         if (PeregrineClientMod.menuKey.matches(e)) {
@@ -88,8 +89,29 @@ final class PeregrineScreen extends Screen {
         }
     }
 
+    /** 26.3 uses different key numbers; the menu expects the classic ones. */
+    private static int menuKey(int key) {
+        if (key == InputConstants.KEY_ESCAPE) {
+            return Menu.KEY_ESCAPE;
+        }
+        if (key == InputConstants.KEY_RETURN || key == InputConstants.KEY_NUMPADENTER) {
+            return Menu.KEY_ENTER;
+        }
+        if (key == InputConstants.KEY_BACKSPACE) {
+            return Menu.KEY_BACKSPACE;
+        }
+        return -1;
+    }
+
+    @Override
+    public void added() {
+        super.added();
+        Screens.textInput(this, true);
+    }
+
     @Override
     public void removed() {
+        Screens.textInput(this, false);
         menu.close();
     }
 

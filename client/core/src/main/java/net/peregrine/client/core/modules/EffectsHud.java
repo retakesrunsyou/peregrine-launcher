@@ -61,4 +61,9 @@ public final class EffectsHud extends HudModule {
             ry += d.lineHeight() + 2;
         }
     }
+
+    @Override
+    public boolean hasContent(Platform p) {
+        return !p.effects().isEmpty();
+    }
 }

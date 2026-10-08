@@ -8,7 +8,7 @@ import net.peregrine.client.core.Platform;
 public final class MemoryHud extends HudModule {
 
     public MemoryHud() {
-        super("memory", "Memory", "How much of the game's memory is in use", false, 0f, 0.59f);
+        super("memory", "Memory", "How much of the game's memory is in use", false, 0f, 0.525f);
     }
 
     private static String value() {

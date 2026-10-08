@@ -23,6 +23,20 @@ public final class Screens {
         return Minecraft.getInstance().gui.hud.isHidden();
     }
 
+    /**
+     * Minecraft 26.3 (SDL) only sends typed characters while text input is on,
+     * so the menu's search box has to switch it on. Earlier versions always send them.
+     */
+    public static void textInput(Object owner, boolean on) {
+        try {
+            Object manager = Minecraft.class.getMethod("textInputManager").invoke(Minecraft.getInstance());
+            manager.getClass().getMethod(on ? "startTextInput" : "stopTextInput", Object.class)
+                    .invoke(manager, owner);
+        } catch (ReflectiveOperationException | RuntimeException e) {
+            // 26.2: no owner-based text input; characters arrive anyway
+        }
+    }
+
     /** Minecraft's Options screen; its constructor differs between versions. */
     public static Screen options(Screen parent) {
         Minecraft mc = Minecraft.getInstance();

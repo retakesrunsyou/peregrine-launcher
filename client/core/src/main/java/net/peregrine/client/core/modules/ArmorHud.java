@@ -14,7 +14,7 @@ public final class ArmorHud extends HudModule {
 
     public ArmorHud() {
         super("armor", "Armor status", "Your armor and held item, with durability left",
-                true, 1f, 0.5f);
+                true, 1f, 0.42f);
     }
 
     @Override
@@ -47,5 +47,10 @@ public final class ArmorHud extends HudModule {
             }
             ry += ROW;
         }
+    }
+
+    @Override
+    public boolean hasContent(Platform p) {
+        return !p.armor().isEmpty();
     }
 }

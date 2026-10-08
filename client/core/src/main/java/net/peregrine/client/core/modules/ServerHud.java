@@ -7,7 +7,7 @@ import net.peregrine.client.core.Platform;
 public final class ServerHud extends HudModule {
 
     public ServerHud() {
-        super("server", "Server address", "Which server you're on (hidden in singleplayer)", false, 0f, 0.35f);
+        super("server", "Server address", "Which server you're on (hidden in singleplayer)", false, 0f, 0.315f);
     }
 
     @Override
@@ -29,5 +29,10 @@ public final class ServerHud extends HudModule {
         }
         panel(d, x, y, width(d, p), height(d, p));
         labelled(d, x + 4, y + 4, "Server", s);
+    }
+
+    @Override
+    public boolean hasContent(Platform p) {
+        return p.serverAddress() != null;
     }
 }

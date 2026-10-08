@@ -28,6 +28,11 @@ public abstract class HudModule extends Module {
 
     public abstract void render(Draw d, Platform p, int x, int y);
 
+    /** False when there's nothing to show right now (no effects, singleplayer ping...). */
+    public boolean hasContent(Platform p) {
+        return true;
+    }
+
     void renderAt(Draw d, Platform p) {
         int w = width(d, p);
         int h = height(d, p);

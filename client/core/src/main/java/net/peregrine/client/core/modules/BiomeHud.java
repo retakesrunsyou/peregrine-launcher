@@ -7,7 +7,7 @@ import net.peregrine.client.core.Platform;
 public final class BiomeHud extends HudModule {
 
     public BiomeHud() {
-        super("biome", "Biome", "The biome you're standing in", false, 0f, 0.51f);
+        super("biome", "Biome", "The biome you're standing in", false, 0f, 0.455f);
     }
 
     /** "minecraft:dark_forest" → "Dark Forest". */

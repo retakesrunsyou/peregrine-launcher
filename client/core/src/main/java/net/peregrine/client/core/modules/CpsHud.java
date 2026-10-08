@@ -8,7 +8,7 @@ import net.peregrine.client.core.Platform;
 public final class CpsHud extends HudModule {
 
     public CpsHud() {
-        super("cps", "CPS", "Clicks per second for left and right mouse buttons", false, 0f, 0.19f);
+        super("cps", "CPS", "Clicks per second for left and right mouse buttons", false, 0f, 0.175f);
     }
 
     private String value() {

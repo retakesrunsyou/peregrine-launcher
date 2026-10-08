@@ -123,8 +123,21 @@ final class GamePlatform implements Platform {
 
     @Override
     public boolean zoomKeyDown() {
-        return PeregrineClientMod.zoomKey != null && PeregrineClientMod.zoomKey.isDown()
-                && mc().screen == null;
+        if (PeregrineClientMod.zoomKey == null || mc().screen != null) {
+            return false;
+        }
+        // Before 1.21.9 only one binding can own a key, and C is also "Save Hotbar",
+        // so read the key itself instead of trusting the binding.
+        com.mojang.blaze3d.platform.InputConstants.Key key =
+                net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper.getBoundKeyOf(PeregrineClientMod.zoomKey);
+        long window = mc().getWindow().getWindow();
+        if (key.getType() == com.mojang.blaze3d.platform.InputConstants.Type.KEYSYM) {
+            return com.mojang.blaze3d.platform.InputConstants.isKeyDown(window, key.getValue());
+        }
+        if (key.getType() == com.mojang.blaze3d.platform.InputConstants.Type.MOUSE) {
+            return org.lwjgl.glfw.GLFW.glfwGetMouseButton(window, key.getValue()) == org.lwjgl.glfw.GLFW.GLFW_PRESS;
+        }
+        return PeregrineClientMod.zoomKey.isDown();
     }
 
     @Override
