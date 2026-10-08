@@ -52,6 +52,44 @@ jobs:
           pip install --quiet 'requests[socks]'
           python3 tests/test_launcher.py
 
+  install:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: System packages the installer asks for
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq python3-venv libxcb-cursor0 libegl1 libxkbcommon-x11-0 desktop-file-utils zip >/dev/null
+      - name: Build the release zip and install it like a player
+        run: |
+          ./make-release.sh
+          mkdir -p /tmp/rel && cd /tmp/rel && unzip -q "$GITHUB_WORKSPACE/../peregrine-launcher.zip"
+          bash /tmp/rel/peregrine/install.sh
+          test -x ~/.local/bin/peregrine
+          desktop-file-validate ~/.local/share/applications/peregrine.desktop
+          ls ~/.local/share/icons/hicolor/256x256/apps/peregrine.png
+      - name: The app starts and keeps running
+        run: |
+          mkdir -p ~/.local/share/peregrine/instances/keep-me && echo '{}' > ~/.local/share/peregrine/instances/keep-me/instance.json
+          set +e
+          QT_QPA_PLATFORM=offscreen timeout 20 ~/.local/bin/peregrine > app.log 2>&1
+          code=$?
+          cat app.log
+          [ "$code" = 124 ] || { echo "::error::The launcher exited by itself with code $code"; exit 1; }
+      - name: Self-update installs over the old version and keeps player data
+        run: |
+          cd /tmp && python3 -m http.server 8765 --directory "$GITHUB_WORKSPACE/.." >/dev/null 2>&1 &
+          sleep 1
+          cd ~/.local/share/peregrine/app
+          ./venv/bin/python -c "
+          from peregrine import updater
+          assert updater.installed_app_dir() is not None, 'not seen as installed'
+          updater.apply({'version': '9.9.9', 'url': 'http://127.0.0.1:8765/peregrine-launcher.zip'})
+          print('update applied')
+          "
+          test -f ~/.local/share/peregrine/instances/keep-me/instance.json
+          QT_QPA_PLATFORM=offscreen timeout 15 ~/.local/bin/peregrine >/dev/null 2>&1; [ $? = 124 ]
+
   play:
     needs: versions
     runs-on: ubuntu-latest
@@ -145,7 +183,7 @@ jobs:
           path: out/ui-${{ matrix.minecraft }}
 
   save:
-    needs: [play, ui, unit]
+    needs: [play, ui, unit, install]
     if: always()
     runs-on: ubuntu-latest
     steps:

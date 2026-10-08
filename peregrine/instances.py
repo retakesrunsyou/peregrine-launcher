@@ -211,7 +211,9 @@ def all_instances() -> list:
     for folder in sorted(paths.INSTANCES.iterdir()):
         if (folder / "instance.json").is_file():
             try:
-                out.append(Instance(folder))
-            except (json.JSONDecodeError, KeyError):
+                inst = Instance(folder)
+                if all(k in inst.data for k in ("name", "mc_version", "loader")):
+                    out.append(inst)  # skip damaged ones instead of breaking the home page
+            except (OSError, ValueError, KeyError, AttributeError, TypeError):
                 pass
     return out
