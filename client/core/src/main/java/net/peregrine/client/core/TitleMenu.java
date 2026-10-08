@@ -71,6 +71,7 @@ public final class TitleMenu {
     }
 
     public void render(Draw raw, int mx, int my) {
+        SelfTest.count("title");
         float t = shownAt < 0 ? 1f : FadeDraw.progress(shownAt, 400);
         Draw d = t < 1f ? new FadeDraw(raw, t) : raw;
         Platform p = pc.platform();

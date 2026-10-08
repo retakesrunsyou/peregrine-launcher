@@ -147,6 +147,9 @@ public final class Peregrine {
     // ---- called by the version adapter
 
     public void tick() {
+        if (SelfTest.ACTIVE) {
+            SelfTest.tick(this);
+        }
         if (platform.inWorld()) {
             for (Module m : modules) {
                 if (m.enabled() && platform.supports(m.id)) {
@@ -164,6 +167,7 @@ public final class Peregrine {
         if (!platform.inWorld()) {
             return;
         }
+        SelfTest.count("hud");
         for (Module m : modules) {
             if (m.enabled() && m instanceof HudModule && platform.supports(m.id)) {
                 ((HudModule) m).renderAt(d, platform);
@@ -173,6 +177,7 @@ public final class Peregrine {
 
     /** button: 0 = left, 1 = right. */
     public void onMouseButton(int button) {
+        SelfTest.count("mouse");
         Deque<Long> q = button == 0 ? leftClicks : button == 1 ? rightClicks : null;
         if (q != null) {
             q.addLast(System.currentTimeMillis());
@@ -191,11 +196,14 @@ public final class Peregrine {
     /** How much to divide the field of view by (1 = no zoom). */
     public double zoomDivisor() {
         Zoom zoom = (Zoom) module("zoom");
-        return zoom != null ? zoom.divisor(platform) : 1.0;
+        double d = zoom != null ? zoom.divisor(platform) : 1.0;
+        SelfTest.count(d != 1.0 ? "zoom-active" : "zoom-hook");
+        return d;
     }
 
     /** For version adapters' hooks: is this module switched on? */
     public boolean on(String id) {
+        SelfTest.count("on:" + id);
         Module m = module(id);
         return m != null && m.enabled();
     }

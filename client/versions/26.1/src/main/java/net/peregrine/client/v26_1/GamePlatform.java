@@ -169,7 +169,23 @@ final class GamePlatform implements Platform {
             case OPTIONS: Screens.open(Screens.options(current)); break;
             case PEREGRINE_MENU: Screens.open(new PeregrineScreen()); break;
             case QUIT: mc.stop(); break;
+            case NONE: Screens.open(null); break;
+            case TITLE: Screens.open(new net.minecraft.client.gui.screens.TitleScreen()); break;
             default: break;
+        }
+    }
+
+    @Override
+    public boolean showing(Screen which) {
+        net.minecraft.client.gui.screens.Screen s = Screens.current();
+        switch (which) {
+            case NONE: return s == null;
+            case TITLE: return s instanceof PeregrineTitleScreen;
+            case SINGLEPLAYER: return s instanceof SelectWorldScreen;
+            case MULTIPLAYER: return s instanceof JoinMultiplayerScreen;
+            case OPTIONS: return s instanceof net.minecraft.client.gui.screens.options.OptionsScreen;
+            case PEREGRINE_MENU: return s instanceof PeregrineScreen;
+            default: return false;
         }
     }
 

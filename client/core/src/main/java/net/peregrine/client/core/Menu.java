@@ -56,6 +56,35 @@ public final class Menu {
         dragging = null;
     }
 
+    // ---- for the self-test (see SelfTest)
+
+    boolean editingHud() {
+        return editingHud;
+    }
+
+    String search() {
+        return search;
+    }
+
+    /** Centre of something on screen, in GUI pixels, or null if it isn't showing. */
+    int[] centerOf(String what) {
+        layout(pc.platform());
+        if (what.equals("edit")) {
+            return editW > 0 ? new int[] {editX + editW / 2, editY + editH / 2} : null;
+        }
+        if (what.equals("done")) {
+            return doneW > 0 ? new int[] {doneX + doneW / 2, doneY + doneH / 2} : null;
+        }
+        List<Module> mods = visible();
+        for (int i = 0; i < mods.size(); i++) {
+            if (mods.get(i).id.equals(what)) {
+                int y = cardY(i) + CARD_H / 2;
+                return y > gridY && y < gridY + gridH ? new int[] {cardX(i) + cardW / 2, y} : null;
+            }
+        }
+        return null;
+    }
+
     /** Call when the menu screen closes. */
     public void close() {
         dragging = null;
@@ -115,6 +144,7 @@ public final class Menu {
     public void render(Draw raw, int mx, int my) {
         Platform p = pc.platform();
         layout(p);
+        SelfTest.count(editingHud ? "editor" : "menu");
         if (editingHud) {
             renderEditor(raw, mx, my, p);
             return;

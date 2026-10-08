@@ -1,0 +1,115 @@
+# Plays every supported Minecraft version through the launcher on a virtual
+# screen and checks the in-game mod: main menu, Right Shift menu, search,
+# toggles, HUD editor and dragging, zoom, mouse clicks. Run it from the
+# Actions tab before publishing a release. Results and screenshots are saved
+# to the "test-results" branch.
+name: Play test
+
+on:
+  workflow_dispatch:
+    inputs:
+      versions:
+        description: 'Minecraft versions to test, space separated (empty = all)'
+        required: false
+        default: ''
+
+permissions:
+  contents: write
+
+jobs:
+  versions:
+    runs-on: ubuntu-latest
+    outputs:
+      list: ${{ steps.list.outputs.list }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: list
+        run: |
+          want="${{ github.event.inputs.versions }}"
+          if [ -z "$want" ]; then
+            want="$(cat client/versions/*/targets.txt | grep -vE '^\s*(#|$)' | awk '{print $1}' | tr '\n' ' ')"
+          fi
+          echo "list=$(printf '%s\n' $want | jq -R . | jq -cs .)" >> "$GITHUB_OUTPUT"
+
+  play:
+    needs: versions
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        minecraft: ${{ fromJson(needs.versions.outputs.list) }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '25'
+          cache: gradle
+
+      - name: Install the virtual screen and input tools
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq xvfb xdotool imagemagick libgl1-mesa-dri mesa-vulkan-drivers libxcb-cursor0 >/dev/null
+          pip install --quiet 'requests[socks]'
+
+      - name: Build the mod
+        run: |
+          chmod +x client/build.sh client/gradlew
+          client/build.sh ${{ matrix.minecraft }}
+
+      - name: Play
+        env:
+          LIBGL_ALWAYS_SOFTWARE: '1'
+        run: |
+          xvfb-run -a -s "-screen 0 1280x720x24" python3 tests/play_test.py "${{ matrix.minecraft }}" client/dist "out/${{ matrix.minecraft }}"
+
+      - name: Shrink screenshots and logs
+        if: always()
+        run: |
+          d="out/${{ matrix.minecraft }}"
+          mkdir -p "$d"
+          rm -rf "$d/home" "$d/server"
+          for f in "$d"/*.png; do [ -f "$f" ] && convert "$f" -resize 960x -quality 80 "${f%.png}.jpg" && rm "$f"; done
+          find "$d" -name '*.log' -size +2M -exec sh -c 'tail -c 2000000 "$1" > "$1.tail" && mv "$1.tail" "$1"' _ {} \;
+          cp client/dist/build-*.log "$d/" 2>/dev/null || true
+          ls -la "$d"
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: play-${{ matrix.minecraft }}
+          path: out/${{ matrix.minecraft }}
+
+  save:
+    needs: play
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: results
+      - name: Save to the test-results branch
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          cd results
+          for d in play-*; do mv "$d" "${d#play-}"; done
+          {
+            echo "Play test, run ${{ github.run_id }}"
+            for d in */; do
+              v="${d%/}"
+              if [ -f "$v/summary.txt" ]; then
+                fails="$(grep -c '^FAIL' "$v/summary.txt" || true)"
+                echo "$v: $fails failed"
+              else
+                echo "$v: no summary (the test didn't run to the end)"
+              fi
+            done
+          } > README.txt
+          cat README.txt
+          git init -q -b test-results
+          git -c user.name=Peregrine -c user.email=noreply@users.noreply.github.com add -A
+          git -c user.name=Peregrine -c user.email=noreply@users.noreply.github.com commit -qm "Play test results"
+          git push -qf "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" test-results

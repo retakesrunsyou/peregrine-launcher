@@ -53,9 +53,12 @@ public interface Platform {
     // ---- added for the main menu and server HUD items
 
     /** Screens the core can ask the game to open. */
-    enum Screen { SINGLEPLAYER, MULTIPLAYER, OPTIONS, PEREGRINE_MENU, QUIT }
+    enum Screen { SINGLEPLAYER, MULTIPLAYER, OPTIONS, PEREGRINE_MENU, QUIT, NONE, TITLE }
 
     void openScreen(Screen which);
+
+    /** Whether that screen is the one showing now (NONE = no screen, playing). */
+    boolean showing(Screen which);
 
     /** The signed-in player's name. */
     String playerName();
