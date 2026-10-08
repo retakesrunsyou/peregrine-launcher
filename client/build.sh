@@ -50,8 +50,13 @@ for adapter in versions/*/; do
       cat "$log"
       # On GitHub, also post the errors as annotations so they're easy to find.
       if [ -n "${GITHUB_ACTIONS:-}" ]; then
-        { grep -E "error:|e: |What went wrong|Could not|Exception" "$log" || true; } | head -40 |
-          while IFS= read -r line; do echo "::error title=Minecraft $mc::${line//$'\r'/}"; done
+        # One annotation per error, with the lines after it (symbol, location).
+        awk -v mc="$mc" '
+          function esc(x) { gsub(/%/, "%25", x); gsub(/\r/, "", x); return x }
+          function flush() { if (msg != "") { print "::error title=Minecraft " mc "::" msg; msg = "" } }
+          /error:|What went wrong|Could not|Exception/ { flush(); msg = esc($0); n = 6; next }
+          n > 0 { msg = msg "%0A" esc($0); n--; if (n == 0) flush() }
+          END { flush() }' "$log" | head -40
       fi
     fi
   done < "$adapter/targets.txt"
