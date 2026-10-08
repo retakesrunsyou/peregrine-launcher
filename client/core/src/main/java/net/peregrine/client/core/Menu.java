@@ -21,7 +21,9 @@ public final class Menu {
     private static final int GAP = 6;
     private static final int HEADER = 54;
     private static final int FOOTER = 20;
-    private static final Module.Category[] TABS = {null, Module.Category.HUD, Module.Category.UTILITY};
+    private static final Module.Category[] TABS = {
+        null, Module.Category.HUD, Module.Category.UTILITY, Module.Category.VISUALS
+    };
 
     private final Peregrine pc;
     private String search = "";
@@ -32,6 +34,7 @@ public final class Menu {
     private HudModule dragging;
     private int dragDX;
     private int dragDY;
+    private long openedAt;
 
     // Layout from the last render, used for clicks.
     private int px, py, pw, ph, gridX, gridY, gridW, gridH, cols, cardW;
@@ -46,6 +49,7 @@ public final class Menu {
 
     /** Call when the menu screen opens. */
     public void open() {
+        openedAt = System.currentTimeMillis();
         search = "";
         scroll = 0;
         editingHud = false;
@@ -71,7 +75,7 @@ public final class Menu {
     private List<Module> visible() {
         List<Module> out = new ArrayList<Module>();
         for (Module m : pc.modules()) {
-            if ((tab == null || m.category == tab) && m.matches(search)) {
+            if ((tab == null || m.category == tab) && m.matches(search) && pc.platform().supports(m.id)) {
                 out.add(m);
             }
         }
@@ -103,12 +107,25 @@ public final class Menu {
 
     // ------------------------------------------------------------ drawing
 
-    public void render(Draw d, int mx, int my) {
+    /** How far the opening fade has got, 0-1; adapters use it to fade the background shade too. */
+    public float fade() {
+        return FadeDraw.progress(openedAt, 160);
+    }
+
+    public void render(Draw raw, int mx, int my) {
         Platform p = pc.platform();
         layout(p);
         if (editingHud) {
-            renderEditor(d, mx, my, p);
+            renderEditor(raw, mx, my, p);
             return;
+        }
+        float t = fade();
+        Draw d = t < 1f ? new FadeDraw(raw, t) : raw;
+        if (t < 1f) {
+            // Slide up a few pixels as it fades in.
+            int lift = Math.round((1f - t) * 8);
+            py += lift;
+            gridY += lift;
         }
         int a = pc.accent();
 
@@ -196,11 +213,15 @@ public final class Menu {
 
         // Footer
         int on = 0;
+        int total = 0;
         for (Module m : pc.modules()) {
-            on += m.enabled() ? 1 : 0;
+            if (p.supports(m.id)) {
+                total++;
+                on += m.enabled() ? 1 : 0;
+            }
         }
         d.text("Right Shift opens this menu. Esc closes it.", px + 10, py + ph - 14, Theme.FAINT, false);
-        String count = on + " of " + pc.modules().size() + " on";
+        String count = on + " of " + total + " on";
         d.text(count, px + pw - 10 - d.width(count), py + ph - 14, Theme.FAINT, false);
     }
 

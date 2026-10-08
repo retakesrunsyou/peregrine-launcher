@@ -363,6 +363,12 @@ def build_command(profile: dict, info: dict, java: str, account: dict,
 
     major = int(profile.get("javaVersion", {}).get("majorVersion", 8))
     tuned = jvm_tuning(cfg, major)
+    if major >= 19 and cfg.get("fast_start", True):
+        # Class snapshot: the first launch records the classes Java loaded, later
+        # launches map them straight in instead of loading them one by one.
+        cds = paths.CACHE / "cds" / f"{profile['id']}.jsa"
+        cds.parent.mkdir(parents=True, exist_ok=True)
+        tuned += ["-XX:+AutoCreateSharedArchive", f"-XX:SharedArchiveFile={cds}"]
     if info.get("log_arg"):
         tuned.append(info["log_arg"])
     tuned += cfg.get("extra_jvm_args", "").split()

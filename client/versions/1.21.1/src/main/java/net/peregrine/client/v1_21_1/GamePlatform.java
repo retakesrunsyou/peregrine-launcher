@@ -6,10 +6,19 @@ import java.util.List;
 
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.OptionInstance;
+import net.minecraft.server.packs.repository.Pack;
+import net.minecraft.world.item.PotionItem;
+import net.minecraft.client.gui.screens.multiplayer.JoinMultiplayerScreen;
+import net.minecraft.client.gui.screens.options.OptionsScreen;
+import net.minecraft.client.gui.screens.worldselection.SelectWorldScreen;
+import net.minecraft.client.multiplayer.PlayerInfo;
+import net.minecraft.client.multiplayer.ServerData;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.item.ItemStack;
+import net.peregrine.client.core.Compat;
 import net.peregrine.client.core.Platform;
 import net.peregrine.client.v1_21_1.mixin.OptionInstanceAccessor;
 
@@ -55,8 +64,7 @@ final class GamePlatform implements Platform {
 
     @Override
     public String facing() {
-        String n = player().getDirection().getName();
-        return Character.toUpperCase(n.charAt(0)) + n.substring(1);
+        return Compat.facing(player().getYRot());
     }
 
     @Override
@@ -144,5 +152,129 @@ final class GamePlatform implements Platform {
     @Override
     public Path configFile() {
         return FabricLoader.getInstance().getConfigDir().resolve("peregrine-client.json");
+    }
+
+    @Override
+    public void openScreen(Screen which) {
+        Minecraft mc = mc();
+        net.minecraft.client.gui.screens.Screen current = mc.screen;
+        switch (which) {
+            case SINGLEPLAYER: mc.setScreen(new SelectWorldScreen(current)); break;
+            case MULTIPLAYER: mc.setScreen(new JoinMultiplayerScreen(current)); break;
+            case OPTIONS: mc.setScreen(new OptionsScreen(current, mc.options)); break;
+            case PEREGRINE_MENU: mc.setScreen(new PeregrineScreen()); break;
+            case QUIT: mc.stop(); break;
+            default: break;
+        }
+    }
+
+    @Override
+    public String playerName() {
+        return mc().getUser().getName();
+    }
+
+    @Override
+    public String minecraftVersion() {
+        return FabricLoader.getInstance().getModContainer("minecraft")
+                .map(m -> m.getMetadata().getVersion().getFriendlyString()).orElse("?");
+    }
+
+    @Override
+    public int ping() {
+        if (mc().getCurrentServer() == null || mc().getConnection() == null || player() == null) {
+            return -1;
+        }
+        PlayerInfo info = mc().getConnection().getPlayerInfo(player().getUUID());
+        return info == null ? -1 : info.getLatency();
+    }
+
+    @Override
+    public String serverAddress() {
+        ServerData server = mc().getCurrentServer();
+        return server == null ? null : server.ip;
+    }
+
+    @Override
+    public long worldTime() {
+        return mc().level == null ? 0 : mc().level.getDayTime() % 24000L;
+    }
+
+    @Override
+    public String biome() {
+        return mc().level.getBiome(player().blockPosition()).unwrapKey()
+                .map(Compat::keyId).orElse("unknown");
+    }
+
+    @Override
+    public float yaw() {
+        return player().getYRot();
+    }
+
+    @Override
+    public int food() {
+        return player().getFoodData().getFoodLevel();
+    }
+
+    @Override
+    public float saturation() {
+        return player().getFoodData().getSaturationLevel();
+    }
+
+    @Override
+    public int potionCount() {
+        var inv = player().getInventory();
+        int n = 0;
+        for (int i = 0; i < inv.getContainerSize(); i++) {
+            ItemStack stack = inv.getItem(i);
+            if (stack.getItem() instanceof PotionItem) {
+                n += stack.getCount();
+            }
+        }
+        return n;
+    }
+
+    @Override
+    public List<String> resourcePacks() {
+        List<String> out = new ArrayList<>();
+        for (Pack pack : mc().getResourcePackRepository().getSelectedPacks()) {
+            out.add(0, pack.getTitle().getString());  // Minecraft lists the top pack last
+        }
+        return out;
+    }
+
+    private boolean chunkBorders;
+
+    /** Sets an enum setting by position, without naming its class (it moves between versions). */
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    private static void setEnum(OptionInstance option, int ordinal) {
+        Object[] values = ((Enum<?>) option.get()).getDeclaringClass().getEnumConstants();
+        option.set(values[ordinal]);
+    }
+
+    @Override
+    public void setOption(Option option, boolean on) {
+        var o = mc().options;
+        switch (option) {
+            case TOGGLE_SNEAK: o.toggleCrouch().set(on); break;
+            case STATIC_FOV: o.fovEffectScale().set(on ? 0.0 : 1.0); break;
+            case STEADY_CAMERA:
+                o.bobView().set(!on);
+                o.damageTiltStrength().set(on ? 0.0 : 1.0);
+                break;
+            case NO_MENU_BLUR: o.menuBackgroundBlurriness().set(on ? 0 : 5); break;
+            case FEWER_PARTICLES: setEnum(o.particles(), on ? 2 : 0); break;  // MINIMAL : ALL
+            case CHUNK_BORDERS:
+                if (chunkBorders != on) {
+                    chunkBorders = mc().debugRenderer.switchRenderChunkborder();
+                }
+                break;
+            case HITBOXES: mc().getEntityRenderDispatcher().setRenderHitBoxes(on); break;
+            default: break;
+        }
+    }
+
+    @Override
+    public long worldDay() {
+        return mc().level == null ? 0 : mc().level.getDayTime() / 24000L + 1;
     }
 }

@@ -1,0 +1,68 @@
+# When you publish a release on GitHub, this builds the launcher zip and the
+# in-game mod and attaches both to the release. Players' launchers then offer
+# "Update now", and the in-game mod updates itself on their next Play.
+name: Build release files
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # The tag must match VERSION in peregrine/__init__.py, or installed
+      # launchers would keep offering the same update forever.
+      - name: Check the version number
+        run: |
+          tag="${{ github.event.release.tag_name }}"
+          tag="${tag#v}"
+          version="$(sed -n 's/^VERSION = "\(.*\)"/\1/p' peregrine/__init__.py)"
+          if [ "$tag" != "$version" ]; then
+            echo "::error::The release tag is $tag but peregrine/__init__.py says VERSION = \"$version\". Make them match, then delete this release and publish it again."
+            exit 1
+          fi
+
+      - name: Build the launcher zip
+        run: |
+          chmod +x make-release.sh
+          ./make-release.sh
+
+      - name: Attach the launcher zip
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release upload "${{ github.event.release.tag_name }}" ../peregrine-launcher.zip --clobber
+
+      # Java 25 builds every version (26.x needs it; 1.21.x targets Java 21 either way).
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '25'
+          cache: gradle
+
+      - name: Build the in-game mod for every Minecraft version
+        run: |
+          chmod +x client/build.sh client/gradlew
+          client/build.sh || echo "MOD_BUILD_FAILED=1" >> "$GITHUB_ENV"
+
+      - name: Attach the in-game mod
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          shopt -s nullglob
+          jars=(client/dist/*.jar)
+          if [ ${#jars[@]} -gt 0 ]; then
+            gh release upload "${{ github.event.release.tag_name }}" "${jars[@]}" --clobber
+          fi
+
+      # Versions that built are already attached; this just makes a failure visible.
+      - name: Report versions that failed to build
+        if: env.MOD_BUILD_FAILED == '1'
+        run: |
+          echo "::error::Some Minecraft versions failed to build. Open the 'Build the in-game mod' step above for the error."
+          exit 1

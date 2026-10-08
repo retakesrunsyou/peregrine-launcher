@@ -1,0 +1,15 @@
+{
+	"required": true,
+	"package": "net.peregrine.client.v26_1.mixin",
+	"compatibilityLevel": "JAVA_25",
+	"client": [
+		"GameRendererMixin",
+		"LevelMixin",
+		"MinecraftMixin",
+		"MouseHandlerMixin",
+		"OptionInstanceAccessor"
+	],
+	"injectors": {
+		"defaultRequire": 0
+	}
+}

@@ -1,30 +1,59 @@
 #!/usr/bin/env bash
-# Builds Peregrine Client for every Minecraft version in versions/ (or just one:
-#   ./build.sh 1.21.1). Needs a Java 21 JDK. The first build downloads Gradle,
-# Minecraft and Fabric, which takes a few minutes; later builds are quick.
+# Builds Peregrine Client for every Minecraft version listed in the adapters'
+# targets.txt files, one jar per version: dist/peregrine-client-<version>.jar
+#
+#   ./build.sh            every version
+#   ./build.sh 1.21.4     just one version
+#
+# Needs a JDK: Java 21 builds 1.21.x; Java 25 builds everything (26.x needs it).
+# The first build of each version downloads Minecraft and Fabric (a few minutes).
 set -euo pipefail
 cd "$(dirname "$0")"
 
 if ! command -v javac >/dev/null; then
-  echo "A Java 21 JDK is needed to build. On Mint/Ubuntu run:"
-  echo "  sudo apt install openjdk-21-jdk"
+  echo "A Java JDK is needed to build. On Mint/Ubuntu run:"
+  echo "  sudo apt install openjdk-21-jdk     (or openjdk-25-jdk for 26.x too)"
   exit 1
 fi
+# (grep for the "javac NN" line: some systems print other notices first)
+java_major="$(javac -version 2>&1 | grep -oE 'javac [0-9]+' | grep -oE '[0-9]+' | head -1)"
+java_major="${java_major:-0}"
 
+only="${1:-}"
 mkdir -p dist
-versions=("${@:-}")
-if [ -z "${versions[0]}" ]; then
-  versions=()
-  for d in versions/*/; do versions+=("$(basename "$d")"); done
-fi
+built=() skipped=() failed=()
 
-for v in "${versions[@]}"; do
-  echo "Building Peregrine Client for Minecraft $v…"
-  ./gradlew -p "versions/$v" build --quiet
-  jar="$(ls "versions/$v/build/libs/"*.jar | grep -v -- '-sources' | head -1)"
-  cp "$jar" "dist/peregrine-client-$v.jar"
-  echo "  → dist/peregrine-client-$v.jar"
+for adapter in versions/*/; do
+  adapter="${adapter%/}"
+  [ -f "$adapter/targets.txt" ] || continue
+  while read -r mc api; do
+    case "$mc" in ''|'#'*) continue ;; esac
+    [ -n "$only" ] && [ "$mc" != "$only" ] && continue
+
+    needs=21
+    case "$mc" in 2[6-9].*|[3-9][0-9].*) needs=25 ;; esac
+    if [ "$java_major" -lt "$needs" ]; then
+      skipped+=("$mc (needs Java $needs)")
+      continue
+    fi
+
+    echo "Building for Minecraft $mc…"
+    if ./gradlew -p "$adapter" clean build --quiet \
+         -Pminecraft_version="$mc" -Pfabric_api_version="$api"; then
+      jar="$(ls "$adapter/build/libs/"*.jar | grep -v -- '-sources' | head -1)"
+      cp "$jar" "dist/peregrine-client-$mc.jar"
+      built+=("$mc")
+    else
+      failed+=("$mc")
+    fi
+  done < "$adapter/targets.txt"
 done
 
 echo
-echo "Done. Attach the jars in dist/ to your GitHub release; the launcher installs them automatically."
+[ ${#built[@]} -gt 0 ] && echo "Built:   ${built[*]}"
+[ ${#skipped[@]} -gt 0 ] && echo "Skipped: ${skipped[*]}"
+if [ ${#failed[@]} -gt 0 ]; then
+  echo "FAILED:  ${failed[*]}  (scroll up for the error)"
+  exit 1
+fi
+echo "Jars are in dist/. The launcher installs the one matching each Fabric instance."

@@ -22,6 +22,9 @@ public interface Draw {
 
     void unclip();
 
+    /** Text drawn larger (scale 2 = twice the size), with its top-left at x, y. */
+    void textScaled(String s, int x, int y, int argb, float scale, boolean shadow);
+
     // ---- helpers shared by everything
 
     default void outline(int x, int y, int w, int h, int argb) {
