@@ -3,7 +3,7 @@
 # targets.txt files, one jar per version: dist/peregrine-client-<version>.jar
 #
 #   ./build.sh            every version
-#   ./build.sh 1.21.4     just one version
+#   ./build.sh 1.21.4     just one version (or several: ./build.sh 26.1 26.3)
 #
 # Needs a JDK: Java 21 builds 1.21.x; Java 25 builds everything (26.x needs it).
 # The first build of each version downloads Minecraft and Fabric (a few minutes).
@@ -19,7 +19,7 @@ fi
 java_major="$(javac -version 2>&1 | grep -oE 'javac [0-9]+' | grep -oE '[0-9]+' | head -1)"
 java_major="${java_major:-0}"
 
-only="${1:-}"
+only="${*:-}"
 mkdir -p dist
 built=() skipped=() failed=()
 
@@ -28,7 +28,7 @@ for adapter in versions/*/; do
   [ -f "$adapter/targets.txt" ] || continue
   while read -r mc api; do
     case "$mc" in ''|'#'*) continue ;; esac
-    [ -n "$only" ] && [ "$mc" != "$only" ] && continue
+    [ -n "$only" ] && [[ " $only " != *" $mc "* ]] && continue
 
     needs=21
     case "$mc" in 2[6-9].*|[3-9][0-9].*) needs=25 ;; esac

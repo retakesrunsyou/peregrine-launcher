@@ -71,23 +71,13 @@ jobs:
             gh release upload "${{ github.event.release.tag_name }}" "${jars[@]}" --clobber
           fi
 
-      # Test builds only: show the Minecraft APIs the adapter compiled against,
-      # so a broken version can be fixed without guessing.
-      - name: Show Minecraft APIs (test builds)
+      # Test builds only: save the APIs a failed version compiled against to
+      # the api-dump branch, so it can be fixed without guessing.
+      - name: Save Minecraft APIs (test builds)
         if: github.event_name == 'workflow_dispatch' && env.MOD_BUILD_FAILED == '1'
-        run: |
-          note() { local m; m="$(cat)"; m="${m//'%'/'%25'}"; m="${m//$'\n'/'%0A'}"; echo "::notice title=$1::${m:0:60000}"; }
-          find ~/.gradle client -name '*.jar' 2>/dev/null | grep -iE 'lwjgl|sdl' | xargs -rn1 basename | sort -u | note "input libraries"
-          mcjar=""
-          for j in $(find ~/.gradle client -name '*.jar' -size +5M 2>/dev/null); do
-            if unzip -l "$j" 2>/dev/null | grep -q 'net/minecraft/client/Minecraft.class'; then mcjar="$j"; break; fi
-          done
-          echo "$mcjar" | note "minecraft jar"
-          [ -n "$mcjar" ] || exit 0
-          for c in com.mojang.blaze3d.platform.InputConstants net.minecraft.client.KeyMapping net.minecraft.client.Minecraft net.minecraft.client.MouseHandler net.minecraft.client.gui.screens.Screen; do
-            javap -cp "$mcjar" -public "$c" 2>&1 | grep -vE 'lambda\$' | head -400 | note "$c"
-          done
-          unzip -l "$mcjar" | grep -oE 'com/mojang/blaze3d/platform/[A-Za-z]+\.class|net/minecraft/client/input/[A-Za-z]+\.class' | sort -u | note "input classes"
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: bash .github/api-dump.sh ${{ github.event.inputs.minecraft }}
 
       # Versions that built are already attached; this just makes a failure visible.
       - name: Report versions that failed to build
