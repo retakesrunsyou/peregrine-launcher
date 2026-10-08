@@ -41,6 +41,14 @@ problems = []
 results = []
 
 
+def finish_report():
+    (OUT / "summary.txt").write_text("\n".join(results) + "\n")
+
+
+import atexit  # noqa: E402
+atexit.register(finish_report)  # the summary is written even if this script dies
+
+
 def note(kind, text):
     line = f"{kind} {text}"
     print(line, flush=True)
@@ -266,8 +274,6 @@ if (inst.game_dir / "saves" / "world").is_dir():
     except Exception as e:
         note("FAIL", f"couldn't install the FPS mods: {e!r}")
 
-summary = "\n".join(results) + "\n"
-(OUT / "summary.txt").write_text(summary)
 server.shutdown()
 print("\n" + ("ALL CHECKS PASSED" if not problems else f"{len(problems)} PROBLEM(S)"))
 sys.exit(1 if problems else 0)
