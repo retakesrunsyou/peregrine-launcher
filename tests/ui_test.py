@@ -118,6 +118,9 @@ note("PASS", "every page opens in every theme")
 
 # ---- window size menu
 from PySide6.QtWidgets import QComboBox  # noqa: E402
+from peregrine.ui import pages as pages_mod  # noqa: E402
+pages_mod.screen_resolution = lambda: (2560, 1440)  # pretend to be a 1440p monitor
+win.settings.build()
 win.go(2)
 pump(1)
 sizes = [c for c in win.settings.findChildren(QComboBox) if c.count() and "Fit my screen" in c.itemText(0)]
