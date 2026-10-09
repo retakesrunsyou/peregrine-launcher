@@ -310,6 +310,7 @@ final class GamePlatform implements Platform {
             return;
         }
         try {
+            mc().player.setXRot(25.0F);  // look down a little, at the dropped item
             net.minecraft.world.phys.Vec3 look = mc().player.getLookAngle();
             double fx = look.x, fz = look.z;
             double len = Math.max(1e-6, Math.sqrt(fx * fx + fz * fz));
