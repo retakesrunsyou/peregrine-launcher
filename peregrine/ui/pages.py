@@ -576,7 +576,7 @@ class SettingsPage(QWidget):
         for box in (w, h):
             box.setButtonSymbols(QSpinBox.NoButtons)
             box.setAlignment(Qt.AlignCenter)
-            box.setFixedWidth(84)
+            box.setMinimumWidth(96)
         w.setValue(cfg["width"])
         h.setValue(cfg["height"])
         w.valueChanged.connect(lambda v: self.save("width", v))

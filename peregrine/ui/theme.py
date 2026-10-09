@@ -105,7 +105,6 @@ def stylesheet() -> str:
         background: {p['bg']}; border: 1px solid {p['border']}; border-radius: 6px; padding: 7px 9px; }}
     QLineEdit:focus, QComboBox:focus, QSpinBox:focus {{ border-color: {a}; }}
     QLineEdit:hover, QComboBox:hover, QSpinBox:hover {{ border-color: {p['faint']}; }}
-    QSpinBox::up-button, QSpinBox::down-button {{ width: 0; border: none; }}
     QComboBox::drop-down {{ border: none; width: 26px; }}
     QComboBox QAbstractItemView {{ background: {p['surface']}; border: 1px solid {p['border']};
                                    selection-background-color: {tint(a, 0.2)}; }}
@@ -156,7 +155,7 @@ _PATHS = {
     "check": '<path d="M5 12.5l4.5 4.5L19 7.5"/>',
     "search": '<circle cx="11" cy="11" r="6.5"/><path d="M16 16l4 4"/>',
     "package": '<path d="M12 3 4 7v10l8 4 8-4V7z"/><path d="M4 7l8 4 8-4M12 11v10"/>',
-    "play": '<path d="M8 5.8v12.4a.6.6 0 0 0 .9.5l9.8-6.2a.6.6 0 0 0 0-1L8.9 5.3a.6.6 0 0 0-.9.5z"/>',
+    "play": '<path fill="FILL" d="M8 5.8v12.4a.6.6 0 0 0 .9.5l9.8-6.2a.6.6 0 0 0 0-1L8.9 5.3a.6.6 0 0 0-.9.5z"/>',
     "clock": '<circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/>',
     "cube": '<path d="M12 3 4 7v10l8 4 8-4V7z"/><path d="M4 7l8 4 8-4M12 11v10"/>',
     "image": '<rect x="3.5" y="5" width="17" height="14" rx="2"/><circle cx="9" cy="10" r="1.6"/>'
@@ -191,7 +190,7 @@ def icon_pixmap(name: str, color: str = None, size: int = 20, dpr: float = 2.0) 
     color = color or Theme.p["muted"]
     svg = (f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" '
            f'stroke="{color}" stroke-width="1.8" stroke-linecap="round" '
-           f'stroke-linejoin="round">{_PATHS[name]}</svg>')
+           f'stroke-linejoin="round">{_PATHS[name].replace("FILL", color)}</svg>')
     return _render(svg, size, dpr)
 
 
