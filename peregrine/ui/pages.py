@@ -11,7 +11,7 @@ from PySide6.QtWidgets import (
 )
 
 from .. import CLIENT_ID, DISCORD_APP_ID, UPDATE_REPO, VERSION, auth, config, discord, game, instances
-from .theme import ACCENTS, THEME_NAMES, Theme, avatar_pixmap, icon, icon_pixmap, on_color, tint
+from .theme import ACCENTS, THEME_NAMES, Theme, avatar_pixmap, icon, icon_pixmap, logo_pixmap, on_color, tint
 from .widgets import Segmented, Toggle
 
 
@@ -178,11 +178,35 @@ class HomePage(QWidget):
         self.header.addWidget(new, 0, Qt.AlignTop)
 
         clear(self.grid)
+        for r in range(self.grid.rowCount()):
+            self.grid.setRowStretch(r, 0)  # undo the stretch the empty screen used
         if not items:
-            empty = QLabel("Create an instance to pick a Minecraft version and start playing.",
-                           objectName="muted")
-            empty.setAlignment(Qt.AlignCenter)
-            self.grid.addWidget(empty, 0, 0)
+            # A friendly first-run screen instead of a bare line of text.
+            box = QWidget()
+            col = QVBoxLayout(box)
+            col.setSpacing(10)
+            col.addStretch()
+            mark = QLabel()
+            mark.setPixmap(logo_pixmap(64))
+            mark.setAlignment(Qt.AlignCenter)
+            col.addWidget(mark)
+            col.addSpacing(6)
+            head = QLabel("Let's get you playing", objectName="h2")
+            head.setAlignment(Qt.AlignCenter)
+            col.addWidget(head)
+            text = QLabel("Make an instance: pick a Minecraft version, and Peregrine sets up\n"
+                          "Fabric, the FPS boost and the in-game menu for you.", objectName="muted")
+            text.setAlignment(Qt.AlignCenter)
+            col.addWidget(text)
+            col.addSpacing(6)
+            start = QPushButton("  Create your first instance", objectName="accent")
+            start.setIcon(icon("plus", on_color(Theme.accent), 16))
+            start.setCursor(Qt.PointingHandCursor)
+            start.clicked.connect(self.new_instance.emit)
+            col.addWidget(start, 0, Qt.AlignHCenter)
+            col.addStretch(2)
+            self.grid.addWidget(box, 0, 0)
+            self.grid.setRowStretch(0, 1)
             return
         for i, inst in enumerate(items):
             card = InstanceCard(inst, self.states.get(str(inst.folder), ""))

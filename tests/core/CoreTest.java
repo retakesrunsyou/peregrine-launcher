@@ -71,7 +71,7 @@ public class CoreTest {
         pc.module("fullbright").setEnabled(false); check(gamma==0.5, "and restores it");
         gamma=0.7; pc.shutdown(); check(gamma==0.7, "shutdown doesn't touch gamma when fullbright never ran");
         // HUD editor drag
-        texts.clear(); m.render(d,0,0); int[] edit = find("Edit HUD layout@"); m.mouseClicked(edit[0], edit[1], 0);
+        texts.clear(); m.render(d,0,0); int[] edit = find("Edit HUD@"); m.mouseClicked(edit[0], edit[1], 0);
         check(!m.wantsShade(), "edit mode turns off the dim background");
         pc.renderHud(d);  // positions get recorded
         HudModule fps = (HudModule) pc.module("fps");

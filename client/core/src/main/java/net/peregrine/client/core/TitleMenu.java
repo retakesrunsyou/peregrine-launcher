@@ -23,6 +23,8 @@ public final class TitleMenu {
             this.action = action;
         }
 
+        float glow;  // hover highlight, eased in and out
+
         boolean contains(int mx, int my) {
             return mx >= x && mx < x + w && my >= y && my < y + h;
         }
@@ -30,6 +32,7 @@ public final class TitleMenu {
 
     private final Peregrine pc;
     private long shownAt = -1;
+    private long lastFrame;
     private final Button[] buttons = {
         new Button("Singleplayer", Platform.Screen.SINGLEPLAYER),
         new Button("Multiplayer", Platform.Screen.MULTIPLAYER),
@@ -80,8 +83,12 @@ public final class TitleMenu {
         int sh = p.screenHeight();
         int a = pc.accent();
 
-        // Darken the panorama slightly so the text reads clearly.
-        d.rect(0, 0, sw, sh, 0x40000000);
+        // Darken the panorama slightly so the text reads clearly, more towards the bottom.
+        d.rect(0, 0, sw, sh, 0x38000000);
+        for (int i = 0; i < 8; i++) {
+            int band = sh / 3 / 8;
+            d.rect(0, sh - (i + 1) * band, sw, band, Theme.withAlpha(0, 0x0A * (8 - i)));
+        }
 
         // Big title: PEREGRINE in the accent color, scaled up like Minecraft's logo.
         String title = "PEREGRINE";
@@ -95,18 +102,27 @@ public final class TitleMenu {
         int subY = ty + Math.round(d.lineHeight() * scale) + 4;
         d.textScaled(sub, (sw - subW) / 2, subY, Theme.TEXT, 1.5f, true);
 
+        d.rect((sw - 24) / 2, subY + 15, 24, 1, Theme.withAlpha(a, 0xC0));
         String welcome = "Welcome back, " + p.playerName();
-        d.text(welcome, (sw - d.width(welcome)) / 2, subY + 20, Theme.MUTED, true);
+        d.text(welcome, (sw - d.width(welcome)) / 2, subY + 21, Theme.MUTED, true);
 
+        long now = System.currentTimeMillis();
+        float dt = lastFrame == 0 ? 0f : Math.min(0.1f, (now - lastFrame) / 1000f);
+        lastFrame = now;
         for (Button b : buttons) {
             boolean hover = b.contains(mx, my);
-            d.rect(b.x, b.y, b.w, b.h, hover ? 0xD0272C37 : 0xB0171A21);
-            d.outline(b.x, b.y, b.w, b.h, hover ? a : Theme.BORDER);
-            if (hover) {
-                d.rect(b.x, b.y, 2, b.h, a);
+            b.glow = hover ? Math.min(1f, b.glow + dt * 8f) : Math.max(0f, b.glow - dt * 6f);
+            float g = b.glow;
+            d.shadow(b.x, b.y, b.w, b.h);
+            d.roundRect(b.x, b.y, b.w, b.h, Theme.mix(0xB4161920, 0xE0262B36, g));
+            d.roundOutline(b.x, b.y, b.w, b.h, Theme.mix(0x30FFFFFF, Theme.withAlpha(a, 0xFF), g));
+            if (g > 0) {
+                int lw = Math.round((b.w - 16) * g);
+                d.rect(b.x + (b.w - lw) / 2, b.y + b.h - 2, lw, 1, Theme.withAlpha(a, Math.round(0xFF * g)));
             }
             int lx = b.x + (b.w - d.width(b.label)) / 2;
-            d.text(b.label, lx, b.y + (b.h - d.lineHeight()) / 2 + 1, hover ? Theme.TEXT : 0xFFD0D2DA, true);
+            d.text(b.label, lx, b.y + (b.h - d.lineHeight()) / 2 + 1,
+                    Theme.mix(0xFFD0D2DA, Theme.TEXT, g), true);
         }
 
         String left = "Peregrine Client " + CLIENT_VERSION + " for Minecraft " + p.minecraftVersion();

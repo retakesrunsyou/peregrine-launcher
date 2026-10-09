@@ -59,7 +59,7 @@ public abstract class HudModule extends Module {
     // ---- shared look for HUD panels
 
     protected static void panel(Draw d, int x, int y, int w, int h) {
-        d.rect(x, y, w, h, Theme.HUD_BG);
+        d.roundRect(x, y, w, h, Theme.HUD_BG);
     }
 
     /** Draws "label value" with the label in the accent color. Returns the width. */
