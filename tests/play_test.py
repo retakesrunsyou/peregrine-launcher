@@ -359,6 +359,13 @@ def bench_each():
     fresh_world()
     guarded("bench-all", "bench", ["--quickPlaySingleplayer", "world"], 900)
     toggle(ours.values(), False)
+    opts = inst.game_dir / "options.txt"
+    if (OUT / "options-vanilla.txt").exists():  # the same run order, with Minecraft's own settings
+        fast = opts.read_text()
+        shutil.copy(OUT / "options-vanilla.txt", opts)
+        fresh_world()
+        guarded("bench-vanilla", "bench", ["--quickPlaySingleplayer", "world"], 900)
+        opts.write_text(fast)
     fresh_world()
     guarded("bench-settings-only", "bench", ["--quickPlaySingleplayer", "world"], 900)
     toggle(ours.values(), True)
@@ -383,6 +390,9 @@ if (inst.game_dir / "saves" / "world").is_dir():
     try:
         added = inst.install_performance_mods(progress)
         note("PASS", "performance mods installed: " + ", ".join(f for _, f in added))
+        opts = inst.game_dir / "options.txt"
+        if opts.exists():
+            shutil.copy(opts, OUT / "options-vanilla.txt")
         changed = inst.optimize_video()
         note("PASS", f"fast settings written ({len(changed)} changed)")
         shutil.rmtree(inst.game_dir / "saves" / "world")

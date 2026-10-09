@@ -41,7 +41,7 @@ CHECK_EVERY = 24 * 3600  # look for newer versions of the mods once a day
 
 # Fast settings. Keys a Minecraft version doesn't know are ignored by it, so one
 # list covers 1.21 to 26.x (graphicsMode before 1.21.11, the preset after).
-PRESET_VERSION = 2
+PRESET_VERSION = 3
 FAST_SETTINGS = {
     "enableVsync": "false",            # don't cap FPS to the monitor
     "maxFps": "260",                   # 260 = unlimited
@@ -54,7 +54,6 @@ FAST_SETTINGS = {
     "biomeBlendRadius": "0",           # no colour blending between biomes: much faster chunk building
     "particles": "1",                  # decreased
     "entityDistanceScaling": "0.75",
-    "mipmapLevels": "2",
     "weatherRadius": "5",
     "chunkSectionFadeInTime": "0.0",   # chunks appear at once
     "menuBackgroundBlurriness": "0",
