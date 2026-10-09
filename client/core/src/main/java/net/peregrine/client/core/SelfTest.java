@@ -79,6 +79,8 @@ public final class SelfTest {
                 steps = new ArrayList<Step>();
                 if (PHASE.equals("world")) {
                     worldSteps();
+                } else if (PHASE.equals("bench")) {
+                    benchSteps();
                 } else if (PHASE.equals("smoke")) {
                     smokeSteps();
                 } else {
@@ -157,6 +159,28 @@ public final class SelfTest {
         finish();
     }
 
+    /** Just the benchmark: join, let everything load, measure, quit. */
+    private static void benchSteps() {
+        run("hold Stable FPS off for the benchmark", new Runnable() {
+            public void run() {
+                pc.module("stable_fps").setEnabled(false);
+            }
+        });
+        waitFor("joins the world", 6000, new Cond() {
+            public boolean ok() {
+                return p.inWorld() && p.showing(Platform.Screen.NONE);
+            }
+        });
+        waitTicks(400);
+        benchmark(600);
+        run("Stable FPS back on", new Runnable() {
+            public void run() {
+                pc.module("stable_fps").setEnabled(true);
+            }
+        });
+        finish();
+    }
+
     private static void worldSteps() {
         run("hold Stable FPS off for the benchmark", new Runnable() {
             public void run() {
@@ -168,7 +192,7 @@ public final class SelfTest {
                 return p.inWorld() && p.showing(Platform.Screen.NONE);
             }
         });
-        waitTicks(200);  // chunks load in
+        waitTicks(400);  // chunks load in and get built
         benchmark(400);
         run("Stable FPS back on", new Runnable() {
             public void run() {

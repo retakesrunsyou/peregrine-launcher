@@ -12,6 +12,10 @@ on:
         description: 'Minecraft versions to test, space separated (empty = all)'
         required: false
         default: ''
+      bench_each:
+        description: 'Also benchmark each performance mod left out in turn (slow)'
+        required: false
+        default: ''
 
 permissions:
   contents: write
@@ -123,6 +127,7 @@ jobs:
       - name: Play
         env:
           LIBGL_ALWAYS_SOFTWARE: '1'
+          BENCH_EACH: ${{ github.event.inputs.bench_each }}
         run: |
           python3 tests/play_test.py "${{ matrix.minecraft }}" client/dist "out/${{ matrix.minecraft }}"
 
@@ -204,7 +209,7 @@ jobs:
               v="${d%/}"
               if [ -f "$v/summary.txt" ]; then
                 fails="$(grep -c '^FAIL' "$v/summary.txt" || true)"
-                bench="$(grep -o '^INFO [a-z-]*: benchmark: [0-9]* fps' "$v/summary.txt" | sed -E 's/^INFO ([a-z-]*): benchmark: ([0-9]*) fps/\1 \2/' | tr '\n' ' ')"
+                bench="$(grep -o '^INFO [a-z0-9-]*: benchmark: [0-9]* fps' "$v/summary.txt" | sed -E 's/^INFO ([a-z0-9-]*): benchmark: ([0-9]*) fps/\1 \2/' | tr '\n' ' ')"
                 echo "$v: $fails failed${bench:+   fps: $bench}"
               else
                 echo "$v: no summary (the test didn't run to the end)"

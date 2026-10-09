@@ -337,6 +337,38 @@ def check_log(phase: str, text: str):
         note("FAIL", f"{phase}: crash report {c.name}")
 
 
+def bench_each():
+    """Which performance mod helps or hurts on this version: the same benchmark with
+    everything, with fast settings only, and with each mod left out in turn."""
+    mods = inst.game_dir / "mods"
+    files = dict(inst.data.get("perf_files") or {})
+    ours = {k: v for k, v in files.items() if not k.startswith("dep:")}
+
+    def fresh_world():
+        shutil.rmtree(inst.game_dir / "saves" / "world", ignore_errors=True)
+        shutil.copytree(OUT / "server" / "world", inst.game_dir / "saves" / "world")
+
+    def toggle(names, on):
+        for n in names:
+            a, b = mods / n, mods / (n + ".disabled")
+            if on and b.exists():
+                b.rename(a)
+            elif not on and a.exists():
+                a.rename(b)
+
+    fresh_world()
+    guarded("bench-all", "bench", ["--quickPlaySingleplayer", "world"], 900)
+    toggle(ours.values(), False)
+    fresh_world()
+    guarded("bench-settings-only", "bench", ["--quickPlaySingleplayer", "world"], 900)
+    toggle(ours.values(), True)
+    for slug, name in ours.items():
+        toggle([name], False)
+        fresh_world()
+        guarded(f"bench-without-{slug}", "bench", ["--quickPlaySingleplayer", "world"], 900)
+        toggle([name], True)
+
+
 def guarded(*args):
     try:
         play(*args)
@@ -356,6 +388,8 @@ if (inst.game_dir / "saves" / "world").is_dir():
         shutil.rmtree(inst.game_dir / "saves" / "world")
         shutil.copytree(OUT / "server" / "world", inst.game_dir / "saves" / "world")
         guarded("fps-mods", "world", ["--quickPlaySingleplayer", "world"], 1500)
+        if os.environ.get("BENCH_EACH"):
+            bench_each()
     except Exception as e:
         note("FAIL", f"couldn't install the FPS mods: {e!r}")
 
