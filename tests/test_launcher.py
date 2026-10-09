@@ -177,10 +177,13 @@ catalog = {}   # (project, mc) -> version number; missing = not out for that ver
 asked = []
 
 
+RULES = {}  # mod id -> extra fabric.mod.json fields (version, breaks, depends)
+
+
 def fake_jar(mid):
     buf = io.BytesIO()
     with zipfile.ZipFile(buf, "w") as z:
-        z.writestr("fabric.mod.json", _json.dumps({"id": mid}))
+        z.writestr("fabric.mod.json", _json.dumps(dict({"id": mid, "version": "1.0.0"}, **RULES.get(mid, {}))))
     return buf.getvalue()
 
 
@@ -270,6 +273,28 @@ pinst.set_performance(False)
 names = sorted(p.name for p in pmods.iterdir())
 check("turning performance mode off removes only what it added",
       names == ["fabric-api-0.1.jar", "my-sodium-custom.jar"] and pinst.data["perf_files"] == {})
+
+# mods that declare they don't work together (as on Minecraft 1.21: More Culling 1.0.10
+# needs a newer Sodium than the newest one for 1.21)
+for slug in performance.SLUGS + ["cloth", "fabric-api"]:
+    catalog[(slug, "1.21")] = 3
+RULES["sodium"] = {"version": "0.6.13+mc1.21.1"}
+RULES["moreculling"] = {"version": "1.0.10", "breaks": {"sodium": "<=0.6.13"}}
+RULES["modernfix"] = {"version": "5.0", "depends": {"minecraft": "~1.21.1"}}
+cinst = instances.create("Conflicts", "1.21", "fabric", True)
+r = performance.sync(cinst)
+cfiles = cinst.data["perf_files"]
+check("a mod that says it breaks with this Sodium is left out", "moreculling" not in cfiles and "sodium" in cfiles
+      and not any("moreculling" in p.name for p in (cinst.game_dir / "mods").iterdir()))
+check("a mod built for a newer Minecraft is left out", "modernfix" not in cfiles)
+check("the rest still install", {"lithium", "ferrite-core", "dynamic-fps"} <= set(cfiles))
+RULES.clear()
+cinst.log_file.write_text("Incompatible mods found!\n - Mod 'More Culling' (moreculling) 1.0.10 is incompatible "
+                          "with version 0.6.13 or earlier of mod 'Sodium' (sodium), yet a conflicting version is present\n")
+cinst.update(perf_files=dict(cfiles, moreculling="moreculling-3+1.21.jar"))
+(cinst.game_dir / "mods" / "moreculling-3+1.21.jar").write_bytes(fake_jar("moreculling"))
+check("Fabric's 'incompatible mods' crash blames the mod at fault, not Sodium",
+      performance.after_crash(cinst) == ["More Culling"] and "sodium" in cinst.data["perf_files"])
 
 # fast settings
 opts = pinst.game_dir / "options.txt"

@@ -114,6 +114,107 @@ def _installed_ids(mods: Path, skip=()) -> dict:
     return out
 
 
+def _meta(jar: Path):
+    try:
+        with zipfile.ZipFile(jar) as z:
+            return json.loads(z.read("fabric.mod.json").decode("utf-8", "replace"), strict=False)
+    except (OSError, KeyError, ValueError, zipfile.BadZipFile):
+        return None
+
+
+# ---- the version rules mods declare in fabric.mod.json ("depends", "breaks")
+
+def _version(text: str):
+    """'0.6.13+mc1.21.1' -> ((0, 6, 13), pre) where pre sorts a pre-release first.
+    None if it isn't a version we can read (snapshots and such: assume it's fine)."""
+    text = str(text).split("+", 1)[0].strip()
+    core, _, pre = text.partition("-")
+    parts = core.split(".")
+    if not parts or not all(p.isdigit() for p in parts):
+        return None
+    nums = tuple(int(p) for p in parts)
+    return nums, (0, pre) if pre else (1, "")
+
+
+def _cmp(a, b) -> int:
+    an, bn = a[0], b[0]
+    width = max(len(an), len(bn))
+    an, bn = an + (0,) * (width - len(an)), bn + (0,) * (width - len(bn))
+    if an != bn:
+        return -1 if an < bn else 1
+    if a[1] != b[1]:
+        return -1 if a[1] < b[1] else 1
+    return 0
+
+
+def _matches(have: str, rule) -> bool:
+    """Does version `have` satisfy a Fabric version rule? Unreadable rules count as yes."""
+    if isinstance(rule, list):
+        return any(_matches(have, r) for r in rule) if rule else True
+    rule = str(rule).strip()
+    if rule in ("", "*"):
+        return True
+    v = _version(have)
+    if v is None:
+        return True
+    for part in rule.split():
+        op = next((o for o in (">=", "<=", ">", "<", "=", "~", "^") if part.startswith(o)), "")
+        target = part[len(op):]
+        if target.endswith((".x", ".X", ".*")) and not op:
+            prefix = _version(target[:-2])
+            if prefix is None:
+                return True
+            if v[0][:len(prefix[0])] != prefix[0]:
+                return False
+            continue
+        t = _version(target)
+        if t is None:
+            return True
+        c = _cmp(v, t)
+        if op == ">=" and c < 0 or op == "<=" and c > 0 or op == ">" and c <= 0 or op == "<" and c >= 0:
+            return False
+        if op in ("", "=") and c != 0:
+            return False
+        if op in ("~", "^"):
+            if c < 0:
+                return False
+            n = t[0]
+            if op == "~" and len(n) >= 2 and v[0][:2] != n[:2] or op == "^" and v[0][:1] != n[:1]:
+                return False
+    return True
+
+
+def conflicts(mods: Path, mc: str, ours: set) -> dict:
+    """Mods of ours that the game would refuse to start with: they need another
+    Minecraft or library version, or another mod says it breaks with them.
+    Returns {filename: reason}."""
+    jars = {}
+    for f in mods.iterdir() if mods.is_dir() else []:
+        if f.name.endswith(".jar"):
+            m = _meta(f)
+            if m and m.get("id"):
+                jars[f.name] = m
+    versions = {m["id"]: str(m.get("version", "")) for m in jars.values()}
+    for m in jars.values():
+        for p in m.get("provides", []) or []:
+            versions.setdefault(p, str(m.get("version", "")))
+    versions["minecraft"] = mc
+    bad = {}
+    for name, m in jars.items():
+        for dep, rule in (m.get("depends") or {}).items():
+            if name in ours and dep in versions and not _matches(versions[dep], rule):
+                bad[name] = f"needs {dep} {rule}"
+        for dep, rule in (m.get("breaks") or {}).items():
+            if dep in versions and _matches(versions[dep], rule):
+                if name in ours:
+                    bad[name] = f"doesn't work with {dep} {versions[dep]}"
+                else:  # someone else's mod says it breaks with one of ours: ours goes
+                    for other, om in jars.items():
+                        if om.get("id") == dep and other in ours:
+                            bad[other] = f"{m.get('id')} doesn't work with it"
+    return bad
+
+
 def _best(project: str, mc: str):
     return modrinth.best_version(project, mc, "fabric")
 
@@ -234,6 +335,20 @@ def sync(inst, progress=None, force: bool = False) -> dict:
             (summary["updated"] if mine else summary["added"]).append(slug)
         else:
             summary["kept"].append(slug)  # the player already has their own copy
+    # Mods sometimes declare they don't work with a particular version of each other
+    # (or of Minecraft). Take out ours until the game would start; the next daily
+    # check tries them again, so a fixed release comes back by itself.
+    for _ in range(len(tracked) + 1):
+        bad = conflicts(mods, mc, set(tracked.values()))
+        if not bad:
+            break
+        for key, fn in list(tracked.items()):
+            if fn in bad:
+                print(f"[peregrine] not using {fn}: {bad[fn]}")
+                (mods / fn).unlink()
+                tracked.pop(key)
+                if not key.startswith("dep:"):
+                    summary["unavailable"].append(key)
     tracked = {k: v for k, v in tracked.items() if (mods / v).exists() or (mods / (v + ".disabled")).exists()}
     inst.update(perf_files=tracked, perf_mc=mc, perf_checked=now, perf_skip=skip, perf_off=sorted(off))
     if progress and summary["unavailable"]:
@@ -259,12 +374,17 @@ def after_crash(inst) -> list:
     tracked = dict(inst.data.get("perf_files") or {})
     mods = inst.game_dir / "mods"
     blamed = []
+    # Fabric's "incompatible mods" message names the mod at fault first:
+    # "Mod 'More Culling' (moreculling) 1.0 is incompatible with ... 'Sodium' (sodium)".
+    subjects = set(re.findall(r"mod '[^'\n]*' \(([a-z0-9_\-]+)\)[^\n]*?(?:is incompatible|requires)", text))
+    text = "\n".join(l for l in text.splitlines()
+                     if not re.search(r"mod '[^'\n]*' \([a-z0-9_\-]+\)[^\n]*?(?:is incompatible|requires)", l))
     for slug, name in tracked.items():
         if slug.startswith("dep:"):
             continue
         mid = mod_id(mods / name) if (mods / name).exists() else None
         keys = {k for k in (mid, slug) if k}
-        if any(re.search(rf"(mod|caused by|from|mixin|by) [^\n]{{0,40}}\b{re.escape(k)}\b", text)
+        if keys & subjects or any(re.search(rf"(mod|caused by|from|mixin|by) [^\n]{{0,40}}\b{re.escape(k)}\b", text)
                or f"{k}.mixins.json" in text or f"/{k}-" in text for k in keys):
             blamed.append(slug)
     if not blamed:
