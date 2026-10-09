@@ -106,6 +106,9 @@ def stylesheet() -> str:
     QLineEdit:focus, QComboBox:focus, QSpinBox:focus {{ border-color: {a}; }}
     QLineEdit:hover, QComboBox:hover, QSpinBox:hover {{ border-color: {p['faint']}; }}
     QComboBox::drop-down {{ border: none; width: 26px; }}
+    QComboBox QAbstractItemView {{ outline: none; padding: 4px; }}
+    QComboBox QAbstractItemView::item {{ min-height: 28px; padding: 0 10px; border-radius: 5px; }}
+    QComboBox QAbstractItemView::item:hover {{ background: {p['raised']}; }}
     QComboBox QAbstractItemView {{ background: {p['surface']}; border: 1px solid {p['border']};
                                    selection-background-color: {tint(a, 0.2)}; }}
     #segmented {{ background: {p['bg']}; border: 1px solid {p['border']}; border-radius: 7px; }}
