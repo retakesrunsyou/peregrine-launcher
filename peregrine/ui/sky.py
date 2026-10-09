@@ -96,9 +96,23 @@ class Sky(QWidget):
             glow.setAlpha(0)
             r.setColorAt(1, glow)
             p.fillRect(pm.rect(), r)
+            # A whisper of grain hides the colour banding smooth gradients get on 8-bit screens.
+            p.drawTiledPixmap(pm.rect(), self._grain())
             p.end()
             self.backdrop, self.backdrop_key = pm, key
         return self.backdrop
+
+    @staticmethod
+    def _grain() -> QPixmap:
+        rng = random.Random(3)
+        img = QImage(96, 96, QImage.Format_ARGB32_Premultiplied)
+        img.fill(Qt.transparent)
+        for y in range(96):
+            for x in range(96):
+                v = rng.randint(0, 255)
+                a = rng.randint(0, 6)
+                img.setPixelColor(x, y, QColor(v, v, v, a))
+        return QPixmap.fromImage(img)
 
     def _bird_pixmap(self, size: int) -> QPixmap:
         key = (size, Theme.accent)
@@ -183,7 +197,7 @@ class Sky(QWidget):
             self.bird = None
             self.next_bird = now + self.rng.uniform(25, 45)
             return
-        size = 26
+        size = 40
         travel = w + size * 4
         x = -size * 2 + age * travel if ltr else w + size * 2 - age * travel
         # Gentle rise and fall as it glides, with quick wing beats every so often.
