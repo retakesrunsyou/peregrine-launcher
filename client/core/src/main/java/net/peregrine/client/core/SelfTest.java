@@ -389,6 +389,26 @@ public final class SelfTest {
                     return Hooks.modelHits > 0;
                 }
             });
+            run("put bedrock and a dropped item in front of the player", new Runnable() {
+                public void run() {
+                    if (p.supports("item_physics")) {
+                        pc.module("item_physics").setEnabled(true);
+                    }
+                    p.testScene();
+                }
+            });
+            waitFor("bedrock is drawn as diamond blocks", 200, new Cond() {
+                public boolean ok() {
+                    return Hooks.bedrockSwaps > 0;
+                }
+            });
+            if (p.supports("item_physics")) {
+                waitFor("item physics lays the dropped item down", 200, new Cond() {
+                    public boolean ok() {
+                        return Hooks.itemPhysicsHits > 0;
+                    }
+                });
+            }
             waitTicks(40);
             shot("21-anti-leak");
         }

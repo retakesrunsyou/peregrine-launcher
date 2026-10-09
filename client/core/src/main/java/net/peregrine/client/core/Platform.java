@@ -211,6 +211,10 @@ public interface Platform {
     default void setCameraMode(int mode) {
     }
 
+    /** Self-test only: puts bedrock and a dropped item in front of the player, on this client only. */
+    default void testScene() {
+    }
+
     /** Colors the flash on mobs and players when they're hurt; 0 = Minecraft's red. */
     default void setHitColor(int argb) {
     }

@@ -15,7 +15,8 @@ import net.minecraft.client.renderer.entity.state.ItemEntityRenderState;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.phys.AABB;
 
-/** Item physics: dropped items stop bobbing and spinning and lie flat on the ground. */
+/** (rotateAround: the one rotation call that both 26.2 and 26.3 have.)
+ *  Item physics: dropped items stop bobbing and spinning and lie flat on the ground. */
 @Mixin(ItemEntityRenderer.class)
 public abstract class ItemPhysicsMixin {
 
@@ -29,10 +30,10 @@ public abstract class ItemPhysicsMixin {
             Hooks.itemPhysicsHits++;
         }
         poseStack.translate(0.0F, -Hooks.bob(state.ageInTicks, state.bobOffset), 0.0F);  // no bobbing
-        poseStack.mulPose(Axis.YP.rotation(state.bobOffset - ItemEntity.getSpin(state.ageInTicks, state.bobOffset)));
+        poseStack.rotateAround(Axis.YP.rotation(state.bobOffset - ItemEntity.getSpin(state.ageInTicks, state.bobOffset)), 0.0F, 0.0F, 0.0F);
         // Lay it down so its lowest point just touches the ground.
         float lift = -((float) box.minY) + 0.0625F;
         poseStack.translate(0.0F, 0.01F - (float) box.minZ - lift, 0.0F);
-        poseStack.mulPose(Axis.XP.rotationDegrees(-90.0F));
+        poseStack.rotateAround(Axis.XP.rotationDegrees(-90.0F), 0.0F, 0.0F, 0.0F);
     }
 }

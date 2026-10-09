@@ -293,6 +293,35 @@ final class GamePlatform implements Platform {
     // ---- batch 5: render hooks
 
     @Override
+    public void testScene() {
+        if (mc().player == null || mc().level == null) {
+            return;
+        }
+        try {
+            net.minecraft.world.phys.Vec3 look = mc().player.getLookAngle();
+            double fx = look.x, fz = look.z;
+            double len = Math.max(1e-6, Math.sqrt(fx * fx + fz * fz));
+            fx /= len;
+            fz /= len;
+            double px = mc().player.getX(), py = mc().player.getY(), pz = mc().player.getZ();
+            for (int i = -1; i <= 1; i++) {  // a short bedrock wall a few blocks ahead
+                for (int h = 0; h <= 1; h++) {
+                    net.minecraft.core.BlockPos pos = net.minecraft.core.BlockPos.containing(
+                            px + fx * 4 - fz * i, py + h, pz + fz * 4 + fx * i);
+                    mc().level.setBlock(pos, net.minecraft.world.level.block.Blocks.BEDROCK.defaultBlockState(), 3);
+                }
+            }
+            net.minecraft.world.entity.item.ItemEntity item = new net.minecraft.world.entity.item.ItemEntity(
+                    mc().level, px + fx * 2, py + 0.5, pz + fz * 2,
+                    new ItemStack(net.minecraft.world.item.Items.DIAMOND_SWORD));
+            mc().level.addEntity(item);
+        } catch (Throwable t) {
+            System.err.println("[Peregrine] test scene: " + t);
+        }
+    }
+
+
+    @Override
     public void reloadChunks() {
         mc().execute(() -> {
             if (mc().level != null) {
