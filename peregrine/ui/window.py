@@ -14,6 +14,7 @@ from . import workers
 from .dialogs import LoginDialog, NewInstanceDialog
 from .browse import ModBrowser, ModpacksPage
 from .pages import AccountsPage, ContentPage, HomePage, SettingsPage, icon_button
+from .sky import Sky
 from .theme import Theme, avatar_pixmap, icon, logo_pixmap, stylesheet, tint
 
 
@@ -112,7 +113,12 @@ class MainWindow(QMainWindow):
         self.modpacks = ModpacksPage()
         for page in (self.home, self.content, self.settings, self.accounts, self.modpacks):
             self.stack.addWidget(page)
-        body.addWidget(self.stack, 1)
+        # The pages sit on an animated night sky (see sky.py).
+        self.sky = Sky()
+        sky_layout = QVBoxLayout(self.sky)
+        sky_layout.setContentsMargins(0, 0, 0, 0)
+        sky_layout.addWidget(self.stack)
+        body.addWidget(self.sky, 1)
         outer.addLayout(body, 1)
 
         self.home.play.connect(self.play)
@@ -172,7 +178,10 @@ class MainWindow(QMainWindow):
         changed = self.stack.currentIndex() != index
         self.stack.setCurrentIndex(index)
         if changed:
-            self._fade_in(self.stack.currentWidget())
+            if index == 0:
+                self.home.animate_in()  # its cards animate themselves (no fade on top of that)
+            else:
+                self._fade_in(self.stack.currentWidget())
         if index == 2:
             self.settings.build()
         nav_index = 0 if index == 1 else index  # Content lives under Home
@@ -200,6 +209,7 @@ class MainWindow(QMainWindow):
         cfg = config.load()
         Theme.set(cfg["theme"], cfg["accent"])
         QApplication.instance().setStyleSheet(stylesheet())
+        self.sky.set_enabled(bool(cfg.get("animations", True)))
         self.logo.setPixmap(logo_pixmap(30))
         self.nav_line.setStyleSheet(f"background: {Theme.p['border']};")
         self.banner.setStyleSheet(f"#banner {{ background: {tint(Theme.accent, 0.12)}; "
@@ -319,6 +329,7 @@ class MainWindow(QMainWindow):
             self.bar.show()
             self.bar.setMaximum(0)  # moving bar: we can't know how long Minecraft takes
             self.game_loading = True
+            self.sky.set_paused(True)  # the game gets all the power
             self.say("Minecraft is loading…")
             self.home.set_state(self.game_inst.folder, "running")
             discord.update("playing", self.game_inst.name, self.game_inst.subtitle())
@@ -347,7 +358,16 @@ class MainWindow(QMainWindow):
         QMessageBox.warning(self, "Something went wrong", msg)
         self.say("Ready")
 
+    def changeEvent(self, e):
+        from PySide6.QtCore import QEvent
+        if e.type() in (QEvent.WindowStateChange, QEvent.ActivationChange):
+            # The sky only moves while you're looking at the launcher.
+            playing = bool(self.game_task and self.game_task.isRunning())
+            self.sky.set_paused(self.isMinimized() or playing or not self.isActiveWindow())
+        super().changeEvent(e)
+
     def on_finished(self):
+        self.sky.set_paused(self.isMinimized() or not self.isActiveWindow())
         self.game_loading = False
         self.bar.setMaximum(1)
         self.bar.hide()

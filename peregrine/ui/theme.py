@@ -58,7 +58,8 @@ def stylesheet() -> str:
     hover_a = shade(a, 112)
     return f"""
     QWidget {{ color: {p['text']}; font-size: 14px; }}
-    QMainWindow, QDialog, #page {{ background: {p['bg']}; }}
+    QMainWindow, QDialog {{ background: {p['bg']}; }}
+    #page {{ background: transparent; }}
     QScrollArea, #scrollBody {{ background: transparent; border: none; }}
 
     #header {{ background: {p['surface']}; border-bottom: 1px solid {p['border']}; }}

@@ -116,6 +116,27 @@ config.save(cfg)
 win.apply_theme()
 note("PASS", "every page opens in every theme")
 
+# ---- animated sky: show the bird mid-flight and measure what a frame costs
+import time as _t  # noqa: E402
+win.go(0)
+pump(0.5)
+win.sky.set_paused(False)
+win.sky.next_bird = _t.monotonic()
+win.sky.next_meteor = _t.monotonic() + 1.0
+pump(2.2)
+shot(win, "sky-bird")
+pump(0.6)
+shot(win, "sky-meteor")
+frames = 60
+start = _t.perf_counter()
+for _ in range(frames):
+    win.sky.repaint()  # the sky plus every widget drawn over it, like a real frame
+ms = (_t.perf_counter() - start) * 1000 / frames
+note("PASS" if ms < 15 else "FAIL", f"animated background costs {ms:.1f} ms per frame at 24 fps "
+     f"(about {ms * 24 / 10:.0f}% of one CPU core, and nothing while playing)")
+win.sky.set_paused(True)
+note("PASS" if not win.sky.timer.isActive() else "FAIL", "the background stops when paused")
+
 # ---- window size menu
 from PySide6.QtWidgets import QComboBox  # noqa: E402
 from peregrine.ui import pages as pages_mod  # noqa: E402

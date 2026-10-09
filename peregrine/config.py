@@ -17,6 +17,7 @@ DEFAULTS = {
     # Appearance
     "theme": "dusk",          # dusk, midnight, light
     "accent": "#e8a33d",
+    "animations": True,       # the animated night sky behind the launcher
     # Game window
     "window_mode": "screen",  # screen = fill this screen, size = width x height, default = Minecraft's
     "width": 0,               # 0 = Minecraft's default

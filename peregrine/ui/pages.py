@@ -328,6 +328,27 @@ class HomePage(QWidget):
             self.grid.setColumnStretch(c, 1)
         self.grid.setRowStretch(len(items) // self.columns + 1, 1)
 
+    def animate_in(self):
+        """Cards rise into place one after another when Home opens."""
+        from PySide6.QtCore import QEasingCurve, QPropertyAnimation, QTimer
+        from PySide6.QtWidgets import QGraphicsOpacityEffect
+        if not config.load().get("animations", True):
+            return
+        cards = [self.grid.itemAt(i).widget() for i in range(self.grid.count())]
+        self._anims = []
+        for n, card in enumerate(c for c in cards if isinstance(c, InstanceCard)):
+            effect = QGraphicsOpacityEffect(card)
+            effect.setOpacity(0.0)
+            card.setGraphicsEffect(effect)
+            anim = QPropertyAnimation(effect, b"opacity", card)
+            anim.setDuration(260)
+            anim.setStartValue(0.0)
+            anim.setEndValue(1.0)
+            anim.setEasingCurve(QEasingCurve.OutCubic)
+            anim.finished.connect(lambda c=card: c.setGraphicsEffect(None))
+            self._anims.append(anim)
+            QTimer.singleShot(40 + n * 55, anim.start)
+
     def resizeEvent(self, e):
         cols = max(1, min(3, (self.width() - 64) // 340))
         if cols != self.columns:
@@ -608,6 +629,10 @@ class SettingsPage(QWidget):
         custom.clicked.connect(self.custom_accent)
         swatches.addWidget(custom)
         look.row("Accent color", swatches)
+        anim = self._check(cfg, "animations")
+        anim.toggled.connect(lambda _: self.appearance_changed.emit())
+        look.row("Animated background", anim,
+                 "A night sky with stars and the odd peregrine. Pauses while you play.")
         self.body.addWidget(look)
 
         # ---- game
