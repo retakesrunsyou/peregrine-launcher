@@ -211,6 +211,32 @@ public interface Platform {
     default void setCameraMode(int mode) {
     }
 
+    // ---- performance (Stable FPS)
+
+    /** Render distance in chunks, or -1 if unknown. */
+    default int renderDistance() {
+        return -1;
+    }
+
+    default void setRenderDistance(int chunks) {
+    }
+
+    /** Entity distance, 0.5 - 5.0 (1.0 = Minecraft's default). */
+    default double entityDistance() {
+        return 1.0;
+    }
+
+    default void setEntityDistance(double scale) {
+    }
+
+    /** 0 = all particles, 1 = decreased, 2 = minimal. */
+    default int particleLevel() {
+        return 0;
+    }
+
+    default void setParticleLevel(int level) {
+    }
+
     /** Self-test only: puts bedrock and a dropped item in front of the player, on this client only. */
     default void testScene() {
     }

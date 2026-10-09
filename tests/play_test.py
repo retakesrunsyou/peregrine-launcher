@@ -327,6 +327,8 @@ def check_log(phase: str, text: str):
             bad.append(line)
         elif "---- minecraft crash report ----" in low:
             bad.append(line)
+        elif "error parsing option" in low or "skipping bad option" in low:
+            bad.append("a fast setting Minecraft didn't accept: " + line.strip())
     for line in bad[:20]:
         note("FAIL", f"{phase} log: {line.strip()[:400]}")
     crash = list((inst.game_dir / "crash-reports").glob("*.txt")) if (inst.game_dir / "crash-reports").is_dir() else []
@@ -348,7 +350,9 @@ if (inst.game_dir / "saves" / "world").is_dir():
     # Again with the one-click FPS mods, which many players use with Peregrine.
     try:
         added = inst.install_performance_mods(progress)
-        note("PASS", "FPS mods installed: " + ", ".join(f for _, f in added))
+        note("PASS", "performance mods installed: " + ", ".join(f for _, f in added))
+        changed = inst.optimize_video()
+        note("PASS", f"fast settings written ({len(changed)} changed)")
         shutil.rmtree(inst.game_dir / "saves" / "world")
         shutil.copytree(OUT / "server" / "world", inst.game_dir / "saves" / "world")
         guarded("fps-mods", "world", ["--quickPlaySingleplayer", "world"], 1500)

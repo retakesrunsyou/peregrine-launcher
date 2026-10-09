@@ -170,6 +170,13 @@ public final class SelfTest {
             }
         });
         shot("11-hud-default");
+        // CI machines draw in software at well under 60 FPS, so Stable FPS should step in.
+        waitFor("Stable FPS eases off settings when FPS is low", 600, new Cond() {
+            public boolean ok() {
+                return ((net.peregrine.client.core.modules.StableFps) pc.module("stable_fps")).level() > 0
+                        && p.particleLevel() == 2;
+            }
+        });
         run("turn on every HUD item (and zoom)", new Runnable() {
             public void run() {
                 for (Module m : pc.modules()) {

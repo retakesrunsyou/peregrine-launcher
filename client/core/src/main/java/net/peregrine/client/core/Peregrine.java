@@ -7,6 +7,7 @@ import java.util.Deque;
 import java.util.List;
 
 import net.peregrine.client.core.modules.ArmorHud;
+import net.peregrine.client.core.modules.StableFps;
 import net.peregrine.client.core.modules.AntiLeak;
 import net.peregrine.client.core.modules.Crosshair;
 import net.peregrine.client.core.modules.Freelook;
@@ -102,7 +103,7 @@ public final class Peregrine {
         modules.add(new OptionModule("no_menu_blur", "No menu blur",
                 "Menus don't blur the game behind them", Module.Category.VISUALS, Platform.Option.NO_MENU_BLUR));
         modules.add(new OptionModule("fewer_particles", "Fewer particles",
-                "Minimal particles for more FPS in busy fights", Module.Category.VISUALS, Platform.Option.FEWER_PARTICLES));
+                "Minimal particles for more FPS in busy fights", Module.Category.PERFORMANCE, Platform.Option.FEWER_PARTICLES));
         modules.add(new OptionModule("chunk_borders", "Chunk borders",
                 "Show chunk boundary lines", Module.Category.VISUALS, Platform.Option.CHUNK_BORDERS));
         modules.add(new OptionModule("hitboxes", "Hitboxes",
@@ -132,6 +133,8 @@ public final class Peregrine {
         modules.add(new XpHud());
         modules.add(new ChunkHud());
         modules.add(new LightHud());
+        // Performance
+        modules.add(new StableFps());
         // Batch 5: render hooks
         modules.add(new AntiLeak());
         modules.add(new Crosshair());

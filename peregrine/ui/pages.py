@@ -110,6 +110,7 @@ BUILT_IN = {
 KNOWN_MODS = {
     "sodium": "Sodium", "lithium": "Lithium", "ferritecore": "FerriteCore", "entityculling": "Entity Culling",
     "immediatelyfast": "ImmediatelyFast", "modernfix": "ModernFix", "dynamicfps": "Dynamic FPS",
+    "moreculling": "More Culling",
     "iris": "Iris Shaders", "modmenu": "Mod Menu", "clothconfig": "Cloth Config", "sodiumextra": "Sodium Extra",
     "indium": "Indium", "lambdynamiclights": "LambDynamicLights", "continuity": "Continuity",
     "appleskin": "AppleSkin", "xaerominimap": "Xaero's Minimap", "xaerosminimap": "Xaero's Minimap",
@@ -198,9 +199,9 @@ class InstanceCard(QFrame):
         sub_row = QHBoxLayout()
         sub_row.setSpacing(8)
         sub_row.addWidget(QLabel(inst.subtitle(), objectName="faint"))
-        if inst.data.get("performance_mods"):
-            badge = QLabel("FPS boost", objectName="badge")
-            badge.setToolTip("Performance mods installed")
+        if inst.performance:
+            badge = QLabel("Performance", objectName="badge")
+            badge.setToolTip("Speed-up mods for this version and fast settings, kept up to date")
             sub_row.addWidget(badge)
         if inst.data.get("modpack"):
             sub_row.addWidget(QLabel("Modpack", objectName="badge"))
@@ -304,7 +305,7 @@ class HomePage(QWidget):
             head.setAlignment(Qt.AlignCenter)
             col.addWidget(head)
             text = QLabel("Make an instance: pick a Minecraft version, and Peregrine sets up\n"
-                          "Fabric, the FPS boost and the in-game menu for you.", objectName="muted")
+                          "Fabric, performance mods and the in-game menu for you.", objectName="muted")
             text.setAlignment(Qt.AlignCenter)
             col.addWidget(text)
             col.addSpacing(6)
@@ -433,8 +434,9 @@ class ContentPage(QWidget):
             add.setIcon(icon("plus", on_color(Theme.accent), 16))
             add.clicked.connect(lambda: self.browse.emit(inst))
             self.actions.addWidget(add)
-        if self.kind == "mods" and inst.data["loader"] == "fabric" and not inst.data.get("mods_installed"):
-            fps = QPushButton("  Add FPS mods", objectName="outline")
+        if self.kind == "mods" and inst.data["loader"] == "fabric" and not inst.performance:
+            fps = QPushButton("  Performance mode", objectName="outline")
+            fps.setToolTip("Adds speed-up mods matched to this version and keeps them up to date")
             fps.setIcon(icon("bolt", Theme.accent, 16))
             fps.clicked.connect(lambda: self.install_fps.emit(inst))
             self.actions.addWidget(fps)
@@ -660,6 +662,10 @@ class SettingsPage(QWidget):
 
         # ---- performance
         perf = Section("Performance", "These make the game itself run faster. Defaults suit most PCs.")
+        perf.row("Performance mode", self._check(cfg, "performance_first"),
+                 "Every instance gets Sodium and other speed-up mods picked for its exact "
+                 "Minecraft version, kept up to date, plus fast game settings the first time. "
+                 "Turn it off for one instance in its settings.")
         gc = Segmented([("auto", "Balanced"), ("zgc", "Low pause")], cfg["gc"])
         gc.changed.connect(lambda k: self.save("gc", k))
         perf.row("Memory cleanup", gc,

@@ -144,8 +144,8 @@ class NewInstanceDialog(QDialog):
         loaders.addWidget(self.loader)
         loaders.addStretch()
 
-        perf_row = _toggle_row("FPS boost: Sodium, Lithium, FerriteCore and 4 more performance mods",
-                               True)
+        perf_row = _toggle_row("Performance mode: Sodium and 7 more speed-up mods picked for this "
+                               "version, plus fast game settings", True)
         self.perf, self.perf_row = perf_row.toggle, perf_row
         self.version.currentTextChanged.connect(self.update_options)
 
@@ -197,7 +197,14 @@ class NewInstanceDialog(QDialog):
         self.loader.set_enabled("fabric", fabric_ok)
         # Fabric when the player wants it and this version has it; Vanilla otherwise.
         self.loader.set("fabric" if fabric_ok and self.wanted_loader == "fabric" else "vanilla")
-        self.perf_row.setEnabled(self.loader.value() == "fabric")
+        fabric_on = self.loader.value() == "fabric"
+        self.perf_row.setEnabled(fabric_on)
+        if not fabric_on and self.perf.isChecked():
+            self.perf.setChecked(False)  # Vanilla means vanilla: no mods
+            self._perf_auto_off = True
+        elif fabric_on and getattr(self, "_perf_auto_off", False):
+            self.perf.setChecked(True)  # back to Fabric: performance mode back on
+            self._perf_auto_off = False
 
     def create(self):
         loader = self.loader.value()
@@ -248,11 +255,15 @@ class InstanceSettingsDialog(QDialog):
         form.addRow("Description", self.description)
         form.addRow("Color", colors)
         form.addRow("Memory", self.memory)
-        optimize = QPushButton("Optimize video settings")
-        optimize.setToolTip("Turns off V-Sync and costly extras like entity shadows, "
-                            "and lowers simulation distance. Takes effect next launch.")
+        perf_row = _toggle_row("Performance mode: speed-up mods matched to this version, "
+                               "kept up to date, and fast settings", inst.performance)
+        self.perf = perf_row.toggle
+        form.addRow("Performance", perf_row)
+        optimize = QPushButton("Apply fast settings now")
+        optimize.setToolTip("Fast graphics, no clouds or shadows, smooth lighting off, "
+                            "V-Sync off, render distance 10. Takes effect next launch.")
         optimize.clicked.connect(self.optimize)
-        form.addRow("Performance", optimize)
+        form.addRow("", optimize)
         v.addLayout(form)
         v.addSpacing(8)
         row, _ = _buttons(self, "Save")
@@ -281,3 +292,8 @@ class InstanceSettingsDialog(QDialog):
         d["color"] = self.color
         d["memory_mb"] = int(self.memory.currentData() or 0)
         self.inst.save()
+        if self.perf.isChecked() != self.inst.performance:
+            try:
+                self.inst.set_performance(self.perf.isChecked())
+            except Exception as e:
+                QMessageBox.warning(self, "Performance mode", f"Couldn't change performance mode: {e}")

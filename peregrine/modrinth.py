@@ -7,20 +7,11 @@ from . import net
 
 API = "https://api.modrinth.com/v2"
 
-# One-click FPS boost. Each targets a different bottleneck, and all are
-# client-safe and work together.
-PERFORMANCE_MODS = [
-    "sodium",           # rewrites rendering: the biggest FPS gain
-    "lithium",          # faster game logic (mobs, physics, ticking)
-    "ferrite-core",     # cuts memory use, so fewer GC stutters
-    "entityculling",    # skips drawing mobs/chests you can't see
-    "immediatelyfast",  # faster HUD, text and entity rendering
-    "modernfix",        # faster loading and lower memory
-    "dynamic-fps",      # drops FPS when the game is in the background
-]
+# The performance mods themselves are listed in performance.py.
 
 
-def _best_version(project: str, game_version: str, loader: str):
+def best_version(project: str, game_version: str, loader: str):
+    """The newest release of a project for this game version and loader, or None."""
     versions = net.get_json(f"{API}/project/{project}/version", params={
         "loaders": json.dumps([loader]),
         "game_versions": json.dumps([game_version]),
@@ -38,7 +29,7 @@ def install(projects: list, game_version: str, loader: str, mods_dir: Path,
 
     while queue:
         project = queue.pop(0)
-        version = _best_version(project, game_version, loader)
+        version = best_version(project, game_version, loader)
         if version is None:
             skipped.append(project)
             continue

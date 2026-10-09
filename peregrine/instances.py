@@ -6,7 +6,7 @@ import shutil
 import subprocess
 from pathlib import Path
 
-from . import auth, client_mod, config, fabric, game, modrinth, paths
+from . import auth, client_mod, config, fabric, game, modrinth, paths, performance
 
 # Colors new instances cycle through (each card gets its own).
 INSTANCE_COLORS = ["#e8a33d", "#5aa9e6", "#7bc47f", "#c38be0", "#e07a7a", "#d9c25a"]
@@ -18,17 +18,11 @@ CONTENT_FOLDERS = {
 }
 
 
-# Balanced video settings: keeps the game looking good, removes the costly extras.
-VIDEO_PRESET = {
-    "enableVsync": "false",       # don't cap FPS to the monitor
-    "maxFps": "260",              # 260 = unlimited
-    "renderClouds": '"fast"',
-    "entityShadows": "false",
-    "biomeBlendRadius": "1",
-    "particles": "1",             # decreased
-    "simulationDistance": "8",
-    "mipmapLevels": "2",
-}
+# Mod ids of the performance mods, for instances that got them before
+# performance mode tracked its files.
+_ID_TO_SLUG = {"sodium": "sodium", "lithium": "lithium", "ferritecore": "ferrite-core",
+               "entityculling": "entityculling", "immediatelyfast": "immediatelyfast",
+               "modernfix": "modernfix", "dynamic_fps": "dynamic-fps", "moreculling": "moreculling"}
 
 
 def _write_json(path: Path, data) -> None:
@@ -66,6 +60,11 @@ class Instance:
     def subtitle(self) -> str:
         return f"{self.data['loader'].capitalize()} {self.data['mc_version']}"
 
+    @property
+    def performance(self) -> bool:
+        """Performance mode: speed-up mods and fast settings. On unless switched off."""
+        return self.data.get("performance", True)
+
     def save(self) -> None:
         _write_json(self.folder / "instance.json", self.data)
 
@@ -90,20 +89,9 @@ class Instance:
         return self.folder / "latest.log"
 
     def optimize_video(self) -> list:
-        """Write performance-friendly video settings to options.txt. Returns what changed."""
-        opts = self.game_dir / "options.txt"
-        lines = opts.read_text(errors="replace").splitlines() if opts.exists() else []
-        current = dict(l.split(":", 1) for l in lines if ":" in l)
-        changed = []
-        for key, value in VIDEO_PRESET.items():
-            if key == "simulationDistance" and current.get(key, "12").isdigit() \
-                    and int(current.get(key, "12")) <= int(value):
-                continue  # already low enough
-            if current.get(key) != value:
-                current[key] = value
-                changed.append(key)
-        self.game_dir.mkdir(parents=True, exist_ok=True)
-        opts.write_text("\n".join(f"{k}:{v}" for k, v in current.items()) + "\n")
+        """Write the fast game settings to options.txt now. Returns what changed."""
+        changed = performance.apply_fast_settings(self.game_dir)
+        self.update(perf_settings=performance.PRESET_VERSION)
         return changed
 
     def delete(self) -> None:
@@ -138,12 +126,68 @@ class Instance:
         return new
 
     def install_performance_mods(self, progress=None) -> list:
+        """Turn performance mode on and fetch its mods now. Returns [(slug, filename)]."""
         if self.data["loader"] != "fabric":
-            raise ValueError("FPS mods need a Fabric instance.")
-        mods = modrinth.install(modrinth.PERFORMANCE_MODS, self.data["mc_version"],
-                                "fabric", self.game_dir / "mods", progress)
-        self.update(performance_mods=True, mods_installed=[f for _, f in mods])
-        return mods
+            raise ValueError("Performance mods need a Fabric instance.")
+        self.update(performance=True, perf_off=[])
+        performance.sync(self, progress, force=True)
+        return list((self.data.get("perf_files") or {}).items())
+
+    def set_performance(self, on: bool) -> None:
+        """Switch performance mode. Off removes the mods it added (not the player's own)
+        and, for an instance Peregrine moved to Fabric for speed, goes back to Vanilla."""
+        self.update(performance=on)
+        if not on:
+            performance.sync(self)
+            if self.data.get("auto_fabric"):
+                self.update(loader="vanilla", loader_version=None, auto_fabric=False)
+        else:
+            self.update(perf_checked=0, perf_off=[])
+
+    def _migrate_performance(self) -> None:
+        """Instances from before performance mode: adopt the FPS mods they already have."""
+        old = self.data.get("mods_installed")
+        if old is None or "perf_files" in self.data:
+            return
+        tracked = {}
+        mods = self.game_dir / "mods"
+        for name in old:
+            if (mods / name).exists() or (mods / (name + ".disabled")).exists():
+                mid = performance.mod_id(mods / name if (mods / name).exists() else mods / (name + ".disabled"))
+                slug = _ID_TO_SLUG.get(mid or "")
+                if mid == "fabric-api":
+                    continue
+                tracked[slug or f"dep:{mid or name}"] = name
+        self.update(perf_files=tracked, perf_mc=self.data["mc_version"], perf_checked=0)
+
+    def _prepare_performance(self, progress) -> None:
+        """Performance mode, before every launch: Fabric if the instance can have it,
+        the right mods for this exact version, and fast settings the first time."""
+        cfg = config.load()
+        if not (self.performance and cfg.get("performance_first", True)):
+            if self.data["loader"] == "fabric" and self.data.get("perf_files"):
+                performance.sync(self)  # switched off: take our mods back out
+            return
+        if self.data["loader"] == "vanilla":
+            try:
+                if self.data["mc_version"] in fabric.supported_game_versions():
+                    # Fabric is what makes the speed-up mods possible. Worlds are unaffected,
+                    # and switching performance mode off goes back to Vanilla.
+                    self.update(loader="fabric", loader_version=None, auto_fabric=True)
+            except Exception as e:
+                print(f"[peregrine] couldn't check Fabric support: {e}")
+        if self.data.get("perf_settings", 0) < performance.PRESET_VERSION:
+            try:
+                performance.apply_fast_settings(self.game_dir)
+                self.update(perf_settings=performance.PRESET_VERSION)
+            except OSError as e:
+                print(f"[peregrine] fast settings not written: {e}")
+        if self.data["loader"] == "fabric":
+            self._migrate_performance()
+            try:
+                performance.sync(self, progress)
+            except Exception as e:  # never let this stop the game from starting
+                print(f"[peregrine] performance mods not updated: {e}")
 
     # ---- install + launch
 
@@ -160,15 +204,9 @@ class Instance:
         cfg = config.load()
         if self.data.get("memory_mb"):
             cfg["max_memory_mb"] = self.data["memory_mb"]
+        self._prepare_performance(progress)
         prof = self.profile()
         info = game.install(prof, progress)
-        # FPS mods are fetched once ("mods_installed" is saved even if Modrinth had none
-        # for this version yet). A network problem here never stops the game starting.
-        if self.data.get("performance_mods") and "mods_installed" not in self.data:
-            try:
-                self.install_performance_mods(progress)
-            except Exception as e:
-                print(f"[peregrine] FPS mods not installed: {e}")
         try:
             client_mod.sync(self, cfg.get("ingame_menu", True), progress)
         except Exception as e:  # never let the extra mod stop the game from starting
@@ -193,13 +231,15 @@ class Instance:
 def create(name: str, mc_version: str, loader: str = "vanilla",
            performance_mods: bool = False, description: str = "",
            loader_version: str = None) -> Instance:
+    """performance_mods: performance mode (speed-up mods and fast settings). It needs
+    Fabric, so it's off for an instance the player explicitly made Vanilla."""
     if performance_mods and loader != "fabric":
-        raise ValueError("FPS mods need Fabric.")
+        raise ValueError("Performance mode needs Fabric.")
     folder = paths.INSTANCES / _slug(name)
     (folder / "minecraft").mkdir(parents=True)
     count = sum(1 for _ in paths.INSTANCES.iterdir())
     data = {"name": name, "description": description, "mc_version": mc_version,
-            "loader": loader, "loader_version": loader_version, "performance_mods": performance_mods,
+            "loader": loader, "loader_version": loader_version, "performance": performance_mods,
             "color": INSTANCE_COLORS[(count - 1) % len(INSTANCE_COLORS)], "memory_mb": 0}
     _write_json(folder / "instance.json", data)
     return Instance(folder)

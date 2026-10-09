@@ -9,7 +9,7 @@ from PySide6.QtWidgets import (
     QPlainTextEdit, QProgressBar, QPushButton, QStackedWidget, QVBoxLayout, QWidget,
 )
 
-from .. import NAME, UPDATE_REPO, VERSION, auth, avatars, config, discord, paths, updater
+from .. import NAME, UPDATE_REPO, VERSION, auth, avatars, config, discord, paths, performance, updater
 from . import workers
 from .dialogs import LoginDialog, NewInstanceDialog
 from .browse import ModBrowser, ModpacksPage
@@ -303,9 +303,27 @@ class MainWindow(QMainWindow):
             task.finished.connect(log.close)
         except OSError:
             pass  # the console still shows output
-        self._start(task, inst, done=lambda code: self.say(
-            "Minecraft closed" if code == 0 else f"Minecraft closed with an error (code {code}). "
-                                                 "Open the console to see why."))
+        self._start(task, inst, done=lambda code: self.game_closed(inst, code))
+
+    def game_closed(self, inst, code):
+        if code == 0:
+            self.say("Minecraft closed")
+            return
+        try:
+            blamed = performance.after_crash(inst)
+        except Exception as e:
+            print(f"[peregrine] couldn't check the crash: {e}")
+            blamed = []
+        if blamed:
+            names = ", ".join(blamed)
+            self.say(f"{names} crashed the game, so it's switched off for {inst.name}. Press Play again.")
+            QMessageBox.information(
+                self, "Fixed a crash",
+                f"Minecraft crashed because of {names}, one of the performance mods.\n\n"
+                f"It's switched off for {inst.name} now, so the game will start next time. "
+                "It'll be tried again when you move this instance to another Minecraft version.")
+        else:
+            self.say(f"Minecraft closed with an error (code {code}). Open the console to see why.")
 
     def busy(self) -> bool:
         if self.game_task and self.game_task.isRunning():

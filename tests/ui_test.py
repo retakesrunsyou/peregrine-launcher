@@ -183,9 +183,9 @@ dlg.name.setText("UI Test")
 shot(dlg, "new-instance")
 inst = dlg.create()
 dlg.close()
-note("PASS" if inst.data["loader"] == "fabric" and inst.data["performance_mods"] else "FAIL",
-     f"instance created: {inst.data['loader']} {inst.data['mc_version']}, FPS boost {inst.data['performance_mods']}")
-inst.update(performance_mods=False)  # keep this run about the launcher and Peregrine Client
+note("PASS" if inst.data["loader"] == "fabric" and inst.data["performance"] else "FAIL",
+     f"instance created: {inst.data['loader']} {inst.data['mc_version']}, performance mode {inst.data['performance']}")
+inst.update(performance=False)  # keep this run about the launcher and Peregrine Client
 
 win.home.refresh()
 win.go(0)

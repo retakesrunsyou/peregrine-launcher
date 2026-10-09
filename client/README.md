@@ -57,12 +57,16 @@ coordinates, so a screenshot or stream can be traced back to where you are.
 Anti base leak draws every block with the same rotation, centres plants, and
 shows bedrock as diamond blocks. Only your screen changes.
 
+**Performance:** Stable FPS (on by default: keeps FPS above your target by
+easing off particles, entity distance, then render distance, and putting them
+back when there's room), fewer particles.
+
 **Utility:** toggle sprint, toggle sneak, zoom (hold C), freelook (hold Left
 Alt to look around in third person), fullbright.
 
 **Visuals:** custom crosshair (shape, size, gap, thickness, color, outline),
 hit color, item physics (dropped items lie flat), static FOV, steady camera,
-no menu blur, fewer particles, chunk borders, hitboxes, clean edges (no
+no menu blur, chunk borders, hitboxes, clean edges (no
 vignette), clear weather.
 
 Settings save to `config/peregrine-client.json`.

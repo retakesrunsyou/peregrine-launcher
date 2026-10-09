@@ -162,5 +162,142 @@ paths.CONFIG_FILE.unlink()
 check("no settings yet means Fit my screen", config.load()["window_mode"] == "screen")
 
 srv.shutdown()
+# ---------------------------------------------------------------- performance mode
+
+import io  # noqa: E402
+import json as _json  # noqa: E402
+import zipfile  # noqa: E402
+
+from peregrine import fabric, instances, net, performance  # noqa: E402
+
+IDS = {"sodium": "sodium", "lithium": "lithium", "ferrite-core": "ferritecore", "entityculling": "entityculling",
+       "immediatelyfast": "immediatelyfast", "modernfix": "modernfix", "moreculling": "moreculling",
+       "dynamic-fps": "dynamic_fps", "fabric-api": "fabric-api", "cloth": "cloth-config"}
+catalog = {}   # (project, mc) -> version number; missing = not out for that version
+asked = []
+
+
+def fake_jar(mid):
+    buf = io.BytesIO()
+    with zipfile.ZipFile(buf, "w") as z:
+        z.writestr("fabric.mod.json", _json.dumps({"id": mid}))
+    return buf.getvalue()
+
+
+def fake_best(project, mc, loader):
+    asked.append(project)
+    n = catalog.get((project, mc))
+    if n is None:
+        return None
+    deps = [{"dependency_type": "required", "project_id": "cloth"}] if project == "moreculling" else []
+    if project == "sodium":
+        deps.append({"dependency_type": "required", "project_id": "fabric-api"})
+    name = f"{project}-{n}+{mc}.jar"
+    return {"project_id": project, "dependencies": deps,
+            "files": [{"primary": True, "filename": name, "url": f"fake://{project}/{name}"}]}
+
+
+def fake_fetch_all(downloads, label, progress=None):
+    for d in downloads:
+        project = d.url.split("/")[2]
+        d.path.parent.mkdir(parents=True, exist_ok=True)
+        d.path.write_bytes(fake_jar(IDS[project]))
+
+
+performance.modrinth.best_version = fake_best
+performance.net.fetch_all = fake_fetch_all
+for slug in performance.SLUGS + ["cloth", "fabric-api"]:
+    catalog[(slug, "1.21.1")] = 1
+del catalog[("moreculling", "1.21.1")]  # pretend it isn't out for 1.21.1 yet
+
+pinst = instances.create("Perf", "1.21.1", "fabric", True)
+pmods = pinst.game_dir / "mods"
+pmods.mkdir(parents=True)
+(pmods / "fabric-api-0.1.jar").write_bytes(fake_jar("fabric-api"))  # from the in-game menu
+(pmods / "my-sodium-custom.jar").write_bytes(fake_jar("sodium"))    # the player's own copy
+r = performance.sync(pinst)
+files = pinst.data["perf_files"]
+check("performance mode installs the speed-up mods for this version",
+      {"lithium", "ferrite-core", "entityculling", "immediatelyfast", "modernfix", "dynamic-fps"} <= set(files))
+check("the player's own Sodium is kept, not doubled",
+      "sodium" not in files and sorted(p.name for p in pmods.glob("sodium*")) == [])
+check("a mod not out for this version is skipped", "moreculling" in r["unavailable"])
+check("Fabric API isn't installed twice", sorted(p.name for p in pmods.iterdir() if "fabric-api" in p.name) == ["fabric-api-0.1.jar"])
+asked.clear()
+check("no Modrinth lookups again the same day", performance.sync(pinst) == {"checked": False} and not asked)
+
+# a mod comes out for 1.21.1, another gets an update
+catalog[("moreculling", "1.21.1")] = 1
+catalog[("lithium", "1.21.1")] = 2
+pinst.update(perf_checked=0)
+r = performance.sync(pinst)
+check("a newly released mod is added the next day (with its library)",
+      "moreculling" in pinst.data["perf_files"] and "dep:cloth-config" in pinst.data["perf_files"])
+check("an update replaces the old file", (pmods / "lithium-2+1.21.1.jar").exists() and not (pmods / "lithium-1+1.21.1.jar").exists())
+
+# switched off in Content: stays off
+f = pmods / pinst.data["perf_files"]["entityculling"]
+f.rename(f.with_name(f.name + ".disabled"))
+pinst.update(perf_checked=0)
+performance.sync(pinst)
+check("a mod switched off in Content stays off", not f.exists() and f.with_name(f.name + ".disabled").exists())
+
+# moving the instance to another Minecraft version
+for slug in performance.SLUGS + ["cloth", "fabric-api"]:
+    catalog[(slug, "1.21.4")] = 7
+pinst.update(mc_version="1.21.4")
+performance.sync(pinst)
+names = sorted(p.name for p in pmods.iterdir())
+check("a new Minecraft version swaps every mod for that version",
+      not any("+1.21.1" in n for n in names) and "lithium-7+1.21.4.jar" in names)
+check("a mod the player switched off stays off on the new version", "entityculling" not in pinst.data["perf_files"])
+check("the player's own files are never touched", "my-sodium-custom.jar" in names and "fabric-api-0.1.jar" in names)
+
+# a crash caused by one of the mods
+pinst.log_file.write_text("[main/ERROR]: Mixin apply for mod lithium failed lithium.mixins.json:ai.Foo\n"
+                          "Caused by: org.spongepowered.asm.mixin.throwables.MixinApplyError\n")
+blamed = performance.after_crash(pinst)
+check("a crash from a performance mod switches it off", blamed == ["Lithium"]
+      and not any("lithium" in n for n in (p.name for p in pmods.iterdir())))
+pinst.update(perf_checked=0)
+performance.sync(pinst)
+check("...and it isn't put back on this version", "lithium" not in pinst.data["perf_files"])
+pinst.log_file.write_text("[main/INFO]: Loading 12 mods:\n\t- sodium 0.6\n\t- lithium 0.14\nSomething else broke\n")
+check("a crash that doesn't name a mod blames nothing", performance.after_crash(pinst) == [])
+
+# switching performance mode off
+pinst.set_performance(False)
+names = sorted(p.name for p in pmods.iterdir())
+check("turning performance mode off removes only what it added",
+      names == ["fabric-api-0.1.jar", "my-sodium-custom.jar"] and pinst.data["perf_files"] == {})
+
+# fast settings
+opts = pinst.game_dir / "options.txt"
+opts.write_text("renderDistance:16\nsimulationDistance:5\nfov:0.5\nao:true\n")
+changed = performance.apply_fast_settings(pinst.game_dir)
+o = dict(l.split(":", 1) for l in opts.read_text().splitlines())
+check("fast settings: high render distance lowered to 10", o["renderDistance"] == "10")
+check("fast settings: a low simulation distance is kept", o["simulationDistance"] == "5")
+check("fast settings: other settings untouched", o["fov"] == "0.5")
+check("fast settings: smooth lighting off, Fast graphics, no clouds",
+      o["ao"] == "false" and o["graphicsMode"] == "0" and o["graphicsPreset"] == '"fast"' and o["renderClouds"] == '"false"')
+
+# a Vanilla instance from before performance mode gets Fabric for speed, and goes back when it's off
+vinst = instances.create("Old vanilla", "1.21.1", "vanilla")
+vinst.data.pop("performance")
+vinst.save()
+vinst = instances.Instance(vinst.folder)
+fabric.supported_game_versions = lambda: frozenset({"1.21.1"})
+vinst._prepare_performance(None)
+check("an old Vanilla instance moves to Fabric for performance mode",
+      vinst.data["loader"] == "fabric" and vinst.data.get("auto_fabric"))
+check("...and gets fast settings once", vinst.data.get("perf_settings") == performance.PRESET_VERSION
+      and (vinst.game_dir / "options.txt").is_file())
+vinst.set_performance(False)
+check("switching performance mode off puts it back to Vanilla", vinst.data["loader"] == "vanilla")
+explicit = instances.create("Pure", "1.21.1", "vanilla")
+explicit._prepare_performance(None)
+check("an instance made as Vanilla stays Vanilla", explicit.data["loader"] == "vanilla")
+
 print("\nALL LAUNCHER TESTS PASSED" if not failures else f"\n{failures} FAILED")
 sys.exit(1 if failures else 0)

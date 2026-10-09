@@ -28,6 +28,7 @@ DEFAULTS = {
     "open_console": False,
     "check_updates": True,
     # Performance
+    "performance_first": True,  # performance mode for every instance (each can opt out)
     "gc": "auto",             # auto (tuned G1) or zgc
     "driver_boost": True,     # threaded OpenGL for Mesa / NVIDIA
     "dedicated_gpu": False,   # laptops with two GPUs

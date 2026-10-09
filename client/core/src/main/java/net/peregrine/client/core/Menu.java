@@ -31,7 +31,7 @@ public final class Menu {
     private static final int ROW_H = 28;
     private static final int TAB_H = 18;
     private static final Module.Category[] TABS = {
-        null, Module.Category.HUD, Module.Category.UTILITY, Module.Category.VISUALS
+        null, Module.Category.HUD, Module.Category.UTILITY, Module.Category.VISUALS, Module.Category.PERFORMANCE
     };
 
     private final Peregrine pc;

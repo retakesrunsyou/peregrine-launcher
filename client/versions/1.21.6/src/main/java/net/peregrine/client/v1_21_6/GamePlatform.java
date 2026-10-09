@@ -302,6 +302,41 @@ final class GamePlatform implements Platform {
         return n;
     }
 
+    // ---- performance (Stable FPS)
+
+    @Override
+    public int renderDistance() {
+        return mc().options.renderDistance().get();
+    }
+
+    @Override
+    public void setRenderDistance(int chunks) {
+        mc().options.renderDistance().set(chunks);
+    }
+
+    @Override
+    public double entityDistance() {
+        return mc().options.entityDistanceScaling().get();
+    }
+
+    @Override
+    public void setEntityDistance(double scale) {
+        mc().options.entityDistanceScaling().set(scale);
+    }
+
+    @Override
+    public int particleLevel() {
+        return ((Enum<?>) mc().options.particles().get()).ordinal();
+    }
+
+    @Override
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public void setParticleLevel(int level) {
+        net.minecraft.client.OptionInstance option = mc().options.particles();
+        Object[] all = ((Enum) option.get()).getDeclaringClass().getEnumConstants();
+        option.set(all[Math.max(0, Math.min(all.length - 1, level))]);
+    }
+
     // ---- batch 5: render hooks
 
     @Override

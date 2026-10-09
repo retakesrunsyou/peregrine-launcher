@@ -4,7 +4,7 @@ package net.peregrine.client.core;
 public abstract class Module {
 
     public enum Category {
-        HUD("HUD"), UTILITY("Utility"), VISUALS("Visuals");
+        HUD("HUD"), UTILITY("Utility"), VISUALS("Visuals"), PERFORMANCE("Performance");
 
         public final String label;
 

@@ -7,7 +7,7 @@ public class CoreTest {
     static double gamma = 0.5; static boolean sprint, zoomKey; static Path cfg;
     static Set<Key> down = new HashSet<>();
     static class P implements Platform {
-        public boolean inWorld(){return true;} public int fps(){return 144;}
+        public boolean inWorld(){return true;} public int fps(){return fpsNow;}
         public double x(){return 12.345;} public double y(){return 64;} public double z(){return -5.5;}
         public String facing(){return "North";} public boolean isDown(Key k){return down.contains(k);}
         public List<ItemInfo> armor(){return Arrays.asList(new ItemInfo("helmet",10,100), new ItemInfo("sword",900,1000));}
@@ -32,8 +32,11 @@ public class CoreTest {
         public void reloadChunks(){reloads++;} public boolean freelookKeyDown(){return altDown;}
         public int cameraMode(){return camera;} public void setCameraMode(int m){camera=m;}
         public void setHitColor(int c){hitColor=c;} public double guiScale(){return 2;}
+        public int renderDistance(){return render;} public void setRenderDistance(int r){render=r;}
+        public double entityDistance(){return entity;} public void setEntityDistance(double e){entity=e;}
+        public int particleLevel(){return particles;} public void setParticleLevel(int l){particles=l;}
     }
-    static int reloads, camera, hitColor=-1; static boolean altDown;
+    static int reloads, camera, hitColor=-1, fpsNow=144, render=12, particles=0; static double entity=1.0; static boolean altDown;
     static boolean target; static int hurt; static String dim = "minecraft:overworld";
     static java.util.Set<Platform.Option> optionsOn=new java.util.HashSet<>();
     static boolean playing; static Platform.Screen opened; static int ping=-1; static String server=null;
@@ -54,13 +57,13 @@ public class CoreTest {
     public static void main(String[] a) throws Exception {
         cfg = Files.createTempDirectory("pc").resolve("config/peregrine-client.json");
         Peregrine pc = Peregrine.init(new P()); D d = new D(); Menu m = pc.menu();
-        check(pc.modules().size()==52, "52 modules registered");
+        check(pc.modules().size()==53, "53 modules registered");
         for (String id : new String[]{"health","nether_coords","session","totems","arrows","durability_alert",
                 "reach","combo","target","block_info","block_count","players","rotation","stopwatch","xp","chunk","light",
                 "anti_leak","crosshair","freelook","hit_color","item_physics"}) check(pc.module(id)!=null, id+" exists");
         // Defaults: only FPS, coordinates and armor (plus the title screen) start on, every HUD item at 50%
         for (net.peregrine.client.core.Module mod : pc.modules()) {
-            boolean want = Arrays.asList("fps","coords","armor","main_menu").contains(mod.id);
+            boolean want = Arrays.asList("fps","coords","armor","main_menu","stable_fps").contains(mod.id);
             check(mod.enabled()==want, mod.id + (want ? " on" : " off") + " by default");
             if (mod instanceof HudModule) check(((HudModule)mod).scale==0.5f, mod.id + " starts at 50%");
         }
@@ -262,6 +265,31 @@ public class CoreTest {
         pc7.module("hit_color").setEnabled(false); check(hitColor == 0, "off restores Minecraft's red");
         pc7.module("item_physics").setEnabled(true); check(Hooks.itemPhysics, "item physics switch");
         pc7.module("item_physics").setEnabled(false); check(!Hooks.itemPhysics, "item physics off");
+        // ---- Stable FPS
+        Peregrine pc8 = Peregrine.init(new P());
+        check(pc8.module("stable_fps").enabled() && pc8.module("stable_fps").category == net.peregrine.client.core.Module.Category.PERFORMANCE, "Stable FPS is on, in the Performance tab");
+        playing = true; fpsNow = 40; render = 12; entity = 1.0; particles = 0;
+        for (int i = 0; i < 101; i++) pc8.tick();
+        check(particles == 2 && render == 12 && entity == 1.0, "5 s under 60 FPS: particles to minimal first");
+        for (int i = 0; i < 205; i++) pc8.tick();
+        check(entity == 0.6 && render == 12, "then entity distance (" + entity + ")");
+        for (int i = 0; i < 205; i++) pc8.tick();
+        check(render == 10, "then render distance, 2 chunks at a time (" + render + ")");
+        for (int i = 0; i < 2000; i++) pc8.tick();
+        check(render == 6, "never below the lowest setting (" + render + ")");
+        fpsNow = 70; for (int i = 0; i < 2000; i++) pc8.tick();
+        check(render == 6, "60-77 FPS: holds steady, no flip-flopping");
+        fpsNow = 200; for (int i = 0; i < 20000; i++) pc8.tick();
+        check(render == 12 && entity == 1.0 && particles == 0, "with room to spare it all goes back, one step at a time");
+        fpsNow = 30; for (int i = 0; i < 101 + 205 + 205; i++) pc8.tick();
+        check(render == 10, "dips again: lowered again");
+        render = 16; pc8.tick();
+        check(particles == 0 && entity == 1.0, "the player changing render distance takes over (16 is the new normal)");
+        fpsNow = 30; for (int i = 0; i < 101 + 205 + 205 + 100; i++) pc8.tick();
+        check(render == 14, "...and later steps start from 16 (" + render + ")");
+        pc8.module("stable_fps").setEnabled(false);
+        check(render == 16 && particles == 0 && entity == 1.0, "switching it off puts everything back");
+        playing = false; fpsNow = 144;
         System.out.println("\nALL CORE TESTS PASSED");
     }
 }
