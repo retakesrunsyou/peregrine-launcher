@@ -329,12 +329,12 @@ final class GamePlatform implements Platform {
             for (int i = -1; i <= 1; i++) {  // a short bedrock wall a few blocks ahead
                 for (int h = 0; h <= 1; h++) {
                     net.minecraft.core.BlockPos pos = net.minecraft.core.BlockPos.containing(
-                            px + fx * 4 - fz * i, py + h, pz + fz * 4 + fx * i);
+                            px + fx * 6 - fz * i, py + h, pz + fz * 6 + fx * i);
                     mc().level.setBlock(pos, net.minecraft.world.level.block.Blocks.BEDROCK.defaultBlockState(), 3);
                 }
             }
             net.minecraft.world.entity.item.ItemEntity item = new net.minecraft.world.entity.item.ItemEntity(
-                    mc().level, px + fx * 2, py + 0.5, pz + fz * 2,
+                    mc().level, px + fx * 3.5 - fz * 0.8, py + 0.5, pz + fz * 3.5 + fx * 0.8,
                     new ItemStack(net.minecraft.world.item.Items.DIAMOND_SWORD));
             mc().level.addEntity(item);
         } catch (Throwable t) {
