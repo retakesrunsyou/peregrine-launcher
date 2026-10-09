@@ -1,6 +1,6 @@
-# Developer tool: decompiles Minecraft for each supported version and saves
-# the classes the client's hooks touch to the "inspect" branch, so hooks can be
-# checked against every version's real code.
+# Developer tool: decompiles Minecraft for each supported version and keeps the
+# classes the client's hooks touch as short-lived run artifacts, so hooks can be
+# checked against every version's real code. Nothing is committed anywhere.
 name: Inspect Minecraft sources
 
 on:
@@ -12,7 +12,7 @@ on:
         default: 'Gui Camera'
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   versions:
@@ -60,23 +60,5 @@ jobs:
         with:
           name: src-${{ strategy.job-index }}
           path: out
+          retention-days: 1  # Minecraft's code is Mojang's: keep it private and short-lived
 
-  save:
-    needs: sources
-    if: always()
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/download-artifact@v4
-        with:
-          path: results
-      - name: Save to the inspect branch
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          mkdir merged
-          for d in results/*/; do cp -r "$d"* merged/ 2>/dev/null || true; done
-          cd merged
-          git init -q -b inspect
-          git -c user.name=Peregrine -c user.email=noreply@users.noreply.github.com add -A
-          git -c user.name=Peregrine -c user.email=noreply@users.noreply.github.com commit -qm "Minecraft sources"
-          git push -qf "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" inspect
