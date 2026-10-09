@@ -207,11 +207,22 @@ public final class SelfTest {
             }
         });
         shot("11-hud-default");
-        // CI machines draw in software at well under 60 FPS, so Stable FPS should step in.
+        // Aim for 240 FPS, which a test machine drawing in software never reaches,
+        // so Stable FPS has to step in.
+        run("set Stable FPS's target to 240", new Runnable() {
+            public void run() {
+                ((net.peregrine.client.core.settings.ChoiceSetting) pc.module("stable_fps").settings().get(0)).index = 5;
+            }
+        });
         waitFor("Stable FPS eases off settings when FPS is low", 600, new Cond() {
             public boolean ok() {
                 return ((net.peregrine.client.core.modules.StableFps) pc.module("stable_fps")).level() > 0
                         && p.particleLevel() == 2;
+            }
+        });
+        run("Stable FPS's target back to 60", new Runnable() {
+            public void run() {
+                ((net.peregrine.client.core.settings.ChoiceSetting) pc.module("stable_fps").settings().get(0)).index = 1;
             }
         });
         run("turn on every HUD item (and zoom)", new Runnable() {

@@ -23,6 +23,20 @@ play: more FPS, smoother frames and fewer lag spikes, out of the box.
 - **Graphics driver boost** for AMD, Intel and NVIDIA, and dedicated-GPU mode for laptops
 - Uses **Feral GameMode** automatically if you have it
 
+**Measured** (the automated play test: same world, same spot, render distance 8, Minecraft's
+own settings vs performance mode, on a test machine with no graphics card, so the game is
+drawn in software; real graphics cards usually gain more from Sodium):
+
+| Minecraft | Vanilla | Performance mode | |
+|---|---|---|---|
+| 26.3 | 12-13 FPS | 24-28 FPS | about 2x |
+| 26.1 | 11 FPS | 18-19 FPS | about 1.7x |
+| 1.21.11 | 17-18 FPS | 28-31 FPS | about 1.7x |
+| 1.21.1 | 37-38 FPS (lows 16) | 42-44 FPS (lows 28) | lows +70% |
+
+The play test can repeat this on any version, and with each mod left out in turn
+(Actions → Play test → "benchmark each performance mod").
+
 **In-game menu (Peregrine Client)**
 - Press **Right Shift** in game for a see-through menu: search features and switch them on or off
 - FPS, coordinates, keystrokes, CPS, armor status and potion timers, placed anywhere you drag them
