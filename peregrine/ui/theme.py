@@ -63,7 +63,14 @@ def stylesheet() -> str:
     on_a = on_color(a)
     hover_a = shade(a, 112)
     # Frosted panels (header, sidebar, footer): the night sky shows through a little.
-    glass = rgba(p["surface"], 0.40 if Theme.name != "light" else 0.62)
+    glass = rgba(p["surface"], 0.12 if Theme.name != "light" else 0.40)
+    dark = Theme.name != "light"
+    # Cards are lightly see-through too, so the sky glows faintly behind them.
+    card_top = rgba(shade(p["surface"], 108), 0.86 if dark else 0.94)
+    card_bot = rgba(p["surface"], 0.80 if dark else 0.92)
+    edge_hi = "rgba(255, 255, 255, 0.07)" if dark else "rgba(255, 255, 255, 0.9)"
+    a_top, a_bot, a_edge = shade(a, 114), a, shade(a, 82)
+    btn_top, btn_bot = rgba(shade(p["raised"], 112), 0.92), rgba(p["raised"], 0.92)
     return f"""
     QWidget {{ color: {p['text']}; font-size: 14px; }}
     QMainWindow, QDialog {{ background: {p['bg']}; }}
@@ -78,30 +85,41 @@ def stylesheet() -> str:
     #muted {{ color: {p['muted']}; }}
     #faint {{ color: {p['faint']}; font-size: 12px; }}
 
-    #navButton {{ background: transparent; border: none; border-radius: 6px;
-                  padding: 10px 12px; text-align: left; color: {p['muted']}; font-weight: 600; }}
-    #navButton:hover {{ background: {p['raised']}; color: {p['text']}; }}
-    #navButton:checked {{ background: {tint(a, 0.14)}; color: {a}; }}
+    #navButton {{ background: transparent; border: none; border-left: 3px solid transparent;
+                  border-radius: 7px; padding: 10px 12px; text-align: left; color: {p['muted']};
+                  font-weight: 600; }}
+    #navButton:hover {{ background: {rgba(p['raised'], 0.55)}; color: {p['text']}; }}
+    #navButton:checked {{ background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
+                              stop:0 {rgba(a, 0.24)}, stop:1 {rgba(a, 0.04)});
+                          border-left: 3px solid {a}; color: {a}; }}
 
     #accountChip {{ background: transparent; border: none; border-radius: 6px; padding: 4px 8px; }}
     #accountChip:hover {{ background: {p['raised']}; }}
 
-    #card {{ background: {p['surface']}; border: 1px solid {p['border']}; border-radius: 10px; }}
-    #card:hover {{ border-color: {p['faint']}; }}
-    #row {{ background: {p['surface']}; border: 1px solid {p['border']}; border-radius: 8px; }}
-    #row:hover {{ border-color: {p['faint']}; }}
+    #card {{ background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 {card_top}, stop:1 {card_bot});
+             border: 1px solid {p['border']}; border-top-color: {edge_hi}; border-radius: 12px; }}
+    #card:hover {{ border-color: {rgba(a, 0.55)}; }}
+    #row {{ background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 {card_top}, stop:1 {card_bot});
+            border: 1px solid {p['border']}; border-top-color: {edge_hi}; border-radius: 9px; }}
+    #row:hover {{ border-color: {rgba(a, 0.45)}; }}
     #emptyIcon {{ background: {tint(a, 0.12)}; border-radius: 16px; }}
 
-    QPushButton {{ background: {p['raised']}; border: 1px solid {p['border']}; border-radius: 6px;
-                   padding: 8px 16px; color: {p['text']}; }}
-    QPushButton:hover {{ border-color: {p['faint']}; }}
+    QPushButton {{ background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 {btn_top}, stop:1 {btn_bot});
+                   border: 1px solid {p['border']}; border-top-color: {edge_hi}; border-radius: 8px;
+                   padding: 8px 16px; color: {p['text']}; font-weight: 600; }}
+    QPushButton:hover {{ border-color: {rgba(a, 0.6)}; color: {p['text']}; }}
+    QPushButton:pressed {{ background: {btn_bot}; padding-top: 9px; padding-bottom: 7px; }}
     QPushButton:disabled {{ color: {p['faint']}; }}
     QPushButton:focus {{ border-color: {a}; }}
-    QPushButton#accent {{ background: {a}; color: {on_a}; border: none; font-weight: 650; }}
-    QPushButton#accent:hover {{ background: {hover_a}; }}
-    QPushButton#accent:disabled {{ background: {tint(a, 0.35)}; color: {tint(on_a, 0.6)}; }}
-    QPushButton#outline {{ background: transparent; color: {a}; border: 1px solid {p['border']}; }}
-    QPushButton#outline:hover {{ border-color: {a}; }}
+    QPushButton#accent {{ background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 {a_top}, stop:1 {a_bot});
+                          color: {on_a}; border: 1px solid {a_edge}; border-top-color: {shade(a, 135)};
+                          font-weight: 700; }}
+    QPushButton#accent:hover {{ background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                                    stop:0 {shade(a, 124)}, stop:1 {hover_a}); }}
+    QPushButton#accent:pressed {{ background: {a_edge}; padding-top: 9px; padding-bottom: 7px; }}
+    QPushButton#accent:disabled {{ background: {tint(a, 0.35)}; color: {tint(on_a, 0.6)}; border-color: transparent; }}
+    QPushButton#outline {{ background: {rgba(a, 0.06)}; color: {a}; border: 1px solid {rgba(a, 0.45)}; }}
+    QPushButton#outline:hover {{ background: {rgba(a, 0.14)}; border-color: {a}; }}
     QPushButton#icon {{ background: transparent; border: none; padding: 6px; border-radius: 5px; }}
     QPushButton#icon:hover {{ background: {p['raised']}; }}
     QPushButton#swatch {{ border-radius: 6px; padding: 0; min-width: 28px; max-width: 28px;
@@ -111,7 +129,8 @@ def stylesheet() -> str:
     QPushButton#tab:checked {{ color: {p['text']}; border-bottom-color: {a}; }}
 
     QLineEdit, QComboBox, QSpinBox, QPlainTextEdit {{
-        background: {p['bg']}; border: 1px solid {p['border']}; border-radius: 6px; padding: 7px 9px; }}
+        background: {rgba(p['bg'], 0.78)}; border: 1px solid {p['border']}; border-radius: 8px;
+        padding: 7px 10px; selection-background-color: {rgba(a, 0.45)}; }}
     QLineEdit:focus, QComboBox:focus, QSpinBox:focus {{ border-color: {a}; }}
     QLineEdit:hover, QComboBox:hover, QSpinBox:hover {{ border-color: {p['faint']}; }}
     QComboBox::drop-down {{ border: none; width: 26px; }}
@@ -120,11 +139,12 @@ def stylesheet() -> str:
     QComboBox QAbstractItemView::item:hover {{ background: {p['raised']}; }}
     QComboBox QAbstractItemView {{ background: {p['surface']}; border: 1px solid {p['border']};
                                    selection-background-color: {tint(a, 0.2)}; }}
-    #segmented {{ background: {p['bg']}; border: 1px solid {p['border']}; border-radius: 7px; }}
+    #segmented {{ background: {rgba(p['bg'], 0.78)}; border: 1px solid {p['border']}; border-radius: 9px; }}
     QPushButton#segment {{ background: transparent; border: none; border-radius: 5px;
                            padding: 6px 14px; color: {p['muted']}; font-weight: 600; }}
     QPushButton#segment:hover {{ color: {p['text']}; }}
-    QPushButton#segment:checked {{ background: {a}; color: {on_a}; }}
+    QPushButton#segment:checked {{ background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                                       stop:0 {a_top}, stop:1 {a_bot}); color: {on_a}; }}
     QPushButton#segment:disabled {{ color: {p['faint']}; }}
     #badge {{ background: {tint(a, 0.16)}; color: {a}; border-radius: 4px; padding: 2px 7px;
               font-size: 12px; font-weight: 600; }}
@@ -136,8 +156,9 @@ def stylesheet() -> str:
     QCheckBox::indicator:checked {{ background: {a}; border-color: {a}; }}
     QSlider::groove:horizontal {{ height: 4px; background: {p['border']}; border-radius: 2px; }}
     QSlider::sub-page:horizontal {{ background: {a}; border-radius: 2px; }}
-    QSlider::handle:horizontal {{ background: {p['text']}; width: 16px; height: 16px;
-                                  margin: -6px 0; border-radius: 8px; }}
+    QSlider::handle:horizontal {{ background: qradialgradient(cx:0.5, cy:0.4, radius:0.7, stop:0 #ffffff,
+                                      stop:1 {shade(p['text'], 90)}); width: 16px; height: 16px;
+                                  margin: -6px 0; border-radius: 8px; border: 2px solid {a}; }}
     QProgressBar {{ background: {p['raised']}; border: none; border-radius: 2px; }}
     QProgressBar::chunk {{ background: {a}; border-radius: 2px; }}
     #console {{ background: {p['bg']}; border: none; border-top: 1px solid {p['border']};

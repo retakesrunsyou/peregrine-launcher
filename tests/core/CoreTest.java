@@ -39,7 +39,8 @@ public class CoreTest {
     public static void main(String[] a) throws Exception {
         cfg = Files.createTempDirectory("pc").resolve("config/peregrine-client.json");
         Peregrine pc = Peregrine.init(new P()); D d = new D(); Menu m = pc.menu();
-        check(pc.modules().size()==30, "30 modules registered");
+        check(pc.modules().size()==36, "36 modules registered");
+        for (String id : new String[]{"health","nether_coords","session","totems","arrows","durability_alert"}) check(pc.module(id)!=null, id+" exists");
         texts.clear(); pc.renderHud(d);
         check(texts.stream().anyMatch(t->t.startsWith("144")), "FPS HUD shows 144");
         check(texts.stream().anyMatch(t->t.startsWith("12.3  64.0  -5.5")), "coords formatted");

@@ -263,6 +263,40 @@ final class GamePlatform implements Platform {
     }
 
     @Override
+    public float health() {
+        return mc().player == null ? -1 : mc().player.getHealth();
+    }
+
+    @Override
+    public float maxHealth() {
+        return mc().player == null ? 20 : mc().player.getMaxHealth();
+    }
+
+    @Override
+    public String dimension() {
+        return mc().level == null ? "" : Compat.keyId(mc().level.dimension());
+    }
+
+    @Override
+    public int itemCount(String what) {
+        if (mc().player == null) {
+            return 0;
+        }
+        var inv = player().getInventory();
+        int n = 0;
+        for (int i = 0; i < inv.getContainerSize(); i++) {
+            ItemStack stack = inv.getItem(i);
+            boolean match = what.equals("totem")
+                    ? stack.is(net.minecraft.world.item.Items.TOTEM_OF_UNDYING)
+                    : what.equals("arrow") && stack.getItem() instanceof net.minecraft.world.item.ArrowItem;
+            if (match) {
+                n += stack.getCount();
+            }
+        }
+        return n;
+    }
+
+    @Override
     public List<String> resourcePacks() {
         List<String> out = new ArrayList<>();
         for (Pack pack : mc().getResourcePackRepository().getSelectedPacks()) {

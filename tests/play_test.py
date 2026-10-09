@@ -192,6 +192,11 @@ def handle(command: str, label: str):
     if what == "shot":
         time.sleep(0.5)
         shot(OUT / f"{label}-{parts[1]}.png")
+        if label == "title" and parts[1] == "01-title":
+            names = subprocess.run(["xdotool", "search", "--name", "Peregrine Client", "getwindowname", "%@"],
+                                   capture_output=True, text=True).stdout.strip()
+            note("PASS" if names.startswith("Peregrine Client") else "FAIL",
+                 f"game window is titled {names.splitlines()[0]!r}" if names else "game window isn't titled Peregrine Client")
     elif what == "key":
         xdo("key", "--delay", 80, parts[1])
     elif what in ("keydown", "keyup"):

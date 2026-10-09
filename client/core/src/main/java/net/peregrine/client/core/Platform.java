@@ -102,6 +102,27 @@ public interface Platform {
     /** Turns an option on, or back to Minecraft's default when off. */
     void setOption(Option option, boolean on);
 
+    // ---- added in batch 3 (defaults keep older adapters and tests working)
+
+    /** The player's health in half-hearts (20 = full), or -1 outside a world. */
+    default float health() {
+        return -1;
+    }
+
+    default float maxHealth() {
+        return 20;
+    }
+
+    /** Dimension id, like "minecraft:the_nether", or "" if unknown. */
+    default String dimension() {
+        return "";
+    }
+
+    /** How many of something are in the inventory: "totem" or "arrow". */
+    default int itemCount(String what) {
+        return 0;
+    }
+
     /** False for features this Minecraft version can't do; they're hidden from the menu. */
     default boolean supports(String moduleId) {
         return true;

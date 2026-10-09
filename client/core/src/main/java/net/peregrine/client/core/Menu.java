@@ -41,6 +41,8 @@ public final class Menu {
     private long openedAt;
     private long lastFrame;
     private final Map<Module, Float> knob = new IdentityHashMap<Module, Float>();
+    private final Map<Module, Float> rowGlow = new IdentityHashMap<Module, Float>();
+    private float tabSlide = -1;  // where the category highlight is, sliding to the chosen one
 
     // Layout from the last render, used for clicks.
     private int px, py, pw, ph, listX, listY, listW, listH;
@@ -63,6 +65,8 @@ public final class Menu {
         editingHud = false;
         dragging = null;
         knob.clear();
+        rowGlow.clear();
+        tabSlide = -1;
     }
 
     // ---- for the self-test (see SelfTest)
@@ -201,8 +205,14 @@ public final class Menu {
         d.shadow(px, py, pw, ph);
         d.roundRect(px, py, pw, ph, Theme.PANEL);
         d.roundOutline(px, py, pw, ph, Theme.HAIRLINE);
+        // Slightly darker towards the bottom, for depth.
+        for (int b = 0; b < 4; b++) {
+            int bh = (ph - TITLE_H) / 4;
+            d.rect(px + 1, py + TITLE_H + b * bh, pw - 2, bh, Theme.withAlpha(0, 0x06 * b));
+        }
         d.rect(px + 2, py, pw - 4, 1, Theme.withAlpha(a, 0xE0));
         d.rect(px + 1, py + 1, pw - 2, 1, Theme.withAlpha(a, 0x50));
+        d.rect(px + 2, py + 2, pw - 4, 1, 0x10FFFFFF);  // a hairline of light along the top edge
 
         // Title bar: name, search, close
         d.rect(px + 1, py + 2, pw - 2, TITLE_H - 2, Theme.TITLE_BAR);
@@ -217,7 +227,8 @@ public final class Menu {
         d.roundOutline(searchX, searchY, searchW, 15, searching ? Theme.withAlpha(a, 0xC0) : Theme.HAIRLINE);
         boolean caret = (now / 500) % 2 == 0;
         String shown = searching ? search + (caret ? "_" : "") : "Search";
-        d.text(d.trim(shown, searchW - 10), searchX + 5, searchY + 4, searching ? Theme.TEXT : Theme.FAINT, false);
+        magnifier(d, searchX + 5, searchY + 4, searching ? a : Theme.FAINT);
+        d.text(d.trim(shown, searchW - 20), searchX + 15, searchY + 4, searching ? Theme.TEXT : Theme.FAINT, false);
 
         boolean closeHover = in(mx, my, closeX - 3, closeY - 3, 13, 13);
         if (closeHover) {
@@ -232,18 +243,27 @@ public final class Menu {
         // Sidebar: categories with counts, Edit HUD at the bottom
         d.rect(px + 1, py + TITLE_H + 1, SIDE_W, ph - TITLE_H - 3, Theme.SIDEBAR);
         d.rect(px + SIDE_W + 1, py + TITLE_H + 1, 1, ph - TITLE_H - 3, Theme.HAIRLINE);
+        int chosen = 0;
+        for (int i = 0; i < TABS.length; i++) {
+            if (TABS[i] == tab) {
+                chosen = i;
+            }
+        }
+        float target = tabY(chosen);
+        tabSlide = tabSlide < 0 ? target : tabSlide + (target - tabSlide) * Math.min(1f, dt * 16f);
+        int sy = Math.round(tabSlide);
+        d.roundRect(px + 4, sy, SIDE_W - 8, TAB_H, Theme.withAlpha(a, 0x2C));
+        d.rect(px + 4, sy + 4, 2, TAB_H - 8, a);
         for (int i = 0; i < TABS.length; i++) {
             int y = tabY(i);
             boolean on = TABS[i] == tab;
             boolean hover = in(mx, my, px + 4, y, SIDE_W - 8, TAB_H);
-            if (on) {
-                d.roundRect(px + 4, y, SIDE_W - 8, TAB_H, Theme.withAlpha(a, 0x2C));
-                d.rect(px + 4, y + 4, 2, TAB_H - 8, a);
-            } else if (hover) {
+            if (!on && hover) {
                 d.roundRect(px + 4, y, SIDE_W - 8, TAB_H, Theme.ROW_HOVER);
             }
             String label = TABS[i] == null ? "All" : TABS[i].label;
-            d.text(label, px + 11, y + 5, on ? Theme.TEXT : hover ? Theme.TEXT : Theme.MUTED, false);
+            d.roundRect(px + 11, y + 7, 4, 4, on ? a : hover ? Theme.MUTED : Theme.FAINT);
+            d.text(label, px + 19, y + 5, on ? Theme.TEXT : hover ? Theme.TEXT : Theme.MUTED, false);
             String n = String.valueOf(count(TABS[i], true));
             d.text(n, px + SIDE_W - 9 - d.width(n), y + 5, on ? Theme.withAlpha(a, 0xFF) : Theme.FAINT, false);
         }
@@ -273,8 +293,13 @@ public final class Menu {
                 continue;
             }
             boolean hover = mouseInList && in(mx, my, listX, ry, listW, ROW_H);
-            if (hover) {
-                d.roundRect(listX, ry, listW, ROW_H, Theme.ROW_HOVER);
+            float g = ease(rowGlow, m, hover ? 1f : 0f, dt * 10f);
+            if (g > 0.01f) {
+                d.roundRect(listX, ry, listW, ROW_H, Theme.withAlpha(0xFFFFFF, Math.round(0x14 * g)));
+            }
+            float on = knob.containsKey(m) ? knob.get(m) : (m.enabled() ? 1f : 0f);
+            if (on > 0.01f) {  // a thin accent bar marks what's switched on
+                d.rect(listX + 1, ry + 6, 2, ROW_H - 12, Theme.withAlpha(a, Math.round(0xFF * on)));
             }
             d.text(d.trim(m.name, textW), listX + 7, ry + 5, Theme.TEXT, false);
             boolean warn = hover && m.warning() != null;
@@ -308,7 +333,29 @@ public final class Menu {
                 : "Type to search";
         d.text(d.trim(hint, listW - 60), listX + 4, fy, Theme.FAINT, false);
         String counts = count(null, true) + " / " + count(null, false) + " on";
-        d.text(counts, px + pw - 9 - d.width(counts), fy, Theme.FAINT, false);
+        int cw = d.width(counts) + 10;
+        d.roundRect(px + pw - 9 - cw, fy - 3, cw, 13, Theme.withAlpha(a, 0x22));
+        d.text(counts, px + pw - 4 - cw, fy, Theme.withAlpha(a, 0xFF), false);
+    }
+
+    /** Eases a per-row value towards a target (for smooth hover highlights). */
+    private static float ease(Map<Module, Float> map, Module m, float target, float step) {
+        Float cur = map.get(m);
+        float v = cur == null ? 0f : cur;
+        v = v < target ? Math.min(target, v + step) : Math.max(target, v - step);
+        map.put(m, v);
+        return v;
+    }
+
+    /** A tiny magnifying glass, drawn pixel by pixel so it stays crisp. */
+    private static void magnifier(Draw d, int x, int y, int c) {
+        d.rect(x + 1, y, 3, 1, c);
+        d.rect(x + 1, y + 4, 3, 1, c);
+        d.rect(x, y + 1, 1, 3, c);
+        d.rect(x + 4, y + 1, 1, 3, c);
+        d.rect(x + 4, y + 4, 1, 1, c);
+        d.rect(x + 5, y + 5, 1, 1, c);
+        d.rect(x + 6, y + 6, 1, 1, c);
     }
 
     /** Moves a switch's knob towards on or off; returns 0 (off) to 1 (on). */
@@ -328,8 +375,13 @@ public final class Menu {
     /** A rounded switch; on is filled with the accent and the knob slides right. */
     private static void toggle(Draw d, int x, int y, float on, int accent, boolean hover) {
         int track = Theme.mix(hover ? 0xFF3C4352 : 0xFF2F3542, accent, on);
+        if (on > 0.05f) {  // a soft glow around a switch that's on
+            d.roundOutline(x - 1, y - 1, 24, 12, Theme.withAlpha(accent, Math.round(0x50 * on)));
+        }
         d.roundRect(x, y, 22, 10, track);
+        d.rect(x + 2, y + 1, 18, 1, Theme.withAlpha(0xFFFFFF, Math.round(0x18 + 0x18 * on)));  // sheen
         int kx = x + 2 + Math.round(on * 10);
+        d.rect(kx + 1, y + 8, 6, 1, 0x40000000);  // the knob's shadow
         d.rect(kx + 1, y + 2, 6, 6, 0xFFFFFFFF);
         d.rect(kx, y + 3, 8, 4, 0xFFFFFFFF);
     }

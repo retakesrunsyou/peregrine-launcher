@@ -7,7 +7,7 @@ package net.peregrine.client.core;
  */
 public final class TitleMenu {
 
-    public static final String CLIENT_VERSION = "0.3.0";
+    public static final String CLIENT_VERSION = "0.4.0";
 
     private static final int W = 204;
     private static final int H = 22;
@@ -66,6 +66,12 @@ public final class TitleMenu {
             b.w = i == 4 ? W - 2 * (small + GAP) : small;
             b.h = H;
         }
+    }
+
+    /** The game window's title: "Peregrine Client 0.4.0 · Minecraft 1.21.1 - Singleplayer". */
+    public static String windowTitle(String vanilla) {
+        String rest = vanilla == null ? "Minecraft" : vanilla.replaceFirst("^Minecraft\\*", "Minecraft");
+        return "Peregrine Client " + CLIENT_VERSION + " · " + rest;
     }
 
     /** Call when the main menu screen is created, so it fades in. */

@@ -7,6 +7,11 @@ import java.util.Deque;
 import java.util.List;
 
 import net.peregrine.client.core.modules.ArmorHud;
+import net.peregrine.client.core.modules.DurabilityAlertHud;
+import net.peregrine.client.core.modules.HealthHud;
+import net.peregrine.client.core.modules.ItemCountHud;
+import net.peregrine.client.core.modules.NetherCoordsHud;
+import net.peregrine.client.core.modules.SessionHud;
 import net.peregrine.client.core.modules.BiomeHud;
 import net.peregrine.client.core.modules.CompassHud;
 import net.peregrine.client.core.modules.Flag;
@@ -86,6 +91,15 @@ public final class Peregrine {
                 "Show chunk boundary lines", Module.Category.VISUALS, Platform.Option.CHUNK_BORDERS));
         modules.add(new OptionModule("hitboxes", "Hitboxes",
                 "Show entity hitboxes without the debug screen", Module.Category.VISUALS, Platform.Option.HITBOXES));
+        // Batch 3
+        modules.add(new HealthHud());
+        modules.add(new NetherCoordsHud());
+        modules.add(new SessionHud());
+        modules.add(new ItemCountHud("totems", "Totem counter", "How many Totems of Undying you're carrying",
+                "totem", "Totems", 1f, 0.62f));
+        modules.add(new ItemCountHud("arrows", "Arrow counter", "Arrows left in your inventory",
+                "arrow", "Arrows", 1f, 0.68f));
+        modules.add(new DurabilityAlertHud());
         modules.add(new Flag("clean_edges", "Clean edges", "Remove the dark vignette around the screen",
                 Module.Category.VISUALS));
         modules.add(new Flag("clear_weather", "Clear weather", "No rain or snow on your screen (the world isn't changed)",
