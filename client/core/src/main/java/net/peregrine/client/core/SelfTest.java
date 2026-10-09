@@ -170,13 +170,14 @@ public final class SelfTest {
             }
         });
         shot("11-hud-default");
-        run("turn on every HUD item", new Runnable() {
+        run("turn on every HUD item (and zoom)", new Runnable() {
             public void run() {
                 for (Module m : pc.modules()) {
                     if (m instanceof HudModule) {
                         m.setEnabled(true);
                     }
                 }
+                pc.module("zoom").setEnabled(true);
             }
         });
         waitTicks(20);
@@ -296,6 +297,43 @@ public final class SelfTest {
         clickOn("Done closes the editor", "done", new Cond() {
             public boolean ok() {
                 return !menu.editingHud();
+            }
+        });
+        // Settings pages: the gear on a row
+        clickOn("the gear opens a settings page", "gear:clock", new Cond() {
+            public boolean ok() {
+                return menu.page() == pc.module("clock");
+            }
+        });
+        waitTicks(10);
+        shot("19b-settings-page");
+        final boolean[] h24 = new boolean[1];
+        run("remember the 24-hour setting", new Runnable() {
+            public void run() {
+                h24[0] = (Boolean) pc.module("clock").settings().get(0).save();
+            }
+        });
+        clickOn("clicking an option changes it", "set:24h", new Cond() {
+            public boolean ok() {
+                return (Boolean) pc.module("clock").settings().get(0).save() != h24[0];
+            }
+        });
+        clickOn("Customize opens the editor with the style panel", "customize", new Cond() {
+            public boolean ok() {
+                return menu.editingHud() && menu.editor().styleOpen();
+            }
+        });
+        waitTicks(10);
+        shot("19c-customize");
+        clickOn("Done goes back to the settings page", "done", new Cond() {
+            public boolean ok() {
+                return !menu.editingHud() && menu.page() != null;
+            }
+        });
+        ask("key Escape");
+        waitFor("Esc goes back to the list", 60, new Cond() {
+            public boolean ok() {
+                return menu.page() == null && p.showing(Platform.Screen.PEREGRINE_MENU);
             }
         });
         ask("key Escape");

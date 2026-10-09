@@ -9,17 +9,18 @@ import net.peregrine.client.core.Theme;
 /** A gentle pulsing warning when worn armor or the held tool is about to break. */
 public final class DurabilityAlertHud extends HudModule {
 
-    private static final float LOW = 0.10f;
+    private final net.peregrine.client.core.settings.SliderSetting low = add(
+            new net.peregrine.client.core.settings.SliderSetting("threshold", "Warn below", 5f, 50f, 5f, 10f, "%.0f%%"));
 
     public DurabilityAlertHud() {
         super("durability_alert", "Low durability alert", "Warns before your armor or tool breaks",
-                true, 0.5f, 0.70f);
+                false, 0.5f, 0.70f);
     }
 
     private ItemInfo worst(Platform p) {
         ItemInfo worst = null;
         for (ItemInfo i : p.armor()) {
-            if (i.damageable() && i.remaining() <= i.maxDamage * LOW
+            if (i.damageable() && i.remaining() <= i.maxDamage * low.value / 100f
                     && (worst == null || i.remaining() < worst.remaining())) {
                 worst = i;
             }

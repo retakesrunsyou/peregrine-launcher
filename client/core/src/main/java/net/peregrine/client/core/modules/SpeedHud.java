@@ -9,6 +9,8 @@ public final class SpeedHud extends HudModule {
     private double lastX = Double.NaN;
     private double lastZ;
     private double speed;  // blocks per second, smoothed
+    private final net.peregrine.client.core.settings.ChoiceSetting unit = add(
+            new net.peregrine.client.core.settings.ChoiceSetting("unit", "Unit", 0, "Blocks a second", "km/h"));
 
     public SpeedHud() {
         super("speed", "Speed", "How fast you're moving, in blocks per second", false, 0f, 0.385f);
@@ -35,7 +37,7 @@ public final class SpeedHud extends HudModule {
     }
 
     private String value() {
-        return String.format("%.1f b/s", speed);
+        return unit.index == 1 ? String.format("%.1f km/h", speed * 3.6) : String.format("%.1f b/s", speed);
     }
 
     @Override

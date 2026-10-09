@@ -5,25 +5,49 @@ menu where you search and turn features on and off.
 
 **Main menu:** replaces Minecraft's title screen with Peregrine's (can be switched off).
 
-**HUD** (drag anywhere with Edit HUD layout)
+Out of the box only **FPS**, **Coordinates** and **Armor status** are on, at
+half size. Everything else is one click away.
+
+**Settings for each feature:** click the **gear** on a row (or right-click the
+row) for its options: zoom level, smooth zoom, fullbright strength, 24-hour
+clock, speed units, which coordinate lines to show, and more. HUD items also
+get **Customize look & position**, which opens the editor on that item.
+
+**HUD editor** (Edit HUD in the menu): drag items anywhere, drag the corner or
+scroll to resize, right-click for colors, background, opacity and shadow.
+
+**HUD**
 
 | Feature | What it shows |
 |---|---|
 | FPS | Frames per second |
-| Coordinates | Position and facing direction |
+| Coordinates | Position, facing and dimension, in every dimension and on any server or Realm; optional Nether/Overworld match |
+| Nether coordinates | The matching Nether or Overworld spot |
+| Chunk position | Which chunk you're in, and where inside it |
+| Rotation | Exact yaw and pitch |
 | Compass | A strip of headings across the top |
 | Keystrokes | WASD, mouse buttons and jump as you press them |
 | CPS | Clicks per second |
+| Reach display | How far away you were on your last hit |
+| Combo counter | Hits in a row without getting hit |
+| Target info | Name, health and distance of what you're aiming at |
+| Block info | The block you're looking at |
+| Block counter | How many of the held item you have (for bridging) |
 | Armor status | Armor and held item with durability left |
+| Low durability alert | Warns before armor or tools break |
+| Health | Exact health |
 | Potion effects | Active effects and time left |
-| Potion counter | Potions left in your inventory |
+| Potion, totem and arrow counters | What's left in your inventory |
 | Food | Hunger plus hidden saturation |
+| Experience | Level and progress |
+| Light level | Block light where you stand (mobs spawn at 0) |
 | Biome | The biome you're in |
-| Speed | Blocks per second |
+| Speed | Blocks per second or km/h |
 | World clock | In-game day and time |
 | Clock | Real-world time |
-| Ping | Delay to the server |
-| Server address | Which server you're on |
+| Stopwatch | Start, stop and reset from its settings |
+| Session time | How long you've played this session |
+| Ping, server address, players online | Your connection and the server |
 | Memory | Game memory in use |
 | Resource packs | Active packs, in order |
 
@@ -32,8 +56,7 @@ menu where you search and turn features on and off.
 **Visuals:** static FOV, steady camera, no menu blur, fewer particles,
 chunk borders, hitboxes, clean edges (no vignette), clear weather.
 
-Click **Edit HUD layout** in the menu to drag HUD items anywhere. Settings
-save to `config/peregrine-client.json`.
+Settings save to `config/peregrine-client.json`.
 
 ## Supported Minecraft versions
 

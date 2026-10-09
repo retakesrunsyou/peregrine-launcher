@@ -128,6 +128,70 @@ public interface Platform {
         return 0;
     }
 
+    // ---- added in batch 4
+
+    /** Vertical look angle in degrees (-90 = straight up, 90 = straight down). */
+    default float pitch() {
+        return 0;
+    }
+
+    /** Distance from your eyes to the entity under the crosshair, or -1 if none. */
+    default double targetDistance() {
+        return -1;
+    }
+
+    /** Name of the entity under the crosshair, or "". */
+    default String targetName() {
+        return "";
+    }
+
+    /** Health of the entity under the crosshair (half-hearts), or -1 if it has none. */
+    default float targetHealth() {
+        return -1;
+    }
+
+    default float targetMaxHealth() {
+        return 20;
+    }
+
+    /** Name of the block under the crosshair, or "". */
+    default String lookedAtBlock() {
+        return "";
+    }
+
+    /** How many of the held item you have in total, or 0 with an empty hand. */
+    default int heldItemCount() {
+        return 0;
+    }
+
+    default String heldItemName() {
+        return "";
+    }
+
+    /** Players in the tab list, or -1 outside a world. */
+    default int onlinePlayers() {
+        return -1;
+    }
+
+    default int xpLevel() {
+        return 0;
+    }
+
+    /** Progress to the next level, 0-1. */
+    default float xpProgress() {
+        return 0;
+    }
+
+    /** Block light where you stand (0-15), or -1 outside a world. Mobs spawn at 0. */
+    default int lightLevel() {
+        return -1;
+    }
+
+    /** Ticks left of the red flash after you're hurt (0 when not hurt). */
+    default int hurtTime() {
+        return 0;
+    }
+
     /** False for features this Minecraft version can't do; they're hidden from the menu. */
     default boolean supports(String moduleId) {
         return true;

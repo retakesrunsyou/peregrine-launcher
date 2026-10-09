@@ -7,6 +7,17 @@ import java.util.Deque;
 import java.util.List;
 
 import net.peregrine.client.core.modules.ArmorHud;
+import net.peregrine.client.core.modules.ReachHud;
+import net.peregrine.client.core.modules.ComboHud;
+import net.peregrine.client.core.modules.TargetHud;
+import net.peregrine.client.core.modules.BlockInfoHud;
+import net.peregrine.client.core.modules.BlockCountHud;
+import net.peregrine.client.core.modules.PlayersHud;
+import net.peregrine.client.core.modules.RotationHud;
+import net.peregrine.client.core.modules.StopwatchHud;
+import net.peregrine.client.core.modules.XpHud;
+import net.peregrine.client.core.modules.ChunkHud;
+import net.peregrine.client.core.modules.LightHud;
 import net.peregrine.client.core.modules.DurabilityAlertHud;
 import net.peregrine.client.core.modules.HealthHud;
 import net.peregrine.client.core.modules.ItemCountHud;
@@ -104,6 +115,18 @@ public final class Peregrine {
                 Module.Category.VISUALS));
         modules.add(new Flag("clear_weather", "Clear weather", "No rain or snow on your screen (the world isn't changed)",
                 Module.Category.VISUALS));
+        // Batch 4
+        modules.add(new ReachHud());
+        modules.add(new ComboHud());
+        modules.add(new TargetHud());
+        modules.add(new BlockInfoHud());
+        modules.add(new BlockCountHud());
+        modules.add(new PlayersHud());
+        modules.add(new RotationHud());
+        modules.add(new StopwatchHud());
+        modules.add(new XpHud());
+        modules.add(new ChunkHud());
+        modules.add(new LightHud());
         this.menu = new Menu(this);
         this.titleMenu = new TitleMenu(this);
     }
@@ -195,6 +218,13 @@ public final class Peregrine {
         Deque<Long> q = button == 0 ? leftClicks : button == 1 ? rightClicks : null;
         if (q != null) {
             q.addLast(System.currentTimeMillis());
+        }
+        if (button == 0 && platform.inWorld() && platform.showing(Platform.Screen.NONE)) {
+            double reach = platform.targetDistance();
+            if (reach >= 0) {  // an attack on something: feed the reach display and combo counter
+                ((ReachHud) module("reach")).hit(reach);
+                ((ComboHud) module("combo")).hit();
+            }
         }
     }
 

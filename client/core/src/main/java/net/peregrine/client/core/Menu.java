@@ -5,6 +5,12 @@ import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 
+import net.peregrine.client.core.settings.ActionSetting;
+import net.peregrine.client.core.settings.BoolSetting;
+import net.peregrine.client.core.settings.ChoiceSetting;
+import net.peregrine.client.core.settings.Setting;
+import net.peregrine.client.core.settings.SliderSetting;
+
 /**
  * The in-game menu (Right Shift): a compact window in the middle of the screen
  * with categories down the side, a search box, and a list of features with
@@ -43,6 +49,28 @@ public final class Menu {
     private final Map<Module, Float> knob = new IdentityHashMap<Module, Float>();
     private final Map<Module, Float> rowGlow = new IdentityHashMap<Module, Float>();
     private float tabSlide = -1;  // where the category highlight is, sliding to the chosen one
+    private Module page;          // the feature whose settings page is open, or null for the list
+    private long pageOpenedAt;
+    private SliderSetting draggingSlider;
+    private final Map<Setting, Float> settingKnob = new IdentityHashMap<Setting, Float>();
+
+    /** Something clickable on a settings page, from the last frame (menu pixels). */
+    private static final class Hit {
+        final String id;
+        final int x, y, w, h;
+        final Setting setting;
+
+        Hit(String id, int x, int y, int w, int h, Setting setting) {
+            this.id = id;
+            this.x = x;
+            this.y = y;
+            this.w = w;
+            this.h = h;
+            this.setting = setting;
+        }
+    }
+
+    private final List<Hit> hits = new ArrayList<Hit>();
 
     // Layout from the last render, used for clicks.
     private int px, py, pw, ph, listX, listY, listW, listH;
@@ -82,6 +110,28 @@ public final class Menu {
         knob.clear();
         rowGlow.clear();
         tabSlide = -1;
+        page = null;
+        draggingSlider = null;
+        hits.clear();
+    }
+
+    /** Opens a feature's settings page (the gear on its row, or right-click). */
+    void openPage(Module m) {
+        page = m;
+        pageOpenedAt = System.currentTimeMillis();
+        scroll = 0;
+        smoothScroll = 0;
+        hits.clear();
+        settingKnob.clear();
+    }
+
+    Module page() {
+        return page;
+    }
+
+    /** Features with a gear: anything with options, and every HUD item (for its look). */
+    static boolean hasPage(Module m) {
+        return m instanceof HudModule || !m.settings().isEmpty();
     }
 
     // ---- for the self-test (see SelfTest)
@@ -107,8 +157,20 @@ public final class Menu {
         if (what.equals("edit")) {
             return editW > 0 ? new int[] {s(editX + editW / 2), s(editY + editH / 2)} : null;
         }
+        if (page != null) {
+            for (Hit h : hits) {
+                if (h.id.equals(what)) {
+                    return new int[] {s(h.x + h.w / 2), s(h.y + h.h / 2)};
+                }
+            }
+            return null;
+        }
         List<Module> mods = visible();
         for (int i = 0; i < mods.size(); i++) {
+            if (what.equals("gear:" + mods.get(i).id) && hasPage(mods.get(i))) {
+                int y = rowY(i) + ROW_H / 2;
+                return y > listY && y < listY + listH ? new int[] {s(gearX() + 5), s(y)} : null;
+            }
             if (mods.get(i).id.equals(what)) {
                 int y = rowY(i) + ROW_H / 2;
                 return y > listY && y < listY + listH ? new int[] {s(listX + listW / 2), s(y)} : null;
@@ -182,6 +244,10 @@ public final class Menu {
 
     private int rowY(int i) {
         return listY + i * (ROW_H + 2) - Math.round(smoothScroll);
+    }
+
+    private int gearX() {
+        return listX + listW - 48;
     }
 
     private int tabY(int i) {
@@ -302,6 +368,11 @@ public final class Menu {
         d.text(edit, editX + (editW - d.width(edit)) / 2, editY + 4,
                 editHover ? 0xFF15171C : Theme.withAlpha(a, 0xFF), false);
 
+        if (page != null) {
+            renderPage(d, mx, my, p, dt, now, a);
+            return;
+        }
+
         // Feature list
         List<Module> mods = visible();
         maxScroll = Math.max(0, mods.size() * (ROW_H + 2) - 2 - listH);
@@ -316,7 +387,7 @@ public final class Menu {
         d.clip(s(listX), s(listY), s(listW), s(listH));
         d.pushScale(0, 0, k);
         boolean mouseInList = in(mx, my, listX, listY, listW, listH);
-        int textW = listW - 44;
+        int textW = listW - 60;
         for (int i = 0; i < mods.size(); i++) {
             Module m = mods.get(i);
             int ry = rowY(i);
@@ -338,6 +409,14 @@ public final class Menu {
             d.text(d.trim(sub, textW), listX + 7, ry + 16, warn ? Theme.OK : Theme.FAINT, false);
             float k = animate(m, dt);
             toggle(d, listX + listW - 30, ry + (ROW_H - 10) / 2, k, a, hover);
+            if (hasPage(m)) {
+                int gx = gearX(), gy = ry + (ROW_H - 10) / 2;
+                boolean gh = mouseInList && in(mx, my, gx - 3, gy - 3, 16, 16);
+                if (gh) {
+                    d.roundRect(gx - 3, gy - 3, 16, 16, Theme.ROW_HOVER);
+                }
+                gear(d, gx, gy, gh ? a : hover ? Theme.MUTED : Theme.FAINT);
+            }
             if (i < mods.size() - 1) {
                 d.rect(listX + 7, ry + ROW_H + 1, listW - 14, 1, 0x0CFFFFFF);
             }
@@ -363,12 +442,276 @@ public final class Menu {
         int fy = py + ph - FOOTER_H + 5;
         d.rect(listX, py + ph - FOOTER_H - 1, listW, 1, Theme.HAIRLINE);
         String hint = searching ? mods.size() + (mods.size() == 1 ? " result" : " results")
-                : "Type to search";
+                : "Type to search  \u00b7  Gear for settings";
         d.text(d.trim(hint, listW - 60), listX + 4, fy, Theme.FAINT, false);
         String counts = count(null, true) + " / " + count(null, false) + " on";
         int cw = d.width(counts) + 10;
         d.roundRect(px + pw - 9 - cw, fy - 3, cw, 13, Theme.withAlpha(a, 0x22));
         d.text(counts, px + pw - 4 - cw, fy, Theme.withAlpha(a, 0xFF), false);
+    }
+
+
+    // ------------------------------------------------------- settings page
+
+    private static final int SET_H = 22;
+
+    private void hit(String id, int x, int y, int w, int h, Setting setting) {
+        hits.add(new Hit(id, x, y, w, h, setting));
+    }
+
+    private void renderPage(Draw d, int mx, int my, Platform p, float dt, long now, int a) {
+        Module m = page;
+        hits.clear();
+        float t = FadeDraw.progress(pageOpenedAt, 160);
+        float e = 1f - (1f - t) * (1f - t);
+        int ox = Math.round((1f - e) * 8);  // slides in from the right a little
+        int x = listX + ox;
+        int w = listW;
+
+        // Header: back, name and description, the feature's own switch
+        boolean bh = in(mx, my, x, listY + 3, 16, 16);
+        d.roundRect(x, listY + 3, 16, 16, bh ? Theme.withAlpha(a, 0x40) : Theme.FIELD);
+        d.roundOutline(x, listY + 3, 16, 16, bh ? Theme.withAlpha(a, 0xC0) : Theme.HAIRLINE);
+        arrowLeft(d, x + 6, listY + 7, bh ? Theme.TEXT : Theme.MUTED);
+        hit("back", x, listY + 3, 16, 16, null);
+        d.text(d.trim(m.name, w - 66), x + 22, listY + 2, Theme.TEXT, false);
+        d.text(d.trim(m.description, w - 66), x + 22, listY + 13, Theme.FAINT, false);
+        boolean th = in(mx, my, x + w - 30, listY + 6, 22, 10);
+        toggle(d, x + w - 30, listY + 6, animate(m, dt), a, th);
+        hit("toggle", x + w - 32, listY + 3, 26, 16, null);
+        d.rect(x, listY + 25, w - 4, 1, Theme.HAIRLINE);
+
+        int top = listY + 28;
+        int viewH = listH - 28;
+        int contentH = 0;
+        if (m instanceof HudModule) {
+            contentH += 40;
+        }
+        contentH += m.settings().size() * (SET_H + 1);
+        if (!m.settings().isEmpty()) {
+            contentH += 24;
+        }
+        maxScroll = Math.max(0, contentH - viewH);
+        scroll = clamp(scroll, 0, maxScroll);
+        smoothScroll += (scroll - smoothScroll) * Math.min(1f, dt * 18f);
+        if (Math.abs(scroll - smoothScroll) < 0.5f) {
+            smoothScroll = scroll;
+        }
+
+        d.popScale();
+        d.clip(s(listX), s(top), s(listW), s(viewH));
+        d.pushScale(0, 0, k);
+        boolean inView = in(mx, my, listX, top, listW, viewH);
+        int y = top + 2 - Math.round(smoothScroll);
+
+        if (m instanceof HudModule) {
+            String label = "Customize look & position";
+            int bw = Math.min(w - 8, d.width(label) + 26);
+            boolean ch = inView && in(mx, my, x, y, bw, 18);
+            d.roundRect(x, y, bw, 18, Theme.withAlpha(a, ch ? 0xFF : 0x2A));
+            d.roundOutline(x, y, bw, 18, Theme.withAlpha(a, ch ? 0xFF : 0xA0));
+            pencil(d, x + 7, y + 5, ch ? 0xFF15171C : Theme.withAlpha(a, 0xFF));
+            d.text(label, x + 19, y + 5, ch ? 0xFF15171C : Theme.withAlpha(a, 0xFF), false);
+            hit("customize", x, y, bw, 18, null);
+            d.text(d.trim("Size, colors and background. Or right-click it in Edit HUD.", w - 8),
+                    x + 1, y + 23, Theme.FAINT, false);
+            y += 40;
+        }
+
+        List<Setting> list = m.settings();
+        for (int i = 0; i < list.size(); i++) {
+            Setting st = list.get(i);
+            boolean rh = inView && in(mx, my, x, y, w - 4, SET_H);
+            if (rh) {
+                d.roundRect(x, y, w - 4, SET_H, Theme.withAlpha(0xFFFFFF, 0x0E));
+            }
+            d.text(d.trim(st.label, w / 2), x + 6, y + 7, rh ? Theme.TEXT : Theme.MUTED, false);
+            int right = x + w - 8;
+            String id = "set:" + st.id;
+            if (st instanceof BoolSetting) {
+                BoolSetting b = (BoolSetting) st;
+                float target = b.value ? 1f : 0f;
+                Float cur = settingKnob.get(st);
+                float v = cur == null ? target : cur;
+                v = v < target ? Math.min(target, v + dt * 9f) : Math.max(target, v - dt * 9f);
+                settingKnob.put(st, v);
+                toggle(d, right - 22, y + 6, v, a, rh);
+                hit(id, x, y, w - 4, SET_H, st);
+            } else if (st instanceof SliderSetting) {
+                SliderSetting sl = (SliderSetting) st;
+                String val = sl.text();
+                int vw = Math.max(d.width(val), 28);
+                d.text(val, right - d.width(val), y + 7, Theme.TEXT, false);
+                int tw = Math.max(40, Math.min(110, w - 16 - w / 2 - vw));
+                int tx = right - vw - 8 - tw;
+                boolean active = draggingSlider == sl;
+                d.roundRect(tx, y + 10, tw, 3, 0xFF2F3542);
+                int fill = Math.round(sl.fraction() * tw);
+                d.roundRect(tx, y + 10, Math.max(2, fill), 3, a);
+                int kx = tx + fill - 3;
+                d.rect(kx + 1, y + 7, 4, 9, rh || active ? 0xFFFFFFFF : 0xFFE6E6E6);
+                d.rect(kx, y + 8, 6, 7, rh || active ? 0xFFFFFFFF : 0xFFE6E6E6);
+                hit(id, tx - 3, y + 2, tw + 6, SET_H - 4, st);
+            } else if (st instanceof ChoiceSetting || st instanceof ActionSetting) {
+                boolean action = st instanceof ActionSetting;
+                String val = action ? ((ActionSetting) st).button() : ((ChoiceSetting) st).text();
+                int pw2 = d.width(val) + (action ? 14 : 22);
+                int bx = right - pw2;
+                boolean ph2 = inView && in(mx, my, bx, y + 3, pw2, 16);
+                d.roundRect(bx, y + 3, pw2, 16, action ? Theme.withAlpha(a, ph2 ? 0xFF : 0x2A)
+                        : ph2 ? Theme.ROW_HOVER : Theme.FIELD);
+                d.roundOutline(bx, y + 3, pw2, 16, action ? Theme.withAlpha(a, 0xA0)
+                        : ph2 ? Theme.withAlpha(a, 0xC0) : Theme.HAIRLINE);
+                int tc = action ? (ph2 ? 0xFF15171C : Theme.withAlpha(a, 0xFF)) : Theme.TEXT;
+                d.text(val, bx + 7, y + 7, tc, false);
+                if (!action) {  // a small arrow: click to cycle
+                    arrowRight(d, bx + pw2 - 10, y + 8, ph2 ? a : Theme.FAINT);
+                }
+                hit(id, bx, y + 3, pw2, 16, st);
+            }
+            y += SET_H;
+            if (i < list.size() - 1) {
+                d.rect(x + 6, y, w - 16, 1, 0x0CFFFFFF);
+            }
+            y += 1;
+        }
+        if (!list.isEmpty()) {
+            String reset = "Reset options";
+            int rw = d.width(reset) + 14;
+            int ry = y + 6;
+            boolean rh = inView && in(mx, my, x, ry, rw, 14);
+            d.roundRect(x, ry, rw, 14, rh ? Theme.ROW_HOVER : 0x00000000);
+            d.roundOutline(x, ry, rw, 14, rh ? Theme.MUTED : Theme.HAIRLINE);
+            d.text(reset, x + 7, ry + 3, rh ? Theme.TEXT : Theme.MUTED, false);
+            hit("reset", x, ry, rw, 14, null);
+        }
+        d.popScale();
+        d.unclip();
+        d.pushScale(0, 0, k);
+        // Only what's inside the view can be clicked.
+        for (int i = hits.size() - 1; i >= 0; i--) {
+            Hit h = hits.get(i);
+            if (h.setting != null || h.id.equals("customize") || h.id.equals("reset")) {
+                if (h.y + h.h / 2 < top || h.y + h.h / 2 > top + viewH) {
+                    hits.remove(i);
+                }
+            }
+        }
+        if (maxScroll > 0) {
+            int track = viewH - 4;
+            int barH = Math.max(14, track * viewH / (viewH + maxScroll));
+            int barY = top + 2 + Math.round((track - barH) * (smoothScroll / maxScroll));
+            d.roundRect(px + pw - 5, barY, 2, barH, inView ? Theme.withAlpha(a, 0xB0) : 0x40FFFFFF);
+        }
+
+        // Footer
+        int fy = py + ph - FOOTER_H + 5;
+        d.rect(listX, py + ph - FOOTER_H - 1, listW, 1, Theme.HAIRLINE);
+        d.text(d.trim("Esc to go back", listW - 60), listX + 4, fy, Theme.FAINT, false);
+        String cat = m.category.label;
+        int cw = d.width(cat) + 10;
+        d.roundRect(px + pw - 9 - cw, fy - 3, cw, 13, Theme.withAlpha(a, 0x22));
+        d.text(cat, px + pw - 4 - cw, fy, Theme.withAlpha(a, 0xFF), false);
+    }
+
+    private void slideTo(SliderSetting sl, int mx) {
+        for (Hit h : hits) {
+            if (h.setting == sl) {
+                float t = (mx - (h.x + 3)) / (float) Math.max(1, h.w - 6);
+                sl.set(sl.min + Math.max(0f, Math.min(1f, t)) * (sl.max - sl.min));
+                return;
+            }
+        }
+    }
+
+    private boolean pageClicked(int mx, int my) {
+        for (Hit h : new ArrayList<Hit>(hits)) {
+            if (!in(mx, my, h.x, h.y, h.w, h.h)) {
+                continue;
+            }
+            if (h.id.equals("back")) {
+                closePage();
+            } else if (h.id.equals("toggle")) {
+                page.setEnabled(!page.enabled());
+            } else if (h.id.equals("customize")) {
+                HudModule hm = (HudModule) page;
+                if (!hm.enabled()) {
+                    hm.setEnabled(true);
+                }
+                editingHud = true;
+                editor.openFor(hm);
+            } else if (h.id.equals("reset")) {
+                for (Setting st : page.settings()) {
+                    st.reset();
+                }
+            } else if (h.setting instanceof BoolSetting) {
+                ((BoolSetting) h.setting).value = !((BoolSetting) h.setting).value;
+            } else if (h.setting instanceof ChoiceSetting) {
+                ((ChoiceSetting) h.setting).next();
+            } else if (h.setting instanceof ActionSetting) {
+                ((ActionSetting) h.setting).action.run();
+            } else if (h.setting instanceof SliderSetting) {
+                draggingSlider = (SliderSetting) h.setting;
+                slideTo(draggingSlider, mx);
+            }
+            pc.markDirty();
+            return true;
+        }
+        return false;
+    }
+
+    private void closePage() {
+        page = null;
+        draggingSlider = null;
+        hits.clear();
+        scroll = 0;
+        smoothScroll = 0;
+    }
+
+    /** A gear: a ring with eight teeth, drawn pixel by pixel (10x10). */
+    private static void gear(Draw d, int x, int y, int c) {
+        d.rect(x + 3, y + 1, 4, 1, c);
+        d.rect(x + 3, y + 8, 4, 1, c);
+        d.rect(x + 1, y + 3, 1, 4, c);
+        d.rect(x + 8, y + 3, 1, 4, c);
+        d.rect(x + 2, y + 2, 1, 1, c);
+        d.rect(x + 7, y + 2, 1, 1, c);
+        d.rect(x + 2, y + 7, 1, 1, c);
+        d.rect(x + 7, y + 7, 1, 1, c);
+        // teeth
+        d.rect(x + 4, y, 2, 1, c);
+        d.rect(x + 4, y + 9, 2, 1, c);
+        d.rect(x, y + 4, 1, 2, c);
+        d.rect(x + 9, y + 4, 1, 2, c);
+        d.rect(x + 1, y + 1, 1, 1, c);
+        d.rect(x + 8, y + 1, 1, 1, c);
+        d.rect(x + 1, y + 8, 1, 1, c);
+        d.rect(x + 8, y + 8, 1, 1, c);
+        // hub
+        d.rect(x + 4, y + 4, 2, 2, c);
+    }
+
+    private static void arrowLeft(Draw d, int x, int y, int c) {
+        for (int i = 0; i < 4; i++) {
+            d.rect(x + i, y + 3 - i, 1, 1, c);
+            d.rect(x + i, y + 3 + i, 1, 1, c);
+        }
+        d.rect(x, y + 3, 1, 1, c);
+    }
+
+    private static void arrowRight(Draw d, int x, int y, int c) {
+        for (int i = 0; i < 3; i++) {
+            d.rect(x + i, y + i, 1, 1, c);
+            d.rect(x + i, y + 4 - i, 1, 1, c);
+        }
+    }
+
+    /** A small pencil, for "customize". */
+    private static void pencil(Draw d, int x, int y, int c) {
+        for (int i = 0; i < 6; i++) {
+            d.rect(x + 1 + i, y + 6 - i, 2, 1, c);
+        }
+        d.rect(x, y + 7, 1, 1, c);
     }
 
     /** Eases a per-row value towards a target (for smooth hover highlights). */
@@ -433,12 +776,22 @@ public final class Menu {
             }
             return true;
         }
-        if (button != 0) {
-            return false;
-        }
         int mx = Math.round(screenMx / k);
         int my = Math.round(screenMy / k);
         layout(p);
+        if (button == 1 && page == null && in(mx, my, listX, listY, listW, listH)) {
+            // Right-click a feature to open its settings, same as the gear.
+            List<Module> mods = visible();
+            for (int i = 0; i < mods.size(); i++) {
+                if (in(mx, my, listX, rowY(i), listW, ROW_H) && hasPage(mods.get(i))) {
+                    openPage(mods.get(i));
+                    return true;
+                }
+            }
+        }
+        if (button != 0) {
+            return false;
+        }
         if (!in(mx, my, px, py, pw, ph) || in(mx, my, closeX - 3, closeY - 3, 13, 13)) {
             // A click outside the window (or on ×) closes it, like any pop-up.
             p.openScreen(p.inWorld() ? Platform.Screen.NONE : Platform.Screen.TITLE);
@@ -446,6 +799,9 @@ public final class Menu {
         }
         for (int i = 0; i < TABS.length; i++) {
             if (in(mx, my, px + 4, tabY(i), SIDE_W - 8, TAB_H)) {
+                if (page != null) {
+                    closePage();
+                }
                 tab = TABS[i];
                 scroll = 0;
                 smoothScroll = 0;
@@ -457,11 +813,20 @@ public final class Menu {
             editor.open();
             return true;
         }
+        if (page != null) {
+            pageClicked(mx, my);
+            return true;
+        }
         if (in(mx, my, listX, listY, listW, listH)) {
             List<Module> mods = visible();
             for (int i = 0; i < mods.size(); i++) {
                 if (in(mx, my, listX, rowY(i), listW, ROW_H)) {
                     Module m = mods.get(i);
+                    int gy = rowY(i) + (ROW_H - 10) / 2;
+                    if (hasPage(m) && in(mx, my, gearX() - 3, gy - 3, 16, 16)) {
+                        openPage(m);
+                        return true;
+                    }
                     m.setEnabled(!m.enabled());
                     pc.markDirty();
                     return true;
@@ -472,10 +837,19 @@ public final class Menu {
     }
 
     public boolean mouseDragged(int screenMx, int screenMy) {
+        if (draggingSlider != null && !editingHud) {
+            slideTo(draggingSlider, Math.round(screenMx / k));
+            return true;
+        }
         return editingHud && editor.mouseDragged(screenMx, screenMy);
     }
 
     public boolean mouseReleased() {
+        if (draggingSlider != null) {
+            draggingSlider = null;
+            pc.markDirty();
+            return true;
+        }
         return editingHud && editor.mouseReleased();
     }
 
@@ -489,11 +863,18 @@ public final class Menu {
         return true;
     }
 
-    /** Returns true if the key was used. Esc is only used in the HUD editor. */
+    /** Returns true if the key was used. Esc is used by the HUD editor and settings pages (to go back). */
     public boolean keyPressed(int key) {
         if (editingHud) {
             if (key == KEY_ESCAPE || key == KEY_ENTER) {
                 editingHud = false;
+                return true;
+            }
+            return false;
+        }
+        if (page != null) {
+            if (key == KEY_ESCAPE || (key == KEY_BACKSPACE && search.isEmpty())) {
+                closePage();
                 return true;
             }
             return false;
@@ -520,6 +901,9 @@ public final class Menu {
         }
         if (search.isEmpty() && c == ' ') {
             return true;
+        }
+        if (page != null) {  // typing goes back to the list to search
+            closePage();
         }
         search += c;
         scroll = 0;

@@ -13,12 +13,16 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
+import net.peregrine.client.core.modules.MainMenu;
+
 /**
  * Saves which modules are on and where HUD items sit, in
  * config/peregrine-client.json. Uses only old Gson APIs so it works on every
  * Minecraft version's bundled Gson.
  */
 final class Config {
+
+    static final int VERSION = 2;
 
     private Config() {
     }
@@ -34,6 +38,9 @@ final class Config {
             if (root.has("accent")) {
                 p.setAccent((int) Long.parseLong(root.get("accent").getAsString(), 16));
             }
+            // Files from before version 2 used the old defaults (most things on, full size);
+            // those switch states are dropped so the new defaults apply once.
+            boolean current = root.has("version") && root.get("version").getAsInt() >= VERSION;
             JsonObject mods = root.has("modules") ? root.getAsJsonObject("modules") : new JsonObject();
             for (Map.Entry<String, JsonElement> e : mods.entrySet()) {
                 Module m = p.module(e.getKey());
@@ -66,8 +73,16 @@ final class Config {
                         h.shadow = o.get("shadow").getAsBoolean();
                     }
                 }
-                if (o.has("enabled")) {
+                if (o.has("enabled") && (current || m instanceof MainMenu)) {
                     m.setEnabledQuietly(o.get("enabled").getAsBoolean());
+                }
+                if (o.has("settings") && o.get("settings").isJsonObject()) {
+                    JsonObject so = o.getAsJsonObject("settings");
+                    for (net.peregrine.client.core.settings.Setting s : m.settings()) {
+                        if (so.has(s.id) && so.get(s.id).isJsonPrimitive()) {
+                            s.load(so.get(s.id).getAsString());
+                        }
+                    }
                 }
             }
         } catch (Exception e) {
@@ -78,6 +93,7 @@ final class Config {
 
     static void save(Peregrine p) {
         JsonObject root = new JsonObject();
+        root.addProperty("version", VERSION);
         root.addProperty("accent", Integer.toHexString(p.accent()));
         JsonObject mods = new JsonObject();
         for (Module m : p.modules()) {
@@ -87,7 +103,7 @@ final class Config {
                 HudModule h = (HudModule) m;
                 o.addProperty("x", h.fx);
                 o.addProperty("y", h.fy);
-                if (h.scale != 1f) {
+                if (h.scale != HudModule.DEFAULT_SCALE) {
                     o.addProperty("scale", h.scale);
                 }
                 if (h.textColor != 0) {
@@ -105,6 +121,18 @@ final class Config {
                 if (!h.shadow) {
                     o.addProperty("shadow", false);
                 }
+            }
+            JsonObject so = new JsonObject();
+            for (net.peregrine.client.core.settings.Setting s : m.settings()) {
+                Object v = s.save();
+                if (v instanceof Boolean) {
+                    so.addProperty(s.id, (Boolean) v);
+                } else if (v instanceof Number) {
+                    so.addProperty(s.id, (Number) v);
+                }
+            }
+            if (so.entrySet().size() > 0) {
+                o.add("settings", so);
             }
             mods.add(m.id, o);
         }

@@ -61,6 +61,15 @@ final class HudEditor {
         guideX = guideY = -1;
     }
 
+    /** Opens with one item picked and its style panel showing (from its settings page). */
+    void openFor(HudModule h) {
+        open();
+        if (h.enabled()) {
+            selected = h;
+            styleOpen = true;
+        }
+    }
+
     boolean wantsExit() {
         boolean e = exit;
         exit = false;
@@ -579,6 +588,14 @@ final class HudEditor {
         }
         if (what.equals("handle") && selected != null) {
             return new int[] {selected.lastX + selected.lastW - 1, selected.lastY + selected.lastH - 1};
+        }
+        if (what.startsWith("item:")) {
+            Module m = pc.module(what.substring(5));
+            if (m instanceof HudModule && ((HudModule) m).lastX >= 0) {
+                HudModule h = (HudModule) m;
+                return new int[] {h.lastX + h.lastW / 2, h.lastY + h.lastH / 2};
+            }
+            return null;
         }
         if (what.startsWith("text-swatch-") && styleOpen()) {
             int i = Integer.parseInt(what.substring("text-swatch-".length()));

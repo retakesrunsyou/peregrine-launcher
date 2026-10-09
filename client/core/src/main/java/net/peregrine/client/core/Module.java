@@ -29,6 +29,19 @@ public abstract class Module {
         this.enabled = defaultOn;
     }
 
+    private final java.util.List<net.peregrine.client.core.settings.Setting> settings =
+            new java.util.ArrayList<net.peregrine.client.core.settings.Setting>();
+
+    /** Options shown on this feature's settings page (the gear in the menu). */
+    public java.util.List<net.peregrine.client.core.settings.Setting> settings() {
+        return settings;
+    }
+
+    protected <T extends net.peregrine.client.core.settings.Setting> T add(T setting) {
+        settings.add(setting);
+        return setting;
+    }
+
     public boolean enabled() {
         return enabled;
     }

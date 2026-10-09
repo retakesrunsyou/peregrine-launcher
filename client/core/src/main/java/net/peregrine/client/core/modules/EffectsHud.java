@@ -14,7 +14,7 @@ public final class EffectsHud extends HudModule {
     private static final String[] ROMAN = {"", " II", " III", " IV", " V", " VI", " VII", " VIII", " IX", " X"};
 
     public EffectsHud() {
-        super("effects", "Potion effects", "Active effects and how long they last", true, 1f, 0.15f);
+        super("effects", "Potion effects", "Active effects and how long they last", false, 1f, 0.15f);
     }
 
     private static String name(EffectInfo e) {

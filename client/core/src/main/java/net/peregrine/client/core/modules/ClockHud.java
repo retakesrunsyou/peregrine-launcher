@@ -10,14 +10,17 @@ import net.peregrine.client.core.Theme;
 
 public final class ClockHud extends HudModule {
 
-    private final SimpleDateFormat format = new SimpleDateFormat("h:mm a");
+    private final SimpleDateFormat format12 = new SimpleDateFormat("h:mm a");
+    private final SimpleDateFormat format24 = new SimpleDateFormat("HH:mm");
+    private final net.peregrine.client.core.settings.BoolSetting h24 = add(
+            new net.peregrine.client.core.settings.BoolSetting("24h", "24-hour clock", false));
 
     public ClockHud() {
         super("clock", "Clock", "The real-world time", false, 1f, 0f);
     }
 
     private String value() {
-        return format.format(new Date());
+        return (h24.value ? format24 : format12).format(new Date());
     }
 
     @Override

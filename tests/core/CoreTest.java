@@ -16,16 +16,23 @@ public class CoreTest {
         public double gamma(){return gamma;} public void setGamma(double v){gamma=v;}
         public int screenWidth(){return 480;} public int screenHeight(){return 270;}
         public Path configFile(){return cfg;}
-        public void openScreen(Screen w){opened=w;} public boolean showing(Screen w){return false;}
+        public void openScreen(Screen w){opened=w;} public boolean showing(Screen w){return playing && w==Screen.NONE;}
         public String playerName(){return "Benjamin";} public String minecraftVersion(){return "1.21.1";}
         public long worldTime(){return 6000;} public String biome(){return "minecraft:dark_forest";} public float yaw(){return 180f;}
         public int food(){return 18;} public float saturation(){return 5.2f;} public int potionCount(){return 4;}
         public java.util.List<String> resourcePacks(){return java.util.Arrays.asList("Faithful 32x","Default");}
         public void setOption(Option o, boolean on){ if(on) optionsOn.add(o); else optionsOn.remove(o); }
         public int ping(){return ping;} public String serverAddress(){return server;} public long worldDay(){return 42;}
+        public float pitch(){return 12.5f;} public double targetDistance(){return target ? 2.87 : -1;}
+        public String targetName(){return target ? "Zombie" : "";} public float targetHealth(){return target ? 14 : -1;}
+        public String lookedAtBlock(){return "Oak Planks";} public int heldItemCount(){return 128;} public String heldItemName(){return "Cobblestone";}
+        public int onlinePlayers(){return 23;} public int xpLevel(){return 30;} public float xpProgress(){return 0.25f;}
+        public int lightLevel(){return 7;} public int hurtTime(){return hurt;}
+        public String dimension(){return dim;}
     }
+    static boolean target; static int hurt; static String dim = "minecraft:overworld";
     static java.util.Set<Platform.Option> optionsOn=new java.util.HashSet<>();
-    static Platform.Screen opened; static int ping=-1; static String server=null;
+    static boolean playing; static Platform.Screen opened; static int ping=-1; static String server=null;
     static List<String> texts = new ArrayList<>();
     static class D implements Draw {
         public void rect(int x,int y,int w,int h,int c){}
@@ -34,14 +41,29 @@ public class CoreTest {
         public void item(Object st,int x,int y){} public void clip(int x,int y,int w,int h){} public void unclip(){}
         public void textScaled(String s,int x,int y,int c,float sc,boolean sh){texts.add(s+"@"+x+","+y);}
     }
+    static int[] centerOfReflect(Menu m, String what) throws Exception {
+        java.lang.reflect.Method c = Menu.class.getDeclaredMethod("centerOf", String.class); c.setAccessible(true);
+        return (int[]) c.invoke(m, what);
+    }
     static void check(boolean c, String m){ if(!c) throw new AssertionError(m); System.out.println("ok  " + m); }
     static int[] find(String prefix){ for(String t: texts) if(t.startsWith(prefix)){ String[] xy=t.substring(t.lastIndexOf('@')+1).split(","); return new int[]{Integer.parseInt(xy[0]),Integer.parseInt(xy[1])}; } throw new AssertionError("not drawn: "+prefix); }
     public static void main(String[] a) throws Exception {
         cfg = Files.createTempDirectory("pc").resolve("config/peregrine-client.json");
         Peregrine pc = Peregrine.init(new P()); D d = new D(); Menu m = pc.menu();
-        check(pc.modules().size()==36, "36 modules registered");
-        for (String id : new String[]{"health","nether_coords","session","totems","arrows","durability_alert"}) check(pc.module(id)!=null, id+" exists");
+        check(pc.modules().size()==47, "47 modules registered");
+        for (String id : new String[]{"health","nether_coords","session","totems","arrows","durability_alert",
+                "reach","combo","target","block_info","block_count","players","rotation","stopwatch","xp","chunk","light"}) check(pc.module(id)!=null, id+" exists");
+        // Defaults: only FPS, coordinates and armor (plus the title screen) start on, every HUD item at 50%
+        for (net.peregrine.client.core.Module mod : pc.modules()) {
+            boolean want = Arrays.asList("fps","coords","armor","main_menu").contains(mod.id);
+            check(mod.enabled()==want, mod.id + (want ? " on" : " off") + " by default");
+            if (mod instanceof HudModule) check(((HudModule)mod).scale==0.5f, mod.id + " starts at 50%");
+        }
         texts.clear(); pc.renderHud(d);
+        check(texts.stream().anyMatch(t->t.startsWith("Overworld@")), "coords show the dimension");
+        dim = "minecraft:the_nether"; texts.clear(); pc.renderHud(d);
+        check(texts.stream().anyMatch(t->t.startsWith("Nether@")), "...in the Nether too"); dim = "minecraft:overworld";
+        pc.module("effects").setEnabled(true); texts.clear(); pc.renderHud(d);
         check(texts.stream().anyMatch(t->t.startsWith("144")), "FPS HUD shows 144");
         check(texts.stream().anyMatch(t->t.startsWith("12.3  64.0  -5.5")), "coords formatted");
         check(texts.stream().anyMatch(t->t.startsWith("Speed II")) && texts.stream().anyMatch(t->t.startsWith("1:15")), "effect name + time");
@@ -66,6 +88,8 @@ public class CoreTest {
         texts.clear(); m.render(d,0,0);
         check(texts.stream().anyMatch(t->t.startsWith("Zoom@")) && texts.stream().noneMatch(t->t.startsWith("FPS@")), "Utility tab shows only utility");
         // zoom
+        pc.module("zoom").setEnabled(true);
+        for (net.peregrine.client.core.settings.Setting st : pc.module("zoom").settings()) if (st.id.equals("smooth")) ((net.peregrine.client.core.settings.BoolSetting)st).value=false;
         check(pc.zoomDivisor()==1.0, "no zoom without key"); zoomKey=true; check(pc.zoomDivisor()==4.0, "zoom key gives 4x"); zoomKey=false;
         // fullbright
         pc.module("fullbright").setEnabled(true); pc.tick(); check(gamma==16.0, "fullbright raises gamma");
@@ -80,7 +104,7 @@ public class CoreTest {
         m.mouseDragged(240,135); m.mouseReleased(); pc.renderHud(d);
         check(fps.fx>0.4 && fps.fx<0.6 && fps.fy>0.4 && fps.fy<0.6, "dragged to the middle: fx="+fps.fx+" fy="+fps.fy);
         // Lunar-style editing: right-click for style, pick a colour, scroll to resize
-        texts.clear(); pc.renderHud(d); int[] fpsAt = find("FPS@");
+        texts.clear(); pc.renderHud(d); int[] fpsAt = centerOfReflect(m, "item:fps");
         m.mouseClicked(fpsAt[0], fpsAt[1], 1);
         texts.clear(); m.render(d, fpsAt[0], fpsAt[1]);
         check(texts.stream().anyMatch(t->t.startsWith("Size@")) && texts.stream().anyMatch(t->t.startsWith("Text shadow@")), "right-click opens the style panel");
@@ -90,7 +114,7 @@ public class CoreTest {
         int[] bgRow = find("Background@"); m.mouseClicked(bgRow[0], bgRow[1], 0);
         check(!fps.background, "background can be switched off");
         m.mouseScrolled(1);
-        check(Math.abs(fps.scale - 1.05f) < 1e-4, "scrolling over it makes it bigger: " + fps.scale);
+        check(Math.abs(fps.scale - 0.55f) < 1e-4, "scrolling over it makes it bigger: " + fps.scale);
         texts.clear(); pc.renderHud(d);
         check(texts.stream().anyMatch(t->t.startsWith("FPS@")), "styled item still draws");
         m.keyPressed(Menu.KEY_ESCAPE); check(m.wantsShade(), "Esc leaves the HUD editor");
@@ -103,7 +127,12 @@ public class CoreTest {
         Peregrine pc2 = Peregrine.init(new P());
         check(pc2.module("cps").enabled() && Math.abs(((HudModule)pc2.module("fps")).fx-fps.fx)<1e-6, "settings load back");
         HudModule fps2 = (HudModule) pc2.module("fps");
-        check(fps2.textColor == 0xFFFF5C5C && !fps2.background && Math.abs(fps2.scale - 1.05f) < 1e-4, "HUD styles load back");
+        check(fps2.textColor == 0xFFFF5C5C && !fps2.background && Math.abs(fps2.scale - 0.55f) < 1e-4, "HUD styles load back");
+        // An old settings file (before version 2): switches go back to the new defaults, places stay
+        Files.write(cfg, "{\"modules\":{\"keystrokes\":{\"enabled\":true,\"x\":0.3,\"y\":0.4},\"main_menu\":{\"enabled\":false}}}".getBytes());
+        Peregrine old = Peregrine.init(new P());
+        check(!old.module("keystrokes").enabled() && ((HudModule)old.module("keystrokes")).fx==0.3f, "old file: new defaults, positions kept");
+        check(!old.module("main_menu").enabled(), "old file: main menu choice kept");
         Files.write(cfg, "{broken".getBytes()); Peregrine.init(new P()); check(true, "broken settings file doesn't crash");
         // ---- main menu
         Peregrine pc3 = Peregrine.init(new P()); TitleMenu t = pc3.titleMenu();
@@ -140,6 +169,68 @@ public class CoreTest {
         pc4.menu().open(); Thread.sleep(200); texts.clear(); pc4.menu().render(d,0,0); int[] vis=find("Visuals@"); pc4.menu().mouseClicked(vis[0]+1,vis[1]+1,0);
         texts.clear(); pc4.menu().render(d,0,0);
         check(texts.stream().anyMatch(x->x.startsWith("Steady camera@")) && texts.stream().noneMatch(x->x.startsWith("FPS@")), "Visuals tab");
+        // ---- settings pages (gear on each row)
+        Files.deleteIfExists(cfg);
+        Peregrine pc5 = Peregrine.init(new P()); Menu m5 = pc5.menu();
+        m5.open(); Thread.sleep(200); texts.clear(); m5.render(d,0,0);
+        int[] gear = centerOfReflect(m5, "gear:coords");
+        check(gear != null, "coordinates row has a gear");
+        m5.mouseClicked(gear[0], gear[1], 0);
+        texts.clear(); m5.render(d,0,0);
+        check(texts.stream().anyMatch(q->q.startsWith("Customize look & position@")) && texts.stream().anyMatch(q->q.startsWith("Show dimension@")), "gear opens the settings page");
+        check(pc5.module("coords").enabled(), "the gear doesn't switch it off");
+        int[] dimRow = centerOfReflect(m5, "set:dimension"); m5.mouseClicked(dimRow[0], dimRow[1], 0);
+        texts.clear(); pc5.renderHud(d);
+        check(texts.stream().noneMatch(q->q.startsWith("Overworld@")), "turning off 'Show dimension' hides it");
+        check(centerOfReflect(m5, "set:decimals") == null, "rows below the fold aren't clickable");
+        m5.mouseScrolled(-3); Thread.sleep(120); m5.render(d,0,0); Thread.sleep(120); m5.render(d,0,0);
+        int[] dec = centerOfReflect(m5, "set:decimals"); m5.mouseClicked(dec[0], dec[1], 0);
+        texts.clear(); pc5.renderHud(d);
+        check(texts.stream().anyMatch(q->q.startsWith("12.35  64.00  -5.50")), "decimals cycle to two");
+        check(m5.keyPressed(Menu.KEY_ESCAPE), "Esc goes back from a settings page");
+        texts.clear(); m5.render(d,0,0);
+        check(texts.stream().anyMatch(q->q.startsWith("Edit HUD@")) && texts.stream().noneMatch(q->q.startsWith("Show dimension@")), "back on the list");
+        // right-click a row: same page
+        int[] ut = find("Utility@"); m5.mouseClicked(ut[0]+1, ut[1]+1, 0); texts.clear(); m5.render(d,0,0);
+        int[] zoomRow = centerOfReflect(m5, "zoom"); m5.mouseClicked(zoomRow[0], zoomRow[1], 1);
+        texts.clear(); m5.render(d,0,0);
+        check(texts.stream().anyMatch(q->q.startsWith("Zoom level@")), "right-click opens settings too");
+        int[] slider = centerOfReflect(m5, "set:level");
+        m5.mouseClicked(slider[0], slider[1], 0); m5.mouseDragged(slider[0] + 400, slider[1]); m5.mouseReleased();
+        float lvl = 0; for (net.peregrine.client.core.settings.Setting st : pc5.module("zoom").settings()) if (st.id.equals("level")) lvl = ((net.peregrine.client.core.settings.SliderSetting)st).value;
+        check(lvl == 10f, "dragging the slider right sets the zoom level to 10x: " + lvl);
+        m5.keyPressed(Menu.KEY_ESCAPE);
+        // customize: opens the HUD editor with the style panel for that item
+        int[] all = find("All@"); m5.mouseClicked(all[0]+1, all[1]+1, 0);
+        texts.clear(); m5.render(d,0,0); gear = centerOfReflect(m5, "gear:fps"); m5.mouseClicked(gear[0], gear[1], 0);
+        texts.clear(); m5.render(d,0,0); pc5.renderHud(d);
+        int[] cust = centerOfReflect(m5, "customize"); m5.mouseClicked(cust[0], cust[1], 0);
+        check(!m5.wantsShade(), "customize opens the HUD editor");
+        pc5.renderHud(d); texts.clear(); m5.render(d,0,0);
+        check(texts.stream().anyMatch(q->q.startsWith("Size@")), "...with the style panel open");
+        m5.keyPressed(Menu.KEY_ESCAPE);
+        pc5.shutdown(); String json5 = new String(Files.readAllBytes(cfg));
+        check(json5.contains("\"version\": 2") && json5.contains("\"level\": 10.0") && json5.contains("\"dimension\": false"), "options saved");
+        Peregrine pc6 = Peregrine.init(new P());
+        boolean dimOn = true; for (net.peregrine.client.core.settings.Setting st : pc6.module("coords").settings()) if (st.id.equals("dimension")) dimOn = ((net.peregrine.client.core.settings.BoolSetting)st).value;
+        check(!dimOn, "options load back");
+        // ---- batch 4 HUD items
+        for (String id : new String[]{"reach","combo","target","block_info","block_count","players","rotation","stopwatch","xp","chunk","light"}) pc6.module(id).setEnabled(true);
+        playing = true; target = true; pc6.onMouseButton(0); pc6.onMouseButton(0); pc6.tick();
+        texts.clear(); pc6.renderHud(d);
+        check(texts.stream().anyMatch(q->q.startsWith("2.9 blocks@")), "reach of the last hit");
+        check(texts.stream().anyMatch(q->q.startsWith("2 hits@")), "combo counts hits");
+        check(texts.stream().anyMatch(q->q.startsWith("Zombie  7.0 hp  2.9m@")), "target name, health, distance");
+        check(texts.stream().anyMatch(q->q.startsWith("Oak Planks@")), "block info");
+        check(texts.stream().anyMatch(q->q.startsWith("128@")), "block counter");
+        check(texts.stream().anyMatch(q->q.startsWith("23@")), "players online");
+        check(texts.stream().anyMatch(q->q.startsWith("180.0 / 12.5@")), "rotation");
+        check(texts.stream().anyMatch(q->q.startsWith("30  (25%)@")), "experience");
+        check(texts.stream().anyMatch(q->q.startsWith("0, -1  [12, 10]@")), "chunk position");
+        check(texts.stream().anyMatch(q->q.startsWith("0:00.0@")), "stopwatch at zero");
+        hurt = 5; pc6.tick(); texts.clear(); pc6.renderHud(d);
+        check(texts.stream().anyMatch(q->q.startsWith("0@")), "getting hit resets the combo");
+        playing = false; target = false; hurt = 0;
         System.out.println("\nALL CORE TESTS PASSED");
     }
 }

@@ -11,13 +11,15 @@ public abstract class HudModule extends Module {
     public float fy;
 
     // Style, set in the HUD editor (right-click an item). 0 colors mean "default".
-    public float scale = 1f;
+    public float scale = DEFAULT_SCALE;
     public int textColor;
     public int labelColor;
     public boolean background = true;
     public int backgroundAlpha = DEFAULT_BG_ALPHA;
     public boolean shadow = true;
     static final int DEFAULT_BG_ALPHA = (Theme.HUD_BG >>> 24) & 0xFF;
+    /** New HUD items start at half size: small and tidy, bigger is a scroll away. */
+    public static final float DEFAULT_SCALE = 0.5f;
     static final float MIN_SCALE = 0.4f;
     static final float MAX_SCALE = 3f;
     private final float defaultFx;
@@ -41,7 +43,7 @@ public abstract class HudModule extends Module {
     public void resetStyle() {
         fx = defaultFx;
         fy = defaultFy;
-        scale = 1f;
+        scale = DEFAULT_SCALE;
         textColor = 0;
         labelColor = 0;
         background = true;
@@ -50,7 +52,7 @@ public abstract class HudModule extends Module {
     }
 
     boolean styled() {
-        return scale != 1f || textColor != 0 || labelColor != 0 || !background
+        return scale != DEFAULT_SCALE || textColor != 0 || labelColor != 0 || !background
                 || backgroundAlpha != DEFAULT_BG_ALPHA || !shadow;
     }
 

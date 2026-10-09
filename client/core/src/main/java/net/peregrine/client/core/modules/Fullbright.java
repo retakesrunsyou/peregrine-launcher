@@ -5,7 +5,8 @@ import net.peregrine.client.core.Platform;
 
 public final class Fullbright extends Module {
 
-    private static final double BRIGHT = 16.0;
+    private final net.peregrine.client.core.settings.SliderSetting bright = add(
+            new net.peregrine.client.core.settings.SliderSetting("brightness", "Brightness", 100f, 1600f, 50f, 1600f, "%.0f%%"));
     private Double saved;
 
     public Fullbright() {
@@ -19,11 +20,11 @@ public final class Fullbright extends Module {
 
     @Override
     public void tick(Platform p) {
-        if (p.gamma() < BRIGHT) {
+        if (Math.abs(p.gamma() - bright.value / 100.0) > 1e-6) {
             if (saved == null) {
                 saved = p.gamma();
             }
-            p.setGamma(BRIGHT);
+            p.setGamma((bright.value / 100.0));
         }
     }
 

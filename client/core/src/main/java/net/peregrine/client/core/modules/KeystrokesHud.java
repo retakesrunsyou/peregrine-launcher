@@ -12,6 +12,11 @@ public final class KeystrokesHud extends HudModule {
     private static final int S = 22;   // key size
     private static final int GAP = 2;
 
+    private final net.peregrine.client.core.settings.BoolSetting mouse = add(
+            new net.peregrine.client.core.settings.BoolSetting("mouse", "Mouse buttons", true));
+    private final net.peregrine.client.core.settings.BoolSetting space = add(
+            new net.peregrine.client.core.settings.BoolSetting("space", "Space bar", true));
+
     public KeystrokesHud() {
         super("keystrokes", "Keystrokes", "Shows WASD, mouse buttons and jump as you press them",
                 false, 0f, 1f);
@@ -24,7 +29,7 @@ public final class KeystrokesHud extends HudModule {
 
     @Override
     public int height(Draw d, Platform p) {
-        return S * 3 + GAP * 3 + 12;
+        return S * 2 + GAP + (mouse.value ? S + GAP : 0) + (space.value ? 12 + GAP : 0);
     }
 
     private void key(Draw d, int x, int y, int w, int h, String label, boolean down) {
@@ -44,13 +49,17 @@ public final class KeystrokesHud extends HudModule {
         key(d, x, row2, S, S, "A", p.isDown(Key.LEFT));
         key(d, col2, row2, S, S, "S", p.isDown(Key.BACK));
         key(d, col3, row2, S, S, "D", p.isDown(Key.RIGHT));
-        int row3 = row2 + S + GAP;
-        int half = (S * 3 + GAP) / 2;
-        Peregrine pc = Peregrine.get();
-        key(d, x, row3, half, S, "LMB " + pc.cps(0), p.isDown(Key.ATTACK));
-        key(d, x + half + GAP, row3, half, S, "RMB " + pc.cps(1), p.isDown(Key.USE));
-        int row4 = row3 + S + GAP;
-        key(d, x, row4, S * 3 + GAP * 2, 12, "", p.isDown(Key.JUMP));
-        d.rect(x + S, row4 + 5, S + GAP * 2, 2, p.isDown(Key.JUMP) ? 0xFF15171C : Theme.TEXT);
+        int row = row2 + S + GAP;
+        if (mouse.value) {
+            int half = (S * 3 + GAP) / 2;
+            Peregrine pc = Peregrine.get();
+            key(d, x, row, half, S, "LMB " + pc.cps(0), p.isDown(Key.ATTACK));
+            key(d, x + half + GAP, row, half, S, "RMB " + pc.cps(1), p.isDown(Key.USE));
+            row += S + GAP;
+        }
+        if (space.value) {
+            key(d, x, row, S * 3 + GAP * 2, 12, "", p.isDown(Key.JUMP));
+            d.rect(x + S, row + 5, S + GAP * 2, 2, p.isDown(Key.JUMP) ? 0xFF15171C : Theme.TEXT);
+        }
     }
 }

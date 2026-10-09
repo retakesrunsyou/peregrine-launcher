@@ -302,6 +302,114 @@ final class GamePlatform implements Platform {
         return n;
     }
 
+    // ---- batch 4: aim, blocks, experience
+
+    @Override
+    public float pitch() {
+        return mc().player == null ? 0 : mc().player.getXRot();
+    }
+
+    private net.minecraft.world.entity.Entity target() {
+        net.minecraft.world.phys.HitResult hit = mc().hitResult;
+        if (mc().player == null || !(hit instanceof net.minecraft.world.phys.EntityHitResult)
+                || hit.getType() != net.minecraft.world.phys.HitResult.Type.ENTITY) {
+            return null;
+        }
+        return ((net.minecraft.world.phys.EntityHitResult) hit).getEntity();
+    }
+
+    @Override
+    public double targetDistance() {
+        if (target() == null) {
+            return -1;
+        }
+        return mc().player.getEyePosition().distanceTo(mc().hitResult.getLocation());
+    }
+
+    @Override
+    public String targetName() {
+        net.minecraft.world.entity.Entity e = target();
+        return e == null ? "" : e.getName().getString();
+    }
+
+    @Override
+    public float targetHealth() {
+        net.minecraft.world.entity.Entity e = target();
+        return e instanceof net.minecraft.world.entity.LivingEntity
+                ? ((net.minecraft.world.entity.LivingEntity) e).getHealth() : -1;
+    }
+
+    @Override
+    public float targetMaxHealth() {
+        net.minecraft.world.entity.Entity e = target();
+        return e instanceof net.minecraft.world.entity.LivingEntity
+                ? ((net.minecraft.world.entity.LivingEntity) e).getMaxHealth() : 20;
+    }
+
+    @Override
+    public String lookedAtBlock() {
+        net.minecraft.world.phys.HitResult hit = mc().hitResult;
+        if (mc().level == null || !(hit instanceof net.minecraft.world.phys.BlockHitResult)
+                || hit.getType() != net.minecraft.world.phys.HitResult.Type.BLOCK) {
+            return "";
+        }
+        net.minecraft.core.BlockPos pos = ((net.minecraft.world.phys.BlockHitResult) hit).getBlockPos();
+        return mc().level.getBlockState(pos).getBlock().getName().getString();
+    }
+
+    @Override
+    public int heldItemCount() {
+        if (mc().player == null) {
+            return 0;
+        }
+        ItemStack held = mc().player.getMainHandItem();
+        if (held.isEmpty()) {
+            return 0;
+        }
+        var inv = player().getInventory();
+        int n = 0;
+        for (int i = 0; i < inv.getContainerSize(); i++) {
+            ItemStack stack = inv.getItem(i);
+            if (!stack.isEmpty() && stack.getItem() == held.getItem()) {
+                n += stack.getCount();
+            }
+        }
+        return Math.max(n, held.getCount());
+    }
+
+    @Override
+    public String heldItemName() {
+        return mc().player == null ? "" : mc().player.getMainHandItem().getHoverName().getString();
+    }
+
+    @Override
+    public int onlinePlayers() {
+        return mc().player == null || mc().getConnection() == null ? -1 : mc().getConnection().getOnlinePlayers().size();
+    }
+
+    @Override
+    public int xpLevel() {
+        return mc().player == null ? 0 : mc().player.experienceLevel;
+    }
+
+    @Override
+    public float xpProgress() {
+        return mc().player == null ? 0 : mc().player.experienceProgress;
+    }
+
+    @Override
+    public int lightLevel() {
+        if (mc().player == null || mc().level == null) {
+            return -1;
+        }
+        return mc().level.getBrightness(net.minecraft.world.level.LightLayer.BLOCK, mc().player.blockPosition());
+    }
+
+    @Override
+    public int hurtTime() {
+        return mc().player == null ? 0 : mc().player.hurtTime;
+    }
+
     @Override
     public List<String> resourcePacks() {
         List<String> out = new ArrayList<>();
