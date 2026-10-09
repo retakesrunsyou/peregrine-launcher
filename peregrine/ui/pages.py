@@ -571,16 +571,15 @@ class SettingsPage(QWidget):
         gamesec.row("Memory", mem, "4 GB suits most packs. More isn't always faster.")
 
         size = QHBoxLayout()
-        w = QSpinBox(minimum=0, maximum=7680, singleStep=10, specialValueText="Auto")
-        h = QSpinBox(minimum=0, maximum=4320, singleStep=10, specialValueText="Auto")
-        for box in (w, h):
-            box.setButtonSymbols(QSpinBox.NoButtons)
+        from PySide6.QtGui import QIntValidator
+        w = QLineEdit(str(cfg["width"] or ""), placeholderText="Auto")
+        h = QLineEdit(str(cfg["height"] or ""), placeholderText="Auto")
+        for box, key, top in ((w, "width", 7680), (h, "height", 4320)):
+            box.setValidator(QIntValidator(0, top, box))
             box.setAlignment(Qt.AlignCenter)
-            box.setMinimumWidth(96)
-        w.setValue(cfg["width"])
-        h.setValue(cfg["height"])
-        w.valueChanged.connect(lambda v: self.save("width", v))
-        h.valueChanged.connect(lambda v: self.save("height", v))
+            box.setFixedWidth(90)
+            box.setToolTip("In pixels. Leave empty for Minecraft's default size.")
+            box.editingFinished.connect(lambda b=box, k=key: self.save(k, int(b.text() or 0)))
         size.addWidget(w)
         size.addWidget(QLabel("×", objectName="muted"))
         size.addWidget(h)
