@@ -10,6 +10,7 @@ from PySide6.QtWidgets import (
     QSpinBox, QVBoxLayout, QWidget,
 )
 
+from .. import display
 from .. import CLIENT_ID, DISCORD_APP_ID, UPDATE_REPO, VERSION, auth, config, discord, game, instances
 from .theme import ACCENTS, THEME_NAMES, Theme, avatar_pixmap, icon, icon_pixmap, logo_pixmap, on_color, tint
 from .widgets import Segmented, Toggle
@@ -134,6 +135,28 @@ def pretty_mod_name(filename: str) -> str:
     if key in KNOWN_MODS:
         return KNOWN_MODS[key]
     return " ".join(w[:1].upper() + w[1:] for w in words) or base
+
+
+def screen_resolution() -> tuple:
+    """The main monitor's real resolution in pixels (not scaled), or (0, 0) if unknown."""
+    from PySide6.QtGui import QGuiApplication
+    screen = QGuiApplication.primaryScreen()
+    if screen is None:
+        return 0, 0
+    size, ratio = screen.size(), screen.devicePixelRatio()
+    return round(size.width() * ratio), round(size.height() * ratio)
+
+
+def sync_screen_size() -> None:
+    """With "Fit my screen" chosen, keep the saved size matching the monitor
+    (it may have changed since last time)."""
+    cfg = config.load()
+    if cfg.get("window_mode", "screen") != "screen":
+        return
+    w, h = screen_resolution()
+    if w and h and (cfg.get("width"), cfg.get("height")) != (w, h):
+        cfg.update(width=w, height=h)
+        config.save(cfg)
 
 
 # ================================================================== home
@@ -523,6 +546,39 @@ class SettingsPage(QWidget):
         outer.addWidget(scroll(body), 1)
         self.build()
 
+    def _window_sizes(self, cfg) -> QComboBox:
+        """A menu of sizes: fit the screen (detected), every common size that fits, or
+        Minecraft's own default."""
+        sw, sh = screen_resolution()
+        box = QComboBox()
+        box.setMinimumWidth(300)
+        box.setMaxVisibleItems(14)
+        box.addItem(f"Fit my screen   ·   {sw} × {sh}" if sw else "Fit my screen", ("screen", sw, sh))
+        for w, h, nick in display.presets_for(sw or 7680, sh or 4320):
+            box.addItem(display.label(w, h, nick), ("size", w, h))
+        dw, dh = display.MINECRAFT_DEFAULT
+        box.addItem(f"Minecraft's default   ·   {dw} × {dh}", ("default", 0, 0))
+        mode, cw, ch = cfg.get("window_mode", "screen"), cfg.get("width", 0), cfg.get("height", 0)
+        pick = 0
+        for i in range(box.count()):
+            m, w, h = box.itemData(i)
+            if m == mode and (m != "size" or (w, h) == (cw, ch)):
+                pick = i
+                break
+        else:
+            if mode == "size" and cw and ch:  # a size typed in before: keep it on the list
+                box.addItem(display.label(cw, ch), ("size", cw, ch))
+                pick = box.count() - 1
+        box.setCurrentIndex(pick)
+
+        def chosen(i):
+            m, w, h = box.itemData(i)
+            c = config.load()
+            c.update(window_mode=m, width=w, height=h)
+            config.save(c)
+        box.currentIndexChanged.connect(chosen)
+        return box
+
     def save(self, key, value):
         cfg = config.load()
         cfg[key] = value
@@ -570,20 +626,8 @@ class SettingsPage(QWidget):
         mem.addWidget(mem_label)
         gamesec.row("Memory", mem, "4 GB suits most packs. More isn't always faster.")
 
-        size = QHBoxLayout()
-        from PySide6.QtGui import QIntValidator
-        w = QLineEdit(str(cfg["width"] or ""), placeholderText="Auto")
-        h = QLineEdit(str(cfg["height"] or ""), placeholderText="Auto")
-        for box, key, top in ((w, "width", 7680), (h, "height", 4320)):
-            box.setValidator(QIntValidator(0, top, box))
-            box.setAlignment(Qt.AlignCenter)
-            box.setFixedWidth(90)
-            box.setToolTip("In pixels. Leave empty for Minecraft's default size.")
-            box.editingFinished.connect(lambda b=box, k=key: self.save(k, int(b.text() or 0)))
-        size.addWidget(w)
-        size.addWidget(QLabel("×", objectName="muted"))
-        size.addWidget(h)
-        gamesec.row("Window size", size)
+        gamesec.row("Window size", self._window_sizes(cfg),
+                    "Fit my screen picks your monitor's full resolution automatically.")
         gamesec.row("Start in fullscreen", self._check(cfg, "fullscreen"))
         gamesec.row("Use GameMode", self._check(cfg, "use_gamemode"),
                     "Boosts performance while playing, if Feral GameMode is installed.")

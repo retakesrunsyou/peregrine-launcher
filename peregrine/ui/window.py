@@ -148,6 +148,8 @@ class MainWindow(QMainWindow):
         outer.addWidget(self.console)
         outer.addWidget(footer)
 
+        from .pages import sync_screen_size
+        sync_screen_size()
         self.apply_theme()
         self.go(0)
         self.refresh_accounts()

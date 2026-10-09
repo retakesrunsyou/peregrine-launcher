@@ -142,6 +142,25 @@ names = [d.path.name for d in cp]
 check("library rules keep Linux and shared libraries only", names[:2] == ["e.jar", "n.jar"] and "w.jar" not in names)
 check("a mod loader's library wins over a duplicate", [n for n in names if "fabric-loader" in n] == ["fabric-loader-0.16.jar"])
 
+# ---------------------------------------------------------------- window sizes
+
+from peregrine import config, display  # noqa: E402
+fits = display.presets_for(1920, 1080)
+check("sizes bigger than the screen aren't offered", all(w <= 1920 and h <= 1080 for w, h, _ in fits))
+check("the biggest size that fits comes first", fits[0][:2] == (1920, 1080))
+odd = display.presets_for(1700, 1000)
+check("an unusual screen size is still offered", odd[0][:2] == (1700, 1000))
+check("sizes are labelled with their shape", display.label(2560, 1080, "Ultrawide") == "2560 × 1080   ·   21:9   ·   Ultrawide"
+      and display.aspect(1920, 1200) == "16:10" and display.aspect(5120, 1440) == "32:9")
+import json  # noqa: E402
+paths.CONFIG.mkdir(parents=True, exist_ok=True)
+paths.CONFIG_FILE.write_text(json.dumps({"width": 1600, "height": 900}))
+check("a size chosen in an older version is kept", config.load()["window_mode"] == "size")
+paths.CONFIG_FILE.write_text(json.dumps({"width": 0, "height": 0}))
+check("new players get Fit my screen", config.load()["window_mode"] == "screen")
+paths.CONFIG_FILE.unlink()
+check("no settings yet means Fit my screen", config.load()["window_mode"] == "screen")
+
 srv.shutdown()
 print("\nALL LAUNCHER TESTS PASSED" if not failures else f"\n{failures} FAILED")
 sys.exit(1 if failures else 0)

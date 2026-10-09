@@ -18,6 +18,7 @@ DEFAULTS = {
     "theme": "dusk",          # dusk, midnight, light
     "accent": "#e8a33d",
     # Game window
+    "window_mode": "screen",  # screen = fill this screen, size = width x height, default = Minecraft's
     "width": 0,               # 0 = Minecraft's default
     "height": 0,
     "fullscreen": False,
@@ -39,7 +40,10 @@ DEFAULTS = {
 def load() -> dict:
     cfg = dict(DEFAULTS)
     try:
-        cfg.update(json.loads(paths.CONFIG_FILE.read_text()))
+        saved = json.loads(paths.CONFIG_FILE.read_text())
+        cfg.update(saved)
+        if "window_mode" not in saved:  # settings from before the size menu: keep a chosen size
+            cfg["window_mode"] = "size" if saved.get("width") else "screen"
     except (FileNotFoundError, json.JSONDecodeError):
         pass
     if not cfg["client_id"]:

@@ -116,6 +116,30 @@ config.save(cfg)
 win.apply_theme()
 note("PASS", "every page opens in every theme")
 
+# ---- window size menu
+from PySide6.QtWidgets import QComboBox  # noqa: E402
+win.go(2)
+pump(1)
+sizes = [c for c in win.settings.findChildren(QComboBox) if c.count() and "Fit my screen" in c.itemText(0)]
+note("PASS" if sizes else "FAIL", "Settings has the window size menu")
+if sizes:
+    menu = sizes[0]
+    note("INFO", "window sizes offered: " + " | ".join(menu.itemText(i) for i in range(menu.count())))
+    menu.showPopup()
+    pump(1)
+    menu.view().window().grab().save(str(OUT / "window-sizes.png"))
+    menu.hidePopup()
+    menu.setCurrentIndex(1)  # pick a preset like a player would
+    pump(0.5)
+    saved = config.load()
+    want = menu.itemData(1)
+    note("PASS" if (saved["window_mode"], saved["width"], saved["height"]) == tuple(want) else "FAIL",
+         f"picking a size saves it (got {saved['window_mode']} {saved['width']}x{saved['height']})")
+    menu.setCurrentIndex(0)
+    pump(0.5)
+    cfg = config.load()
+    cfg["extra_jvm_args"] = cfg.get("extra_jvm_args", "")
+
 # ---- New instance dialog, as a player would use it
 dlg = NewInstanceDialog(win, False)
 dlg.show()
