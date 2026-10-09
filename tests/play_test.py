@@ -152,6 +152,36 @@ except Exception as e:
 
 # ---------------------------------------------------------------- play
 
+class VirtualScreen:
+    """Our own Xvfb, restarted if it dies (it occasionally crashes on CI machines)."""
+    def __init__(self):
+        self.proc = None
+
+    def ensure(self):
+        if self.proc is not None and self.proc.poll() is None:
+            return
+        n = 77
+        lock = Path(f"/tmp/.X{n}-lock")
+        lock.unlink(missing_ok=True)
+        self.proc = subprocess.Popen(["Xvfb", f":{n}", "-screen", "0", f"{WIDTH}x{HEIGHT}x24", "-nolisten", "tcp"],
+                                     stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        os.environ["DISPLAY"] = f":{n}"
+        for _ in range(100):
+            if Path(f"/tmp/.X11-unix/X{n}").exists():
+                break
+            time.sleep(0.1)
+        time.sleep(0.5)
+
+
+screen = VirtualScreen()
+
+
+def shot(path: Path):
+    """Screenshot of the whole virtual screen."""
+    subprocess.run(f"xwd -root -silent | convert xwd:- png:'{path}'", shell=True, check=False,
+                   timeout=30)
+
+
 def xdo(*args):
     subprocess.run(["xdotool", *map(str, args)], check=False)
 
@@ -161,7 +191,7 @@ def handle(command: str, label: str):
     what = parts[0]
     if what == "shot":
         time.sleep(0.5)
-        subprocess.run(["import", "-window", "root", str(OUT / f"{label}-{parts[1]}.png")], check=False)
+        shot(OUT / f"{label}-{parts[1]}.png")
     elif what == "key":
         xdo("key", "--delay", 80, parts[1])
     elif what in ("keydown", "keyup"):
@@ -192,6 +222,25 @@ def handle(command: str, label: str):
 
 
 def play(phase: str, plan: str, extra_game_args: list, timeout: int):
+    """Runs a phase; if the virtual screen crashed underneath it, runs it once more."""
+    for attempt in (1, 2):
+        mark = len(results)
+        screen.ensure()
+        play_once(phase, plan, extra_game_args, timeout)
+        log = (OUT / f"game-{phase}.log").read_text(errors="replace")
+        if "XIO:  fatal IO error" not in log or attempt == 2:
+            return
+        # Not Peregrine's fault: forget this attempt's results and go again.
+        dropped = results[mark:]
+        del results[mark:]
+        for line in dropped:
+            if line.startswith("FAIL "):
+                problems.remove(line[5:])
+        note("INFO", f"{phase}: the test machine's virtual screen crashed; running this part again")
+        shutil.rmtree(OUT / f"selftest-{phase}", ignore_errors=True)
+
+
+def play_once(phase: str, plan: str, extra_game_args: list, timeout: int):
     st = OUT / f"selftest-{phase}"
     st.mkdir()
     cfg["extra_jvm_args"] = (f"-Dperegrine.selftest={st} -Dperegrine.selftest.phase={plan} "
@@ -208,7 +257,7 @@ def play(phase: str, plan: str, extra_game_args: list, timeout: int):
     while proc.poll() is None:
         if time.time() - start > timeout:
             note("FAIL", f"{phase}: game still running after {timeout}s, stopping it")
-            subprocess.run(["import", "-window", "root", str(OUT / f"timeout-{phase}.png")], check=False)
+            shot(OUT / f"timeout-{phase}.png")
             proc.kill()
             break
         for req in sorted(st.glob("req-*"), key=lambda p: int(p.name.split("-")[1])):
@@ -219,7 +268,7 @@ def play(phase: str, plan: str, extra_game_args: list, timeout: int):
             (st / ("ack-" + req.name.split("-")[1])).write_text("ok\n")
         if time.time() - shot_at > 60:  # a progress picture every minute, for debugging
             shot_at = time.time()
-            subprocess.run(["import", "-window", "root", str(OUT / f"progress-{phase}.png")], check=False)
+            shot(OUT / f"progress-{phase}.png")
         time.sleep(0.2)
     proc.wait()
     log.close()
@@ -261,16 +310,23 @@ def check_log(phase: str, text: str):
         note("FAIL", f"{phase}: crash report {c.name}")
 
 
-play("title", "title", [], 900)
+def guarded(*args):
+    try:
+        play(*args)
+    except Exception as e:  # a broken test run must show up as a failure, not as "0 failed"
+        note("FAIL", f"{args[0]}: the test script hit an error: {e!r}")
+
+
+guarded("title", "title", [], 900)
 if (inst.game_dir / "saves" / "world").is_dir():
-    play("world", "world", ["--quickPlaySingleplayer", "world"], 1500)
+    guarded("world", "world", ["--quickPlaySingleplayer", "world"], 1500)
     # Again with the one-click FPS mods, which many players use with Peregrine.
     try:
         added = inst.install_performance_mods(progress)
         note("PASS", "FPS mods installed: " + ", ".join(f for _, f in added))
         shutil.rmtree(inst.game_dir / "saves" / "world")
         shutil.copytree(OUT / "server" / "world", inst.game_dir / "saves" / "world")
-        play("fps-mods", "world", ["--quickPlaySingleplayer", "world"], 1500)
+        guarded("fps-mods", "world", ["--quickPlaySingleplayer", "world"], 1500)
     except Exception as e:
         note("FAIL", f"couldn't install the FPS mods: {e!r}")
 
