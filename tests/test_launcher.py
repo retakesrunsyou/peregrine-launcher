@@ -305,7 +305,7 @@ check("fast settings: high render distance lowered to 10", o["renderDistance"] =
 check("fast settings: a low simulation distance is kept", o["simulationDistance"] == "5")
 check("fast settings: other settings untouched", o["fov"] == "0.5")
 check("fast settings: smooth lighting off, Fast graphics, no clouds",
-      o["ao"] == "false" and o["graphicsMode"] == "0" and o["graphicsPreset"] == '"fast"' and o["renderClouds"] == '"false"')
+      o["ao"] == "false" and o["graphicsMode"] == "0" and o["graphicsPreset"] == '"custom"' and o["renderClouds"] == '"false"')
 
 # a Vanilla instance from before performance mode gets Fabric for speed, and goes back when it's off
 vinst = instances.create("Old vanilla", "1.21.1", "vanilla")

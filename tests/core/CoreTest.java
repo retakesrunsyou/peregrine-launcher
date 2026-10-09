@@ -289,6 +289,15 @@ public class CoreTest {
         check(render == 14, "...and later steps start from 16 (" + render + ")");
         pc8.module("stable_fps").setEnabled(false);
         check(render == 16 && particles == 0 && entity == 1.0, "switching it off puts everything back");
+        // Minecraft saved its options while they were lowered, then the game closed
+        pc8.module("stable_fps").setEnabled(true);
+        render = 12; entity = 1.0; particles = 0; fpsNow = 30;
+        for (int i = 0; i < 101 + 205 + 205 + 100; i++) pc8.tick();
+        check(render < 12, "lowered before closing (" + render + ")");
+        pc8.shutdown();
+        render = 6; particles = 2; entity = 0.6;  // what Minecraft wrote to options.txt
+        Peregrine pc9 = Peregrine.init(new P()); fpsNow = 144; pc9.tick();
+        check(render == 12 && particles == 0 && entity == 1.0, "next start puts the player's own settings back");
         playing = false; fpsNow = 144;
         System.out.println("\nALL CORE TESTS PASSED");
     }

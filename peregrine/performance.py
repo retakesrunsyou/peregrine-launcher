@@ -41,12 +41,14 @@ CHECK_EVERY = 24 * 3600  # look for newer versions of the mods once a day
 
 # Fast settings. Keys a Minecraft version doesn't know are ignored by it, so one
 # list covers 1.21 to 26.x (graphicsMode before 1.21.11, the preset after).
-PRESET_VERSION = 3
+PRESET_VERSION = 4
 FAST_SETTINGS = {
     "enableVsync": "false",            # don't cap FPS to the monitor
     "maxFps": "260",                   # 260 = unlimited
     "graphicsMode": "0",               # Fast (1.21 - 1.21.10)
-    "graphicsPreset": '"fast"',        # Fast (1.21.11 and later)
+    # 1.21.11 and later: a named preset is applied over the settings every time the game
+    # loads, so mark ours "custom" and let the individual settings below do the work.
+    "graphicsPreset": '"custom"',
     "cutoutLeaves": "false",           # solid leaves
     "improvedTransparency": "false",
     "renderClouds": '"false"',         # no clouds

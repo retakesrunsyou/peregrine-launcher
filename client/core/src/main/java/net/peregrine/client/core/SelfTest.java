@@ -171,6 +171,7 @@ public final class SelfTest {
                 return p.inWorld() && p.showing(Platform.Screen.NONE);
             }
         });
+        fixedRenderDistance();
         waitTicks(400);
         benchmark(600);
         run("Stable FPS back on", new Runnable() {
@@ -192,6 +193,7 @@ public final class SelfTest {
                 return p.inWorld() && p.showing(Platform.Screen.NONE);
             }
         });
+        fixedRenderDistance();
         waitTicks(400);  // chunks load in and get built
         benchmark(400);
         run("Stable FPS back on", new Runnable() {
@@ -500,6 +502,15 @@ public final class SelfTest {
     }
 
     // ------------------------------------------------------------ step builders
+
+    /** Every benchmark uses the same render distance, so runs compare fairly. */
+    private static void fixedRenderDistance() {
+        run("render distance 8 for the benchmark", new Runnable() {
+            public void run() {
+                p.setRenderDistance(8);
+            }
+        });
+    }
 
     /** Averages the FPS counter over a number of ticks, standing still, and logs it. */
     private static void benchmark(final int ticks) {

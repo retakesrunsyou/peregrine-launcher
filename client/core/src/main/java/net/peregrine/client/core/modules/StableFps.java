@@ -30,6 +30,7 @@ public final class StableFps extends Module {
     private int origParticles;
     private int setRender = -1; // what we last set, to notice changes made by the player
     private int slow, fast, settle;
+    private boolean checkedLeftovers;
 
     public StableFps() {
         super("stable_fps", "Stable FPS",
@@ -41,8 +42,69 @@ public final class StableFps extends Module {
         return level;
     }
 
+    /**
+     * Minecraft can save its options while they're lowered (and a crash skips putting
+     * them back), so the originals are kept in a small file while anything is lowered.
+     * If it's still there at the next start, those are put back first.
+     */
+    private java.nio.file.Path leftovers(Platform p) {
+        java.nio.file.Path cfg = p.configFile();
+        return cfg == null ? null : cfg.resolveSibling("peregrine-stable-fps.txt");
+    }
+
+    private void remember(Platform p) {
+        java.nio.file.Path f = leftovers(p);
+        if (f == null) {
+            return;
+        }
+        try {
+            java.nio.file.Files.createDirectories(f.getParent());
+            java.nio.file.Files.write(f, (origRender + " " + origEntity + " " + origParticles + "\n")
+                    .getBytes(java.nio.charset.StandardCharsets.UTF_8));
+        } catch (Exception e) {
+            // not fatal: the normal restore still runs
+        }
+    }
+
+    private void forget(Platform p) {
+        java.nio.file.Path f = leftovers(p);
+        try {
+            if (f != null) {
+                java.nio.file.Files.deleteIfExists(f);
+            }
+        } catch (Exception e) {
+            // ignore
+        }
+    }
+
+    private void restoreLeftovers(Platform p) {
+        java.nio.file.Path f = leftovers(p);
+        if (f == null || !java.nio.file.Files.isRegularFile(f)) {
+            return;
+        }
+        try {
+            String[] v = new String(java.nio.file.Files.readAllBytes(f), java.nio.charset.StandardCharsets.UTF_8)
+                    .trim().split(" ");
+            int r = Integer.parseInt(v[0]);
+            if (r > 0) {
+                p.setRenderDistance(r);
+            }
+            p.setEntityDistance(Double.parseDouble(v[1]));
+            p.setParticleLevel(Integer.parseInt(v[2]));
+        } catch (Exception e) {
+            // a damaged file: just drop it
+        }
+        forget(p);
+    }
+
     @Override
     public void tick(Platform p) {
+        if (!checkedLeftovers) {
+            checkedLeftovers = true;
+            if (level == 0) {
+                restoreLeftovers(p);
+            }
+        }
         if (!p.showing(Platform.Screen.NONE)) {
             slow = fast = 0;  // menus and loading screens don't count
             return;
@@ -70,6 +132,7 @@ public final class StableFps extends Module {
                 origRender = p.renderDistance();
                 origEntity = p.entityDistance();
                 origParticles = p.particleLevel();
+                remember(p);
             }
             if (level < maxLevel()) {
                 level++;
@@ -112,6 +175,10 @@ public final class StableFps extends Module {
     }
 
     private void restore(Platform p, boolean render) {
+        restore(p, render, true);
+    }
+
+    private void restore(Platform p, boolean render, boolean forgetFile) {
         p.setParticleLevel(origParticles);
         p.setEntityDistance(origEntity);
         if (render && origRender > 0 && p.renderDistance() != origRender) {
@@ -120,6 +187,9 @@ public final class StableFps extends Module {
         level = 0;
         setRender = -1;
         origRender = -1;
+        if (forgetFile) {
+            forget(p);
+        }
     }
 
     @Override
@@ -134,7 +204,9 @@ public final class StableFps extends Module {
     public void shutdown(Platform p) {
         if (level > 0) {
             level = 0;
-            restore(p, true);
+            // Put them back, and keep the note: if Minecraft saved its options while they
+            // were lowered, the next start puts the originals back from it.
+            restore(p, true, false);
         }
     }
 }
