@@ -256,6 +256,43 @@ public final class SelfTest {
             }
         });
         shot("17-editor-moved");
+        // Lunar-style styling: right-click opens the style panel, pick a colour, drag the corner.
+        run("right-click the FPS item", new Runnable() {
+            public void run() {
+                HudModule fps = (HudModule) pc.module("fps");
+                request("rclickat " + px(fps.lastX + fps.lastW / 2) + " " + px(fps.lastY + fps.lastH / 2));
+            }
+        });
+        waitAck();
+        waitFor("right-click opens the style panel", 60, new Cond() {
+            public boolean ok() {
+                return menu.editor().styleOpen();
+            }
+        });
+        waitTicks(5);
+        shot("18-style-panel");
+        clickOn("picking a colour recolours the text", "text-swatch-3", new Cond() {
+            public boolean ok() {
+                return ((HudModule) pc.module("fps")).textColor == HudEditor.COLORS[3];
+            }
+        });
+        final float[] sizeBefore = new float[1];
+        run("drag the resize corner", new Runnable() {
+            public void run() {
+                HudModule fps = (HudModule) pc.module("fps");
+                sizeBefore[0] = fps.scale;
+                int[] c = menu.centerOf("handle");
+                request("drag " + px(c[0]) + " " + px(c[1]) + " " + px(c[0] + 40) + " " + px(c[1] + 12));
+            }
+        });
+        waitAck();
+        waitFor("dragging the corner makes it bigger", 60, new Cond() {
+            public boolean ok() {
+                return ((HudModule) pc.module("fps")).scale > sizeBefore[0];
+            }
+        });
+        waitTicks(5);
+        shot("19-editor-styled");
         clickOn("Done closes the editor", "done", new Cond() {
             public boolean ok() {
                 return !menu.editingHud();
@@ -295,7 +332,7 @@ public final class SelfTest {
             });
         }
         waitTicks(10);
-        shot("18-visuals-on");
+        shot("20-visuals-on");
         finish();
     }
 

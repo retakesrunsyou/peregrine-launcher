@@ -224,6 +224,10 @@ def handle(command: str, label: str):
         xdo("mousemove", parts[1], parts[2])
         time.sleep(0.3)
         xdo("click", 1)
+    elif what == "rclickat":
+        xdo("mousemove", parts[1], parts[2])
+        time.sleep(0.3)
+        xdo("click", 3)
     elif what == "type":
         xdo("type", "--delay", 120, " ".join(parts[1:]))
     elif what == "drag":

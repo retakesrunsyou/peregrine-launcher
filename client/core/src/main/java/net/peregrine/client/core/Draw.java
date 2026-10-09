@@ -25,6 +25,13 @@ public interface Draw {
     /** Text drawn larger (scale 2 = twice the size), with its top-left at x, y. */
     void textScaled(String s, int x, int y, int argb, float scale, boolean shadow);
 
+    /** Draw what follows scaled by s around (x, y), until popScale(). Nests. */
+    default void pushScale(int x, int y, float s) {
+    }
+
+    default void popScale() {
+    }
+
     // ---- helpers shared by everything
 
     default void outline(int x, int y, int w, int h, int argb) {

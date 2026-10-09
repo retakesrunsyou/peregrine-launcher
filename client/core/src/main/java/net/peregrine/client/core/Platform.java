@@ -113,6 +113,11 @@ public interface Platform {
         return 20;
     }
 
+    /** Real pixels per GUI pixel (Minecraft's GUI Scale, worked out from the window). */
+    default double guiScale() {
+        return 1;
+    }
+
     /** Dimension id, like "minecraft:the_nether", or "" if unknown. */
     default String dimension() {
         return "";

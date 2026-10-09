@@ -255,6 +255,12 @@ final class GamePlatform implements Platform {
     }
 
     @Override
+    public double guiScale() {
+        var w = mc().getWindow();
+        return (double) w.getWidth() / Math.max(1, w.getGuiScaledWidth());
+    }
+
+    @Override
     public float health() {
         return mc().player == null ? -1 : mc().player.getHealth();
     }

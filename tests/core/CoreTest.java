@@ -79,6 +79,20 @@ public class CoreTest {
         check(m.mouseClicked(2,2,0), "grab FPS box at top-left");
         m.mouseDragged(240,135); m.mouseReleased(); pc.renderHud(d);
         check(fps.fx>0.4 && fps.fx<0.6 && fps.fy>0.4 && fps.fy<0.6, "dragged to the middle: fx="+fps.fx+" fy="+fps.fy);
+        // Lunar-style editing: right-click for style, pick a colour, scroll to resize
+        texts.clear(); pc.renderHud(d); int[] fpsAt = find("FPS@");
+        m.mouseClicked(fpsAt[0], fpsAt[1], 1);
+        texts.clear(); m.render(d, fpsAt[0], fpsAt[1]);
+        check(texts.stream().anyMatch(t->t.startsWith("Size@")) && texts.stream().anyMatch(t->t.startsWith("Text shadow@")), "right-click opens the style panel");
+        int[] textRow = find("Text@");
+        m.mouseClicked(textRow[0] + 3*12 + 5, textRow[1] + 15, 0);
+        check(fps.textColor == 0xFFFF5C5C, "picking a swatch colours the text: " + Integer.toHexString(fps.textColor));
+        int[] bgRow = find("Background@"); m.mouseClicked(bgRow[0], bgRow[1], 0);
+        check(!fps.background, "background can be switched off");
+        m.mouseScrolled(1);
+        check(Math.abs(fps.scale - 1.05f) < 1e-4, "scrolling over it makes it bigger: " + fps.scale);
+        texts.clear(); pc.renderHud(d);
+        check(texts.stream().anyMatch(t->t.startsWith("FPS@")), "styled item still draws");
         m.keyPressed(Menu.KEY_ESCAPE); check(m.wantsShade(), "Esc leaves the HUD editor");
         // CPS
         for(int i=0;i<7;i++) pc.onMouseButton(0); pc.onMouseButton(1);
@@ -88,6 +102,8 @@ public class CoreTest {
         check(json.contains("\"cps\"") && json.contains("\"enabled\": true"), "settings saved");
         Peregrine pc2 = Peregrine.init(new P());
         check(pc2.module("cps").enabled() && Math.abs(((HudModule)pc2.module("fps")).fx-fps.fx)<1e-6, "settings load back");
+        HudModule fps2 = (HudModule) pc2.module("fps");
+        check(fps2.textColor == 0xFFFF5C5C && !fps2.background && Math.abs(fps2.scale - 1.05f) < 1e-4, "HUD styles load back");
         Files.write(cfg, "{broken".getBytes()); Peregrine.init(new P()); check(true, "broken settings file doesn't crash");
         // ---- main menu
         Peregrine pc3 = Peregrine.init(new P()); TitleMenu t = pc3.titleMenu();

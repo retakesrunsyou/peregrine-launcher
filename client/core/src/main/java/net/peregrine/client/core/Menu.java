@@ -35,9 +35,9 @@ public final class Menu {
     private float smoothScroll;
     private int maxScroll;
     private boolean editingHud;
-    private HudModule dragging;
-    private int dragDX;
-    private int dragDY;
+    private final HudEditor editor;
+    private float k = 1f;        // the menu is drawn at this fraction of the GUI scale, for finer detail
+    private int lastMx, lastMy;  // mouse position from the last frame (screen pixels)
     private long openedAt;
     private long lastFrame;
     private final Map<Module, Float> knob = new IdentityHashMap<Module, Float>();
@@ -53,6 +53,21 @@ public final class Menu {
 
     Menu(Peregrine pc) {
         this.pc = pc;
+        this.editor = new HudEditor(pc);
+    }
+
+    /**
+     * How much smaller than Minecraft's GUI the menu is drawn. At GUI scale 3 or
+     * more it uses one step down (e.g. 3 -> 2), which keeps the pixel font sharp
+     * while making text and buttons smaller and tidier.
+     */
+    static float uiScale(Platform p) {
+        long g = Math.round(p.guiScale());
+        return g >= 3 ? (g - 1f) / g : 1f;
+    }
+
+    private int s(int ui) {
+        return Math.round(ui * k);
     }
 
     /** Call when the menu screen opens. */
@@ -63,7 +78,7 @@ public final class Menu {
         scroll = 0;
         smoothScroll = 0;
         editingHud = false;
-        dragging = null;
+        editor.open();
         knob.clear();
         rowGlow.clear();
         tabSlide = -1;
@@ -79,20 +94,24 @@ public final class Menu {
         return search;
     }
 
+    HudEditor editor() {
+        return editor;
+    }
+
     /** Centre of something on screen, in GUI pixels, or null if it isn't showing. */
     int[] centerOf(String what) {
+        if (editingHud) {
+            return editor.centerOf(what);
+        }
         layout(pc.platform());
         if (what.equals("edit")) {
-            return editW > 0 ? new int[] {editX + editW / 2, editY + editH / 2} : null;
-        }
-        if (what.equals("done")) {
-            return doneW > 0 ? new int[] {doneX + doneW / 2, doneY + doneH / 2} : null;
+            return editW > 0 ? new int[] {s(editX + editW / 2), s(editY + editH / 2)} : null;
         }
         List<Module> mods = visible();
         for (int i = 0; i < mods.size(); i++) {
             if (mods.get(i).id.equals(what)) {
                 int y = rowY(i) + ROW_H / 2;
-                return y > listY && y < listY + listH ? new int[] {listX + listW / 2, y} : null;
+                return y > listY && y < listY + listH ? new int[] {s(listX + listW / 2), s(y)} : null;
             }
         }
         return null;
@@ -100,7 +119,7 @@ public final class Menu {
 
     /** Call when the menu screen closes. */
     public void close() {
-        dragging = null;
+        editor.mouseReleased();
         editingHud = false;
         pc.markDirty();
     }
@@ -140,8 +159,8 @@ public final class Menu {
 
     /** A medium window: about two thirds of the screen, never edge to edge. */
     private void layout(Platform p) {
-        int sw = p.screenWidth();
-        int sh = p.screenHeight();
+        int sw = Math.round(p.screenWidth() / k);
+        int sh = Math.round(p.screenHeight() / k);
         pw = Math.min(sw - 16, clamp(Math.round(sw * 0.62f), 300, 400));
         ph = Math.min(sh - 16, clamp(Math.round(sh * 0.70f), 186, 264));
         px = (sw - pw) / 2;
@@ -176,19 +195,28 @@ public final class Menu {
         return FadeDraw.progress(openedAt, 180);
     }
 
-    public void render(Draw raw, int mx, int my) {
+    public void render(Draw raw, int screenMx, int screenMy) {
         Platform p = pc.platform();
+        k = uiScale(p);
+        lastMx = screenMx;
+        lastMy = screenMy;
         layout(p);
         SelfTest.count(editingHud ? "editor" : "menu");
         long now = System.currentTimeMillis();
         float dt = lastFrame == 0 ? 0f : Math.min(0.1f, (now - lastFrame) / 1000f);
         lastFrame = now;
         if (editingHud) {
-            renderEditor(raw, mx, my, p);
+            editor.render(raw, screenMx, screenMy, k);
             return;
         }
         float t = fade();
         Draw d = t < 1f ? new FadeDraw(raw, t) : raw;
+        d.pushScale(0, 0, k);
+        renderMenu(d, Math.round(screenMx / k), Math.round(screenMy / k), p, t, dt, now);
+        d.popScale();
+    }
+
+    private void renderMenu(Draw d, int mx, int my, Platform p, float t, float dt, long now) {
         if (t < 1f) {
             // Ease up into place as it fades in.
             float e = 1f - (1f - t) * (1f - t);
@@ -283,7 +311,10 @@ public final class Menu {
             smoothScroll = scroll;
         }
 
-        d.clip(listX, listY, listW, listH);
+        // Clipping works in screen pixels on every version, so step out of the scale for it.
+        d.popScale();
+        d.clip(s(listX), s(listY), s(listW), s(listH));
+        d.pushScale(0, 0, k);
         boolean mouseInList = in(mx, my, listX, listY, listW, listH);
         int textW = listW - 44;
         for (int i = 0; i < mods.size(); i++) {
@@ -311,7 +342,9 @@ public final class Menu {
                 d.rect(listX + 7, ry + ROW_H + 1, listW - 14, 1, 0x0CFFFFFF);
             }
         }
+        d.popScale();
         d.unclip();
+        d.pushScale(0, 0, k);
 
         if (mods.isEmpty()) {
             String none = "Nothing matches \"" + d.trim(search, listW - 80) + "\"";
@@ -386,105 +419,25 @@ public final class Menu {
         d.rect(kx, y + 3, 8, 4, 0xFFFFFFFF);
     }
 
-    private void renderEditor(Draw d, int mx, int my, Platform p) {
-        int a = pc.accent();
-        if (!p.inWorld()) {
-            // HUD items only exist in a world, so there's nothing to arrange here.
-            String line1 = "Join a world to arrange your HUD";
-            String line2 = "Your HUD items appear here once you're playing.";
-            String done = "Back";
-            int w = Math.max(d.width(line1), d.width(line2)) + 36;
-            int h = 76;
-            int x = (p.screenWidth() - w) / 2;
-            int y = (p.screenHeight() - h) / 2;
-            d.shadow(x, y, w, h);
-            d.roundRect(x, y, w, h, Theme.PANEL);
-            d.roundOutline(x, y, w, h, Theme.HAIRLINE);
-            d.rect(x + 2, y, w - 4, 1, a);
-            d.text(line1, x + (w - d.width(line1)) / 2, y + 15, Theme.TEXT, false);
-            d.text(line2, x + (w - d.width(line2)) / 2, y + 29, Theme.MUTED, false);
-            doneW = d.width(done) + 24;
-            doneH = 16;
-            doneX = x + (w - doneW) / 2;
-            doneY = y + h - doneH - 11;
-            boolean hover = in(mx, my, doneX, doneY, doneW, doneH);
-            d.roundRect(doneX, doneY, doneW, doneH, Theme.withAlpha(a, hover ? 0xFF : 0xDD));
-            d.text(done, doneX + 12, doneY + 4, 0xFF15171C, false);
-            return;
-        }
-        for (Module m : pc.modules()) {
-            if (!(m instanceof HudModule) || !m.enabled()) {
-                continue;
-            }
-            HudModule h = (HudModule) m;
-            if (h.lastX < 0) {
-                continue;
-            }
-            boolean hover = h == dragging || h.contains(mx, my);
-            if (!h.hasContent(p)) {
-                // Nothing to show yet (like ping in singleplayer): label the box so it isn't blank.
-                d.roundRect(h.lastX, h.lastY, h.lastW, h.lastH, Theme.withAlpha(Theme.PANEL, 0x90));
-                String label = d.trim(h.name, Math.max(0, h.lastW - 4));
-                d.text(label, h.lastX + (h.lastW - d.width(label)) / 2,
-                        h.lastY + (h.lastH - d.lineHeight()) / 2 + 1, Theme.MUTED, false);
-            }
-            if (hover) {
-                d.roundRect(h.lastX, h.lastY, h.lastW, h.lastH, Theme.withAlpha(a, 0x30));
-                int lw = d.width(h.name) + 8;
-                int ly = h.lastY > 14 ? h.lastY - 13 : h.lastY + h.lastH + 2;
-                d.roundRect(h.lastX, ly, lw, 12, Theme.withAlpha(a, 0xE8));
-                d.text(h.name, h.lastX + 4, ly + 2, 0xFF15171C, false);
-            }
-            d.roundOutline(h.lastX, h.lastY, h.lastW, h.lastH, hover ? a : Theme.withAlpha(a, 0x80));
-        }
-
-        String hint = "Drag HUD items to move them";
-        String done = "Done";
-        doneW = d.width(done) + 18;
-        doneH = 16;
-        int bannerW = d.width(hint) + doneW + 26;
-        int bx = (p.screenWidth() - bannerW) / 2;
-        int by = 8;
-        d.shadow(bx, by, bannerW, 24);
-        d.roundRect(bx, by, bannerW, 24, Theme.PANEL);
-        d.roundOutline(bx, by, bannerW, 24, Theme.HAIRLINE);
-        d.text(hint, bx + 9, by + 8, Theme.TEXT, false);
-        doneX = bx + bannerW - 4 - doneW;
-        doneY = by + 4;
-        boolean hover = in(mx, my, doneX, doneY, doneW, doneH);
-        d.roundRect(doneX, doneY, doneW, doneH, Theme.withAlpha(a, hover ? 0xFF : 0xDD));
-        d.text(done, doneX + 9, doneY + 4, 0xFF15171C, false);
-    }
-
     // -------------------------------------------------------------- input
 
-    /** Returns true if the click was used. button: 0 = left. */
-    public boolean mouseClicked(int mx, int my, int button) {
-        SelfTest.count("click@" + mx + "," + my + "/" + button);
-        if (button != 0) {
-            return false;
-        }
+    /** Returns true if the click was used. button: 0 = left, 1 = right. Screen pixels. */
+    public boolean mouseClicked(int screenMx, int screenMy, int button) {
+        SelfTest.count("click@" + screenMx + "," + screenMy + "/" + button);
         Platform p = pc.platform();
         if (editingHud) {
-            if (in(mx, my, doneX, doneY, doneW, doneH)) {
+            editor.mouseClicked(screenMx, screenMy, button);
+            if (editor.wantsExit()) {
                 editingHud = false;
-                return true;
-            }
-            if (!p.inWorld()) {
-                return true;
-            }
-            List<Module> mods = pc.modules();
-            for (int i = mods.size() - 1; i >= 0; i--) {  // topmost first
-                Module m = mods.get(i);
-                if (m instanceof HudModule && m.enabled() && ((HudModule) m).contains(mx, my)) {
-                    dragging = (HudModule) m;
-                    dragDX = mx - dragging.lastX;
-                    dragDY = my - dragging.lastY;
-                    return true;
-                }
+                pc.markDirty();
             }
             return true;
         }
+        if (button != 0) {
+            return false;
+        }
+        int mx = Math.round(screenMx / k);
+        int my = Math.round(screenMy / k);
         layout(p);
         if (!in(mx, my, px, py, pw, ph) || in(mx, my, closeX - 3, closeY - 3, 13, 13)) {
             // A click outside the window (or on ×) closes it, like any pop-up.
@@ -501,6 +454,7 @@ public final class Menu {
         }
         if (in(mx, my, editX, editY, editW, editH)) {
             editingHud = true;
+            editor.open();
             return true;
         }
         if (in(mx, my, listX, listY, listW, listH)) {
@@ -517,25 +471,18 @@ public final class Menu {
         return true;
     }
 
-    public boolean mouseDragged(int mx, int my) {
-        if (dragging == null) {
-            return false;
-        }
-        dragging.moveTo(mx - dragDX, my - dragDY, pc.platform());
-        pc.markDirty();
-        return true;
+    public boolean mouseDragged(int screenMx, int screenMy) {
+        return editingHud && editor.mouseDragged(screenMx, screenMy);
     }
 
     public boolean mouseReleased() {
-        boolean was = dragging != null;
-        dragging = null;
-        return was;
+        return editingHud && editor.mouseReleased();
     }
 
     /** amount: positive = scroll up. */
     public boolean mouseScrolled(double amount) {
         if (editingHud) {
-            return false;
+            return editor.mouseScrolled(amount, lastMx, lastMy);
         }
         scroll -= (int) Math.round(amount * (ROW_H + 2));
         scroll = clamp(scroll, 0, maxScroll);

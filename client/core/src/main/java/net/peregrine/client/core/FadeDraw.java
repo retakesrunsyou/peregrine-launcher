@@ -70,6 +70,16 @@ final class FadeDraw implements Draw {
         }
     }
 
+    @Override
+    public void pushScale(int x, int y, float s) {
+        d.pushScale(x, y, s);
+    }
+
+    @Override
+    public void popScale() {
+        d.popScale();
+    }
+
     /** Smooth 0→1 over durationMs since startMs (ease-out). */
     static float progress(long startMs, long durationMs) {
         float t = Math.min(1f, (System.currentTimeMillis() - startMs) / (float) durationMs);

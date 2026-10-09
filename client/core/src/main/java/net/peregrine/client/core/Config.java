@@ -45,6 +45,27 @@ final class Config {
                     ((HudModule) m).fx = o.get("x").getAsFloat();
                     ((HudModule) m).fy = o.get("y").getAsFloat();
                 }
+                if (m instanceof HudModule) {
+                    HudModule h = (HudModule) m;
+                    if (o.has("scale")) {
+                        h.setScaleKeepingCorner(o.get("scale").getAsFloat());
+                    }
+                    if (o.has("text")) {
+                        h.textColor = (int) Long.parseLong(o.get("text").getAsString(), 16);
+                    }
+                    if (o.has("label")) {
+                        h.labelColor = (int) Long.parseLong(o.get("label").getAsString(), 16);
+                    }
+                    if (o.has("background")) {
+                        h.background = o.get("background").getAsBoolean();
+                    }
+                    if (o.has("backgroundAlpha")) {
+                        h.backgroundAlpha = Math.max(0, Math.min(255, o.get("backgroundAlpha").getAsInt()));
+                    }
+                    if (o.has("shadow")) {
+                        h.shadow = o.get("shadow").getAsBoolean();
+                    }
+                }
                 if (o.has("enabled")) {
                     m.setEnabledQuietly(o.get("enabled").getAsBoolean());
                 }
@@ -63,8 +84,27 @@ final class Config {
             JsonObject o = new JsonObject();
             o.addProperty("enabled", m.enabled());
             if (m instanceof HudModule) {
-                o.addProperty("x", ((HudModule) m).fx);
-                o.addProperty("y", ((HudModule) m).fy);
+                HudModule h = (HudModule) m;
+                o.addProperty("x", h.fx);
+                o.addProperty("y", h.fy);
+                if (h.scale != 1f) {
+                    o.addProperty("scale", h.scale);
+                }
+                if (h.textColor != 0) {
+                    o.addProperty("text", Integer.toHexString(h.textColor));
+                }
+                if (h.labelColor != 0) {
+                    o.addProperty("label", Integer.toHexString(h.labelColor));
+                }
+                if (!h.background) {
+                    o.addProperty("background", false);
+                }
+                if (h.backgroundAlpha != HudModule.DEFAULT_BG_ALPHA) {
+                    o.addProperty("backgroundAlpha", h.backgroundAlpha);
+                }
+                if (!h.shadow) {
+                    o.addProperty("shadow", false);
+                }
             }
             mods.add(m.id, o);
         }

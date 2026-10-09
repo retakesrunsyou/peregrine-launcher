@@ -59,4 +59,16 @@ final class GuiDraw implements Draw {
         g.drawString(font, s, 0, 0, argb, shadow);
         g.pose().popPose();
     }
+
+    @Override
+    public void pushScale(int x, int y, float s) {
+        g.pose().pushPose();
+        g.pose().translate((float) x, (float) y, 0f);
+        g.pose().scale(s, s, 1f);
+    }
+
+    @Override
+    public void popScale() {
+        g.pose().popPose();
+    }
 }
