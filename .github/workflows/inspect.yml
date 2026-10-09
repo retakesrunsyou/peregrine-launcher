@@ -10,6 +10,10 @@ on:
         description: 'Class file names to save, space separated (e.g. Gui Camera)'
         required: true
         default: 'Gui Camera'
+      grep:
+        description: 'Optional: only save lines matching this regex (with 3 lines of context), pushed to the inspect branch'
+        required: false
+        default: ''
 
 permissions:
   contents: read
@@ -55,10 +59,42 @@ jobs:
             find src -name "$c.java" -exec cp {} out/$mc/ \;
           done
           (cd src && find . -name '*.java' | sort) > out/$mc/all-classes.txt
+          if [ -n "${{ github.event.inputs.grep }}" ]; then
+            mkdir -p lines/$mc
+            grep -n -E -A3 "${{ github.event.inputs.grep }}" out/$mc/*.java > lines/$mc/matches.txt || true
+          fi
           ls out/$mc
       - uses: actions/upload-artifact@v4
         with:
           name: src-${{ strategy.job-index }}
           path: out
           retention-days: 1  # Minecraft's code is Mojang's: keep it private and short-lived
+      - uses: actions/upload-artifact@v4
+        if: github.event.inputs.grep != ''
+        with:
+          name: lines-${{ strategy.job-index }}
+          path: lines
+          retention-days: 1
+
+  lines:
+    needs: sources
+    if: github.event.inputs.grep != ''
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: lines-*
+          merge-multiple: true
+          path: lines
+      - name: Save the matching lines (short excerpts only) to the inspect branch
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          cd lines
+          git init -q -b inspect
+          git -c user.name=Peregrine -c user.email=noreply@users.noreply.github.com add -A
+          git -c user.name=Peregrine -c user.email=noreply@users.noreply.github.com commit -qm "Matching lines"
+          git push -qf "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" inspect
 
