@@ -60,7 +60,7 @@ class _Cloud:
         base_color = QColor(118, 128, 156) if dark else QColor(255, 255, 255)
         lit_color = QColor(214, 220, 236) if dark else QColor(255, 248, 232)
         blobs = []
-        for _ in range(22):
+        for _ in range(30):
             t = rng.random()
             bx = cw * (0.12 + 0.76 * t)
             hump = math.sin(t * math.pi)  # puffier in the middle
@@ -76,6 +76,10 @@ class _Cloud:
             p.setPen(Qt.NoPen)
             for bx, by, r in blobs:
                 _soft_blob(p, bx, by, r, color, strength)
+            # Light catching the tops of the puffs gives the cloud some volume.
+            top = QColor(color).lighter(125)
+            for bx, by, r in blobs:
+                _soft_blob(p, bx + r * 0.12, by - r * 0.32, r * 0.62, top, strength * 0.42)
             # A flatter, darker underside, like real clouds.
             p.setCompositionMode(QPainter.CompositionMode_DestinationIn)
             fade = QLinearGradient(0, 0, 0, ch)
@@ -221,7 +225,7 @@ class Sky(QWidget):
         c["backdrop"] = pm
 
         # The moon (or the sun, in the Light theme) and its halo.
-        size = 46
+        size = 58
         img = QImage(size * 2, size * 2, QImage.Format_ARGB32_Premultiplied)
         img.fill(Qt.transparent)
         p = QPainter(img)
@@ -262,7 +266,7 @@ class Sky(QWidget):
         p = QPainter(img)
         halo = QRadialGradient(QPointF(hr, hr), hr)
         tone = QColor(200, 214, 255) if dark else QColor(255, 222, 160)
-        for stop, a in ((0, 0.42), (0.12, 0.22), (0.35, 0.07), (1, 0)):
+        for stop, a in ((0, 0.5), (0.14, 0.26), (0.38, 0.09), (1, 0)):
             tone.setAlphaF(a)
             halo.setColorAt(stop, tone)
         p.fillRect(img.rect(), halo)
