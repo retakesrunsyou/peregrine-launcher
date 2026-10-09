@@ -7,6 +7,11 @@ import java.util.Deque;
 import java.util.List;
 
 import net.peregrine.client.core.modules.ArmorHud;
+import net.peregrine.client.core.modules.AntiLeak;
+import net.peregrine.client.core.modules.Crosshair;
+import net.peregrine.client.core.modules.Freelook;
+import net.peregrine.client.core.modules.HitColor;
+import net.peregrine.client.core.modules.ItemPhysics;
 import net.peregrine.client.core.modules.ReachHud;
 import net.peregrine.client.core.modules.ComboHud;
 import net.peregrine.client.core.modules.TargetHud;
@@ -127,6 +132,12 @@ public final class Peregrine {
         modules.add(new XpHud());
         modules.add(new ChunkHud());
         modules.add(new LightHud());
+        // Batch 5: render hooks
+        modules.add(new AntiLeak());
+        modules.add(new Crosshair());
+        modules.add(new Freelook());
+        modules.add(new HitColor());
+        modules.add(new ItemPhysics());
         this.menu = new Menu(this);
         this.titleMenu = new TitleMenu(this);
     }
@@ -235,6 +246,11 @@ public final class Peregrine {
             q.removeFirst();
         }
         return q.size();
+    }
+
+    /** Draws the custom crosshair (adapters call this instead of Minecraft's when it's on). */
+    public void renderCrosshair(Draw d) {
+        ((Crosshair) module("crosshair")).render(d, platform);
     }
 
     /** How much to divide the field of view by (1 = no zoom). */

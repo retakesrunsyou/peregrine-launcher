@@ -51,10 +51,19 @@ scroll to resize, right-click for colors, background, opacity and shadow.
 | Memory | Game memory in use |
 | Resource packs | Active packs, in order |
 
-**Utility:** toggle sprint, toggle sneak, zoom (hold C), fullbright.
+**Anti base leak:** Minecraft picks each block's texture rotation (bedrock,
+deepslate, tuff, stone, grass, sand...) and each plant's position from its
+coordinates, so a screenshot or stream can be traced back to where you are.
+Anti base leak draws every block with the same rotation, centres plants, and
+shows bedrock as diamond blocks. Only your screen changes.
 
-**Visuals:** static FOV, steady camera, no menu blur, fewer particles,
-chunk borders, hitboxes, clean edges (no vignette), clear weather.
+**Utility:** toggle sprint, toggle sneak, zoom (hold C), freelook (hold Left
+Alt to look around in third person), fullbright.
+
+**Visuals:** custom crosshair (shape, size, gap, thickness, color, outline),
+hit color, item physics (dropped items lie flat), static FOV, steady camera,
+no menu blur, fewer particles, chunk borders, hitboxes, clean edges (no
+vignette), clear weather.
 
 Settings save to `config/peregrine-client.json`.
 

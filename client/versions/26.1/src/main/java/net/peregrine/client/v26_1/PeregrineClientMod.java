@@ -17,6 +17,7 @@ public final class PeregrineClientMod implements ClientModInitializer {
 
     static KeyMapping menuKey;
     static KeyMapping zoomKey;
+    static KeyMapping freelookKey;
 
     @Override
     public void onInitializeClient() {
@@ -27,6 +28,9 @@ public final class PeregrineClientMod implements ClientModInitializer {
                 KeyMapping.Category.MISC));
         zoomKey = KeyMappingHelper.registerKeyMapping(new KeyMapping(
                 "key.peregrine.zoom", InputConstants.Type.KEYSYM, InputConstants.KEY_C,
+                KeyMapping.Category.MISC));
+        freelookKey = KeyMappingHelper.registerKeyMapping(new KeyMapping(
+                "key.peregrine.freelook", InputConstants.Type.KEYSYM, InputConstants.KEY_LALT,
                 KeyMapping.Category.MISC));
 
         ClientTickEvents.END_CLIENT_TICK.register(mc -> {

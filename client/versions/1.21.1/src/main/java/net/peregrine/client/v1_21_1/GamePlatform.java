@@ -302,6 +302,60 @@ final class GamePlatform implements Platform {
         return n;
     }
 
+    // ---- batch 5: render hooks
+
+    @Override
+    public void reloadChunks() {
+        mc().execute(() -> {
+            if (mc().level != null) {
+                mc().levelRenderer.allChanged();
+            }
+        });
+    }
+
+    @Override
+    public boolean freelookKeyDown() {
+        return PeregrineClientMod.freelookKey != null && PeregrineClientMod.freelookKey.isDown()
+                && mc().screen == null;
+    }
+
+    @Override
+    public int cameraMode() {
+        return mc().options.getCameraType().ordinal();
+    }
+
+    @Override
+    public void setCameraMode(int mode) {
+        net.minecraft.client.CameraType[] all = net.minecraft.client.CameraType.values();
+        mc().options.setCameraType(all[Math.max(0, Math.min(all.length - 1, mode))]);
+    }
+
+    @Override
+    public void setHitColor(int argb) {
+        mc().execute(() -> {
+            try {
+                net.minecraft.client.renderer.texture.DynamicTexture tex =
+                        ((net.peregrine.client.v1_21_1.mixin.OverlayTextureAccessor) (Object) mc().gameRenderer.overlayTexture())
+                                .peregrine$texture();
+                com.mojang.blaze3d.platform.NativeImage img = tex.getPixels();
+                if (img == null) {
+                    return;
+                }
+                int c = argb == 0 ? 0xB2FF0000 : argb;  // 0 = Minecraft's own red
+                // This version stores pixels as ABGR.
+                int abgr = (c & 0xFF00FF00) | (c & 0xFF) << 16 | (c >> 16 & 0xFF);
+                for (int y = 0; y < 8; y++) {
+                    for (int x = 0; x < 16; x++) {
+                        img.setPixelRGBA(x, y, abgr);
+                    }
+                }
+                tex.upload();
+            } catch (Throwable t) {
+                System.err.println("[Peregrine] Couldn't change the hit color: " + t);
+            }
+        });
+    }
+
     // ---- batch 4: aim, blocks, experience
 
     @Override

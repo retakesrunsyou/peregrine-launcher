@@ -192,6 +192,29 @@ public interface Platform {
         return 0;
     }
 
+    // ---- added in batch 5 (render hooks)
+
+    /** Rebuilds every loaded chunk's mesh (like F3+A), after a block-look setting changes. */
+    default void reloadChunks() {
+    }
+
+    /** Is the freelook key (Left Alt by default) held, while playing? */
+    default boolean freelookKeyDown() {
+        return false;
+    }
+
+    /** 0 = first person, 1 = third person behind, 2 = third person in front. */
+    default int cameraMode() {
+        return 0;
+    }
+
+    default void setCameraMode(int mode) {
+    }
+
+    /** Colors the flash on mobs and players when they're hurt; 0 = Minecraft's red. */
+    default void setHitColor(int argb) {
+    }
+
     /** False for features this Minecraft version can't do; they're hidden from the menu. */
     default boolean supports(String moduleId) {
         return true;

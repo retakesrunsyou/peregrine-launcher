@@ -7,12 +7,12 @@ import net.minecraft.world.item.ItemStack;
 import net.peregrine.client.core.Draw;
 
 /** The shared core's drawing calls, done with Minecraft 1.21.1's GuiGraphicsExtractor. */
-final class GuiDraw implements Draw {
+public final class GuiDraw implements Draw {
 
     private final GuiGraphicsExtractor g;
     private final Font font = Minecraft.getInstance().font;
 
-    GuiDraw(GuiGraphicsExtractor g) {
+    public GuiDraw(GuiGraphicsExtractor g) {
         this.g = g;
     }
 

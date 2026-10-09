@@ -15,7 +15,7 @@
 	"entrypoints": {
 		"client": ["net.peregrine.client.v1_21_2.PeregrineClientMod"]
 	},
-	"mixins": ["peregrine-client.mixins.json"],
+	"mixins": ["peregrine-client.mixins.json", "peregrine-client-extras.mixins.json"],
 	"depends": {
 		"fabricloader": ">=0.16.0",
 		"minecraft": "${minecraft}",

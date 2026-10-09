@@ -203,6 +203,16 @@ final class GamePlatform implements Platform {
     }
 
     @Override
+    public boolean supports(String moduleId) {
+        if (moduleId.equals("item_physics")) {
+            // 1.21.4 and 1.21.5 draw dropped items differently from 1.21.2-1.21.3.
+            String v = minecraftVersion();
+            return !v.equals("1.21.4") && !v.equals("1.21.5");
+        }
+        return true;
+    }
+
+    @Override
     public String minecraftVersion() {
         return FabricLoader.getInstance().getModContainer("minecraft")
                 .map(m -> m.getMetadata().getVersion().getFriendlyString()).orElse("?");
@@ -300,6 +310,58 @@ final class GamePlatform implements Platform {
             }
         }
         return n;
+    }
+
+    // ---- batch 5: render hooks
+
+    @Override
+    public void reloadChunks() {
+        mc().execute(() -> {
+            if (mc().level != null) {
+                mc().levelRenderer.allChanged();
+            }
+        });
+    }
+
+    @Override
+    public boolean freelookKeyDown() {
+        return PeregrineClientMod.freelookKey != null && PeregrineClientMod.freelookKey.isDown()
+                && mc().screen == null;
+    }
+
+    @Override
+    public int cameraMode() {
+        return mc().options.getCameraType().ordinal();
+    }
+
+    @Override
+    public void setCameraMode(int mode) {
+        net.minecraft.client.CameraType[] all = net.minecraft.client.CameraType.values();
+        mc().options.setCameraType(all[Math.max(0, Math.min(all.length - 1, mode))]);
+    }
+
+    @Override
+    public void setHitColor(int argb) {
+        mc().execute(() -> {
+            try {
+                net.minecraft.client.renderer.texture.DynamicTexture tex =
+                        ((net.peregrine.client.v1_21_2.mixin.OverlayTextureAccessor) (Object) mc().gameRenderer.overlayTexture())
+                                .peregrine$texture();
+                com.mojang.blaze3d.platform.NativeImage img = tex.getPixels();
+                if (img == null) {
+                    return;
+                }
+                int c = argb == 0 ? 0xB3FF0000 : argb;  // 0 = Minecraft's own red
+                for (int y = 0; y < 8; y++) {
+                    for (int x = 0; x < 16; x++) {
+                        img.setPixel(x, y, c);
+                    }
+                }
+                tex.upload();
+            } catch (Throwable t) {
+                System.err.println("[Peregrine] Couldn't change the hit color: " + t);
+            }
+        });
     }
 
     // ---- batch 4: aim, blocks, experience

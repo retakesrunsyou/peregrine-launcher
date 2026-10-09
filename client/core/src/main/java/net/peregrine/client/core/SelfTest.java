@@ -371,6 +371,69 @@ public final class SelfTest {
         }
         waitTicks(10);
         shot("20-visuals-on");
+
+        // Batch 5: render hooks
+        if (p.supports("anti_leak")) {
+            run("turn on anti base leak", new Runnable() {
+                public void run() {
+                    pc.module("anti_leak").setEnabled(true);
+                }
+            });
+            waitFor("anti base leak: every block uses one rotation", 200, new Cond() {
+                public boolean ok() {
+                    return Hooks.seedHits > 0;
+                }
+            });
+            waitFor("anti base leak: block model hook runs (diamond bedrock)", 200, new Cond() {
+                public boolean ok() {
+                    return Hooks.modelHits > 0;
+                }
+            });
+            waitTicks(40);
+            shot("21-anti-leak");
+        }
+        run("turn on the custom crosshair, hit color and item physics", new Runnable() {
+            public void run() {
+                pc.module("crosshair").setEnabled(true);
+                pc.module("hit_color").setEnabled(true);
+                if (p.supports("item_physics")) {
+                    pc.module("item_physics").setEnabled(true);
+                }
+            }
+        });
+        waitFor("custom crosshair draws", 100, new Cond() {
+            public boolean ok() {
+                return Hooks.crosshairDraws > 0;
+            }
+        });
+        waitTicks(10);
+        shot("22-crosshair");
+        run("turn on freelook", new Runnable() {
+            public void run() {
+                pc.module("freelook").setEnabled(true);
+            }
+        });
+        ask("keydown Alt_L");
+        waitFor("holding Alt starts freelook in third person", 100, new Cond() {
+            public boolean ok() {
+                return Hooks.freelook && p.cameraMode() == 1 && Hooks.cameraHits > 0;
+            }
+        });
+        waitTicks(10);
+        shot("23-freelook");
+        ask("keyup Alt_L");
+        waitFor("letting go of Alt goes back to first person", 100, new Cond() {
+            public boolean ok() {
+                return !Hooks.freelook && p.cameraMode() == 0;
+            }
+        });
+        run("report hook counts", new Runnable() {
+            public void run() {
+                log("INFO", "hooks: seed=" + Hooks.seedHits + " offset=" + Hooks.offsetHits + " model=" + Hooks.modelHits
+                        + " bedrock=" + Hooks.bedrockSwaps + " items=" + Hooks.itemPhysicsHits
+                        + " crosshair=" + Hooks.crosshairDraws + " camera=" + Hooks.cameraHits);
+            }
+        });
         finish();
     }
 

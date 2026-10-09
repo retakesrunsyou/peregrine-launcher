@@ -29,7 +29,11 @@ public class CoreTest {
         public int onlinePlayers(){return 23;} public int xpLevel(){return 30;} public float xpProgress(){return 0.25f;}
         public int lightLevel(){return 7;} public int hurtTime(){return hurt;}
         public String dimension(){return dim;}
+        public void reloadChunks(){reloads++;} public boolean freelookKeyDown(){return altDown;}
+        public int cameraMode(){return camera;} public void setCameraMode(int m){camera=m;}
+        public void setHitColor(int c){hitColor=c;} public double guiScale(){return 2;}
     }
+    static int reloads, camera, hitColor=-1; static boolean altDown;
     static boolean target; static int hurt; static String dim = "minecraft:overworld";
     static java.util.Set<Platform.Option> optionsOn=new java.util.HashSet<>();
     static boolean playing; static Platform.Screen opened; static int ping=-1; static String server=null;
@@ -50,9 +54,10 @@ public class CoreTest {
     public static void main(String[] a) throws Exception {
         cfg = Files.createTempDirectory("pc").resolve("config/peregrine-client.json");
         Peregrine pc = Peregrine.init(new P()); D d = new D(); Menu m = pc.menu();
-        check(pc.modules().size()==47, "47 modules registered");
+        check(pc.modules().size()==52, "52 modules registered");
         for (String id : new String[]{"health","nether_coords","session","totems","arrows","durability_alert",
-                "reach","combo","target","block_info","block_count","players","rotation","stopwatch","xp","chunk","light"}) check(pc.module(id)!=null, id+" exists");
+                "reach","combo","target","block_info","block_count","players","rotation","stopwatch","xp","chunk","light",
+                "anti_leak","crosshair","freelook","hit_color","item_physics"}) check(pc.module(id)!=null, id+" exists");
         // Defaults: only FPS, coordinates and armor (plus the title screen) start on, every HUD item at 50%
         for (net.peregrine.client.core.Module mod : pc.modules()) {
             boolean want = Arrays.asList("fps","coords","armor","main_menu").contains(mod.id);
@@ -231,6 +236,32 @@ public class CoreTest {
         hurt = 5; pc6.tick(); texts.clear(); pc6.renderHud(d);
         check(texts.stream().anyMatch(q->q.startsWith("0@")), "getting hit resets the combo");
         playing = false; target = false; hurt = 0;
+        // ---- batch 5: anti base leak, crosshair, freelook, hit color, item physics
+        Peregrine pc7 = Peregrine.init(new P());
+        int r0 = reloads; pc7.module("anti_leak").setEnabled(true);
+        check(Hooks.fixedRotation && Hooks.fixedOffset && Hooks.diamondBedrock, "anti base leak: one rotation, centred plants, diamond bedrock");
+        check(reloads == r0 + 1, "and the chunks are redrawn");
+        for (net.peregrine.client.core.settings.Setting st : pc7.module("anti_leak").settings()) if (st.id.equals("bedrock")) ((net.peregrine.client.core.settings.BoolSetting)st).value=false;
+        pc7.tick(); check(!Hooks.diamondBedrock && Hooks.fixedRotation && reloads == r0 + 2, "changing an option redraws once");
+        pc7.tick(); check(reloads == r0 + 2, "...and only once");
+        pc7.module("anti_leak").setEnabled(false);
+        check(!Hooks.fixedRotation && !Hooks.fixedOffset && reloads == r0 + 3, "off puts blocks back");
+        pc7.module("crosshair").setEnabled(true); pc7.tick();
+        List<int[]> rects = new ArrayList<>();
+        Draw rd = new D(){ public void rect(int x,int y,int w,int h,int c){ rects.add(new int[]{x,y,w,h,c}); } };
+        pc7.renderCrosshair(rd);
+        check(Hooks.customCrosshair && rects.size() == 8, "cross crosshair: 4 arms + outlines (" + rects.size() + ")");
+        check(rects.stream().anyMatch(q -> q[0] == 480 - 1 && q[3] == 7), "drawn in real pixels at the centre of the screen");
+        pc7.module("freelook").setEnabled(true);
+        altDown = true; camera = 0; pc7.tick();
+        check(Hooks.freelook && camera == 1 && Hooks.camYaw == 180f && Hooks.camPitch == 12.5f, "freelook: Alt switches to third person, camera starts where you look");
+        Hooks.turnCamera(100, 1000); check(Hooks.camYaw == 195f && Hooks.camPitch == 90f, "mouse turns only the camera (pitch clamped)");
+        altDown = false; pc7.tick(); check(!Hooks.freelook && camera == 0, "letting go puts the camera back");
+        pc7.module("hit_color").setEnabled(true); pc7.tick();
+        check(hitColor == 0xB39B3BFF, "hit color: purple at 70%: " + Integer.toHexString(hitColor));
+        pc7.module("hit_color").setEnabled(false); check(hitColor == 0, "off restores Minecraft's red");
+        pc7.module("item_physics").setEnabled(true); check(Hooks.itemPhysics, "item physics switch");
+        pc7.module("item_physics").setEnabled(false); check(!Hooks.itemPhysics, "item physics off");
         System.out.println("\nALL CORE TESTS PASSED");
     }
 }

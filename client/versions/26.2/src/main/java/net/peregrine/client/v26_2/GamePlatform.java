@@ -151,7 +151,7 @@ final class GamePlatform implements Platform {
 
     @Override
     public boolean supports(String moduleId) {
-        return !moduleId.equals("clean_edges");
+        return true;  // every feature works here
     }
 
     @Override
@@ -292,6 +292,58 @@ final class GamePlatform implements Platform {
             }
         }
         return n;
+    }
+
+    // ---- batch 5: render hooks
+
+    @Override
+    public void reloadChunks() {
+        mc().execute(() -> {
+            if (mc().level != null) {
+                mc().levelExtractor.allChanged();
+            }
+        });
+    }
+
+    @Override
+    public boolean freelookKeyDown() {
+        return PeregrineClientMod.freelookKey != null && PeregrineClientMod.freelookKey.isDown()
+                && Screens.current() == null;
+    }
+
+    @Override
+    public int cameraMode() {
+        return mc().options.getCameraType().ordinal();
+    }
+
+    @Override
+    public void setCameraMode(int mode) {
+        net.minecraft.client.CameraType[] all = net.minecraft.client.CameraType.values();
+        mc().options.setCameraType(all[Math.max(0, Math.min(all.length - 1, mode))]);
+    }
+
+    @Override
+    public void setHitColor(int argb) {
+        mc().execute(() -> {
+            try {
+                net.minecraft.client.renderer.texture.DynamicTexture tex =
+                        ((net.peregrine.client.v26_2.mixin.OverlayTextureAccessor) (Object) mc().gameRenderer.overlayTexture())
+                                .peregrine$texture();
+                com.mojang.blaze3d.platform.NativeImage img = tex.getPixels();
+                if (img == null) {
+                    return;
+                }
+                int c = argb == 0 ? 0xB3FF0000 : argb;  // 0 = Minecraft's own red
+                for (int y = 0; y < 8; y++) {
+                    for (int x = 0; x < 16; x++) {
+                        img.setPixel(x, y, c);
+                    }
+                }
+                tex.upload();
+            } catch (Throwable t) {
+                System.err.println("[Peregrine] Couldn't change the hit color: " + t);
+            }
+        });
     }
 
     // ---- batch 4: aim, blocks, experience

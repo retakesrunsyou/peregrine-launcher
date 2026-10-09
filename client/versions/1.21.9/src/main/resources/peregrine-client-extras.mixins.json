@@ -1,0 +1,17 @@
+{
+	"required": false,
+	"package": "net.peregrine.client.v1_21_9.mixin",
+	"compatibilityLevel": "JAVA_21",
+	"client": [
+		"AntiLeakSeedMixin",
+		"CrosshairMixin",
+		"DiamondBedrockMixin",
+		"FreelookCameraMixin",
+		"FreelookTurnMixin",
+		"ItemPhysicsMixin",
+		"OverlayTextureAccessor"
+	],
+	"injectors": {
+		"defaultRequire": 0
+	}
+}
