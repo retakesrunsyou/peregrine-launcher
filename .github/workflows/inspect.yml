@@ -1,0 +1,82 @@
+# Developer tool: decompiles Minecraft for each supported version and saves
+# the classes the client's hooks touch to the "inspect" branch, so hooks can be
+# checked against every version's real code.
+name: Inspect Minecraft sources
+
+on:
+  workflow_dispatch:
+    inputs:
+      classes:
+        description: 'Class file names to save, space separated (e.g. Gui Camera)'
+        required: true
+        default: 'Gui Camera'
+
+permissions:
+  contents: write
+
+jobs:
+  versions:
+    runs-on: ubuntu-latest
+    outputs:
+      list: ${{ steps.list.outputs.list }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: list
+        run: |
+          rows="$(for f in client/versions/*/targets.txt; do d=$(dirname "$f"); grep -vE '^\s*(#|$)' "$f" | while read -r mc api; do echo "$d|$mc|$api"; done; done)"
+          echo "list=$(printf '%s\n' $rows | jq -R . | jq -cs .)" >> "$GITHUB_OUTPUT"
+
+  sources:
+    needs: versions
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        row: ${{ fromJson(needs.versions.outputs.list) }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '25'
+          cache: gradle
+      - name: Decompile
+        run: |
+          IFS='|' read -r adapter mc api <<< "${{ matrix.row }}"
+          chmod +x client/gradlew
+          cd client
+          ./gradlew -p "${adapter#client/}" genSources --quiet -Pminecraft_version="$mc" -Pfabric_api_version="$api" || true
+          cd ..
+          jar="$(find ~/.gradle client -name '*sources.jar' 2>/dev/null | grep -i minecraft | grep -v fabric-api | head -1)"
+          echo "sources: $jar"
+          mkdir -p src out/$mc
+          unzip -q -o "$jar" -d src
+          for c in ${{ github.event.inputs.classes }}; do
+            find src -name "$c.java" -exec cp {} out/$mc/ \;
+          done
+          (cd src && find . -name '*.java' | sort) > out/$mc/all-classes.txt
+          ls out/$mc
+      - uses: actions/upload-artifact@v4
+        with:
+          name: src-${{ strategy.job-index }}
+          path: out
+
+  save:
+    needs: sources
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: results
+      - name: Save to the inspect branch
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir merged
+          for d in results/*/; do cp -r "$d"* merged/ 2>/dev/null || true; done
+          cd merged
+          git init -q -b inspect
+          git -c user.name=Peregrine -c user.email=noreply@users.noreply.github.com add -A
+          git -c user.name=Peregrine -c user.email=noreply@users.noreply.github.com commit -qm "Minecraft sources"
+          git push -qf "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" inspect
