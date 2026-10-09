@@ -21,7 +21,8 @@ from PySide6.QtWidgets import QWidget
 
 from .theme import LOGO_SVG, Theme
 
-FPS = 24
+FPS = 24          # the bird and shooting stars move this smoothly
+SKY_EVERY = 3     # the slow sky (twinkles, clouds) is redrawn every 3rd frame: 8 a second
 
 
 def _soft_blob(p: QPainter, x: float, y: float, r: float, color: QColor, alpha: float):
@@ -122,15 +123,24 @@ class Sky(QWidget):
         self.timer = QTimer(self)
         self.timer.setInterval(1000 // FPS)
         self.timer.timeout.connect(self._tick)
+        self.frame = 0
+        self.flyer_rects = []  # where the bird and shooting star were drawn last
         # The bird and shooting stars fly on a see-through layer above everything,
         # so they cross the sidebar and dividers instead of being cut off by them.
         self.overlay = _Flyers(self)
 
     def _tick(self):
-        self.update()
+        self.frame += 1
+        if self.frame % SKY_EVERY == 0:
+            self.update()  # also repaints the flyers on top
+            return
+        # In between, only the small areas around the bird and shooting star are redrawn.
         now = time.monotonic()
         if self.bird or self.meteor or now >= min(self.next_bird, self.next_meteor):
-            self.overlay.update()
+            if not self.flyer_rects:
+                self.overlay.update()
+            for r in self.flyer_rects:
+                self.overlay.update(r.adjusted(-60, -60, 60, 60).toAlignedRect())
 
     def resizeEvent(self, e):
         self.overlay.setGeometry(self.rect())
@@ -259,6 +269,16 @@ class Sky(QWidget):
         p.end()
         c["halo"] = QPixmap.fromImage(img)
 
+        # Moonbeams: drawn once at full strength, then shown dimmer when clouds pass.
+        beams = QPixmap(w, h)
+        beams.fill(Qt.transparent)
+        p = QPainter(beams)
+        p.setRenderHint(QPainter.Antialiasing)
+        p.setPen(Qt.NoPen)
+        self._beams(p, self._moon_pos(), w, h, dark)
+        p.end()
+        c["beams"] = beams
+
         self.cache, self.cache_key = c, key
         if not self.clouds or len(self.clouds) != 5:
             rng = random.Random(11)
@@ -338,8 +358,9 @@ class Sky(QWidget):
         halo = c["halo"]
         p.setOpacity((0.75 if dark else 0.9) * (0.25 + 0.75 * light))
         p.drawPixmap(QPointF(moon.x() - halo.width() / 2, moon.y() - halo.height() / 2), halo)
+        p.setOpacity(light)
+        p.drawPixmap(0, 0, c["beams"])
         p.setOpacity(1.0)
-        self._beams(p, moon, t, w, h, light, dark)
         mp = c["moon"]
         p.drawPixmap(QPointF(moon.x() - mp.width() / 2 / mp.devicePixelRatio(),
                              moon.y() - mp.height() / 2 / mp.devicePixelRatio()), mp)
@@ -381,20 +402,18 @@ class Sky(QWidget):
             p.drawRect(QRectF(x - arm, y - 0.4, arm * 2, 0.8))
             p.drawRect(QRectF(x - 0.4, y - arm, 0.8, arm * 2))
 
-    def _beams(self, p, moon, t, w, h, light, dark):
-        """Long, faint shafts of light from the moon, swaying very slowly."""
-        if light < 0.05:
-            return
+    def _beams(self, p, moon, w, h, dark):
+        """Long, faint shafts of light falling from the moon."""
         tone = QColor(205, 218, 255) if dark else QColor(255, 230, 180)
         length = math.hypot(w, h) * 0.9
         for i, (ang, spread, strength) in enumerate(((200, 5, 0.07), (214, 3, 0.05), (228, 6, 0.06),
                                                      (242, 4, 0.045), (188, 3, 0.04))):
-            a = math.radians(ang + math.sin(t * 0.07 + i * 1.7) * 2.5)
+            a = math.radians(ang)
             s = math.radians(spread)
             tip1 = QPointF(moon.x() + math.cos(a - s) * length, moon.y() - math.sin(a - s) * length)
             tip2 = QPointF(moon.x() + math.cos(a + s) * length, moon.y() - math.sin(a + s) * length)
             grad = QLinearGradient(moon, QPointF((tip1.x() + tip2.x()) / 2, (tip1.y() + tip2.y()) / 2))
-            tone.setAlphaF(strength * light * (1.0 if dark else 0.8))
+            tone.setAlphaF(strength * (1.0 if dark else 0.8))
             grad.setColorAt(0, tone)
             tone.setAlphaF(0)
             grad.setColorAt(1, tone)
@@ -408,6 +427,7 @@ class Sky(QWidget):
             return
         now = time.monotonic()
         p.setRenderHint(QPainter.Antialiasing)
+        self.flyer_rects = []
         self._meteor(p, now, self.width(), self.height())
         self._bird(p, now, self.width(), self.height())
 
@@ -443,6 +463,7 @@ class Sky(QWidget):
         pen.setCapStyle(Qt.RoundCap)
         p.setPen(pen)
         p.drawLine(QPointF(x, y), QPointF(tx, ty))
+        self.flyer_rects.append(QRectF(QPointF(x, ty), QPointF(tx, y)).normalized())
         head = QColor(255, 255, 255)
         head.setAlphaF(0.85 * fade)
         p.setPen(Qt.NoPen)
@@ -481,6 +502,7 @@ class Sky(QWidget):
         p.scale(flap, 1.0)  # squeezing the wingspan reads as a wing beat
         p.drawPixmap(QPointF(-size / 2, -size / 2), pm)
         p.restore()
+        self.flyer_rects.append(QRectF(x - size, y - size, size * 2, size * 2))
 
 
 class _Flyers(QWidget):

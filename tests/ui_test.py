@@ -134,8 +134,10 @@ for _ in range(frames):
     win.sky.repaint()  # the sky plus every widget drawn over it, like a real frame
     win.sky.overlay.repaint()
 ms = (_t.perf_counter() - start) * 1000 / frames
-note("PASS" if ms < 15 else "FAIL", f"animated background costs {ms:.1f} ms per frame at 24 fps "
-     f"(about {ms * 24 / 10:.0f}% of one CPU core, and nothing while playing)")
+from peregrine.ui import sky as sky_mod  # noqa: E402
+per_sec = sky_mod.FPS / sky_mod.SKY_EVERY
+note("PASS" if ms * per_sec < 150 else "FAIL", f"animated background: {ms:.1f} ms per full frame, {per_sec:g} full frames "
+     f"a second = about {ms * per_sec / 10:.0f}% of one CPU core while you look at it, nothing while playing")
 win.sky.set_paused(True)
 note("PASS" if not win.sky.timer.isActive() else "FAIL", "the background stops when paused")
 

@@ -68,10 +68,10 @@ public final class TitleMenu {
         }
     }
 
-    /** The game window's title: "Peregrine Client 0.4.0 · Minecraft 1.21.1 - Singleplayer". */
+    /** The game window's title: "Peregrine Client 0.4.0 - Minecraft 1.21.1 - Singleplayer". */
     public static String windowTitle(String vanilla) {
         String rest = vanilla == null ? "Minecraft" : vanilla.replaceFirst("^Minecraft\\*", "Minecraft");
-        return "Peregrine Client " + CLIENT_VERSION + " · " + rest;
+        return "Peregrine Client " + CLIENT_VERSION + " - " + rest;
     }
 
     /** Call when the main menu screen is created, so it fades in. */

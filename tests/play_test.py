@@ -195,8 +195,11 @@ def handle(command: str, label: str):
         if label == "title" and parts[1] == "01-title":
             names = subprocess.run(["xdotool", "search", "--name", "Peregrine Client", "getwindowname", "%@"],
                                    capture_output=True, text=True).stdout.strip()
+            every = subprocess.run(["xdotool", "search", "--name", ".", "getwindowname", "%@"],
+                                   capture_output=True, text=True).stdout.strip().replace("\n", " | ")
             note("PASS" if names.startswith("Peregrine Client") else "FAIL",
-                 f"game window is titled {names.splitlines()[0]!r}" if names else "game window isn't titled Peregrine Client")
+                 f"game window is titled {names.splitlines()[0]!r}" if names
+                 else f"game window isn't titled Peregrine Client (windows: {every[:200]})")
     elif what == "key":
         xdo("key", "--delay", 80, parts[1])
     elif what in ("keydown", "keyup"):
