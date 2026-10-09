@@ -63,7 +63,7 @@ def stylesheet() -> str:
     on_a = on_color(a)
     hover_a = shade(a, 112)
     # Frosted panels (header, sidebar, footer): the night sky shows through a little.
-    glass = rgba(p['surface'], 0.55 if Theme.name != "light" else 0.72)
+    glass = rgba(p["surface"], 0.40 if Theme.name != "light" else 0.62)
     return f"""
     QWidget {{ color: {p['text']}; font-size: 14px; }}
     QMainWindow, QDialog {{ background: {p['bg']}; }}
