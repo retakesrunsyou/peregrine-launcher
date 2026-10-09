@@ -65,7 +65,7 @@ srv = http.server.ThreadingHTTPServer(("127.0.0.1", 0), functools.partial(
     type("Q", (http.server.SimpleHTTPRequestHandler,), {"log_message": lambda *a: None}),
     directory=str(JARS)))
 threading.Thread(target=srv.serve_forever, daemon=True).start()
-client_mod._release_assets = lambda: {
+client_mod._release_assets = lambda max_age=0: {
     f.name: {"name": f.name, "id": 1, "size": f.stat().st_size,
              "browser_download_url": f"http://127.0.0.1:{srv.server_address[1]}/{f.name}"}
     for f in JARS.glob("*.jar")}

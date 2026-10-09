@@ -12,11 +12,11 @@ from . import UPDATE_REPO, modrinth, net, paths
 PREFIX = "peregrine-client-"
 
 
-def _release_assets() -> dict:
+def _release_assets(max_age: float = 3600) -> dict:
     if not UPDATE_REPO:
         return {}
     release = net.get_json_cached(f"https://api.github.com/repos/{UPDATE_REPO}/releases/latest",
-                                  paths.CACHE / "latest_release.json", 3600,
+                                  paths.CACHE / "latest_release.json", max_age,
                                   headers={"Accept": "application/vnd.github+json"})
     return {a["name"]: a for a in release.get("assets", [])}
 
@@ -39,7 +39,12 @@ def sync(inst, enabled: bool, progress=None) -> str:
             f.unlink()
         return "removed"
 
-    asset = _release_assets().get(f"{PREFIX}{inst.data['mc_version']}.jar")
+    name = f"{PREFIX}{inst.data['mc_version']}.jar"
+    asset = _release_assets().get(name)
+    if not asset:
+        # Maybe a release came out since we last looked (its files are attached a few
+        # minutes after publishing), so check again instead of waiting an hour.
+        asset = _release_assets(max_age=60).get(name)
     if not asset:
         return "no build for this version"
     dest = mods / asset["name"]

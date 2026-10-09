@@ -449,9 +449,14 @@ def build_command(profile: dict, info: dict, java: str, account: dict,
     if major >= 19 and cfg.get("fast_start", True):
         # Class snapshot: the first launch records the classes Java loaded, later
         # launches map them straight in instead of loading them one by one.
-        cds = paths.CACHE / "cds" / f"{profile['id']}.jsa"
+        # One file per Java version (a snapshot from another Java can't be used),
+        # and Java's notes about it stay out of the game log.
+        have = java_major(java) or major
+        cds = paths.CACHE / "cds" / f"{profile['id']}-java{have}.jsa"
         cds.parent.mkdir(parents=True, exist_ok=True)
-        tuned += ["-XX:+AutoCreateSharedArchive", f"-XX:SharedArchiveFile={cds}"]
+        tuned += ["-XX:+AutoCreateSharedArchive", f"-XX:SharedArchiveFile={cds}", "-Xlog:cds*=off"]
+        if have >= 25:
+            tuned.append("-Xlog:aot*=off")
     if info.get("log_arg"):
         tuned.append(info["log_arg"])
     tuned += cfg.get("extra_jvm_args", "").split()

@@ -52,7 +52,7 @@ mods.mkdir(parents=True)
 (mods / "fabric-api-0.1.jar").write_bytes(b"x")  # so Modrinth isn't asked
 jar = "peregrine-client-1.21.1.jar"
 release = {}
-client_mod._release_assets = lambda: release
+client_mod._release_assets = lambda max_age=0: release
 
 
 def publish(content: bytes, asset_id: int):
@@ -81,6 +81,19 @@ check("a mod switched off in Content stays off", client_mod.sync(inst, True) == 
 check("turning the setting off removes it", client_mod.sync(inst, False) == "removed" and not (mods / jar).exists())
 release.clear()
 check("versions without a build launch without it", client_mod.sync(inst, True) == "no build for this version")
+
+# A release whose files weren't attached yet when the launcher last looked:
+# the launcher checks again at once instead of waiting an hour.
+seen_ages = []
+def late_release(max_age=3600):
+    seen_ages.append(max_age)
+    if max_age > 60:
+        return {}
+    publish(b"DDDD", 3)
+    return release
+client_mod._release_assets = late_release
+check("a just-published build is found on the next Play", client_mod.sync(inst, True) == "installed"
+      and (mods / jar).read_bytes() == b"DDDD" and seen_ages == [3600, 60])
 
 # ---------------------------------------------------------------- Java choice
 

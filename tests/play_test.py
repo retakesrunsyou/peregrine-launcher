@@ -72,7 +72,7 @@ class Quiet(http.server.SimpleHTTPRequestHandler):
 server = http.server.ThreadingHTTPServer(("127.0.0.1", 0), functools.partial(Quiet, directory=str(JARS)))
 threading.Thread(target=server.serve_forever, daemon=True).start()
 port = server.server_address[1]
-client_mod._release_assets = lambda: {
+client_mod._release_assets = lambda max_age=0: {
     f.name: {"name": f.name, "browser_download_url": f"http://127.0.0.1:{port}/{f.name}",
              "size": f.stat().st_size}
     for f in JARS.glob("*.jar")}
