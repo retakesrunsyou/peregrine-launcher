@@ -220,9 +220,16 @@ class InstanceSettingsDialog(QDialog):
         form.setSpacing(12)
         self.name = QLineEdit(inst.name)
         self.description = QLineEdit(inst.data.get("description", ""))
-        self.memory = QSpinBox(minimum=0, maximum=65536, singleStep=512, suffix=" MB")
-        self.memory.setSpecialValueText("Use launcher setting")
-        self.memory.setValue(inst.data.get("memory_mb") or 0)
+        self.memory = QComboBox()
+        self.memory.addItem("Same as Settings", 0)
+        for gb in (2, 3, 4, 6, 8, 10, 12, 16):
+            self.memory.addItem(f"{gb} GB", gb * 1024)
+        current = inst.data.get("memory_mb") or 0
+        found = self.memory.findData(current)
+        if found < 0:  # an older custom value: keep it selectable
+            self.memory.addItem(f"{current / 1024:g} GB", current)
+            found = self.memory.count() - 1
+        self.memory.setCurrentIndex(found)
 
         colors = QHBoxLayout()
         self.color = inst.color
@@ -272,5 +279,5 @@ class InstanceSettingsDialog(QDialog):
         d["name"] = self.name.text().strip() or d["name"]
         d["description"] = self.description.text().strip()
         d["color"] = self.color
-        d["memory_mb"] = self.memory.value()
+        d["memory_mb"] = int(self.memory.currentData() or 0)
         self.inst.save()

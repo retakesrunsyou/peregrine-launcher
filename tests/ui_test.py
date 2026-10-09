@@ -164,6 +164,10 @@ log = inst.log_file
 if log.is_file():
     shutil.copy(log, OUT / "game.log")
 shot(win, "after-play")
+win.home.refresh()
+win.go(0)
+pump(1)
+shot(win, "home-after-play")
 
 write_summary()
 srv.shutdown()

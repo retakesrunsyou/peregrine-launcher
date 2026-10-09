@@ -60,6 +60,82 @@ def page_header(title: str, sub: str = "", back=None) -> QHBoxLayout:
     return row
 
 
+def last_played(when) -> str:
+    """'Played 5 minutes ago', 'Played yesterday', 'Never played'."""
+    import time
+    if not when:
+        return "Never played"
+    ago = max(0, time.time() - float(when))
+    if ago < 90:
+        return "Played just now"
+    for size, unit in ((86400 * 30, "month"), (86400 * 7, "week"), (86400, "day"), (3600, "hour"), (60, "minute")):
+        if ago >= size:
+            n = int(ago // size)
+            if unit == "day" and n == 1:
+                return "Played yesterday"
+            return f"Played {n} {unit}{'s' if n > 1 else ''} ago"
+    return "Played just now"
+
+
+def empty_state(icon_name: str, title: str, text: str) -> QWidget:
+    """A centred icon, heading and line of help, for pages with nothing on them yet."""
+    box = QWidget()
+    col = QVBoxLayout(box)
+    col.setContentsMargins(0, 36, 0, 0)
+    col.setSpacing(8)
+    tile = QLabel(objectName="emptyIcon")
+    tile.setFixedSize(56, 56)
+    tile.setAlignment(Qt.AlignCenter)
+    tile.setPixmap(icon_pixmap(icon_name, Theme.accent, 26))
+    col.addWidget(tile, 0, Qt.AlignHCenter)
+    col.addSpacing(4)
+    head = QLabel(title, objectName="h2")
+    head.setAlignment(Qt.AlignCenter)
+    col.addWidget(head)
+    body = QLabel(text, objectName="muted")
+    body.setAlignment(Qt.AlignCenter)
+    body.setWordWrap(True)
+    col.addWidget(body)
+    return box
+
+
+# Files the launcher adds itself, shown with friendly names in Content.
+BUILT_IN = {
+    "peregrine-client-": ("Peregrine Client", "Built in", "The Right Shift menu, HUD and Peregrine main menu"),
+    "fabric-api": ("Fabric API", "Required", "Needed by Peregrine Client and most Fabric mods"),
+}
+
+
+KNOWN_MODS = {
+    "sodium": "Sodium", "lithium": "Lithium", "ferritecore": "FerriteCore", "entityculling": "Entity Culling",
+    "immediatelyfast": "ImmediatelyFast", "modernfix": "ModernFix", "dynamicfps": "Dynamic FPS",
+    "iris": "Iris Shaders", "modmenu": "Mod Menu", "clothconfig": "Cloth Config", "sodiumextra": "Sodium Extra",
+    "indium": "Indium", "lambdynamiclights": "LambDynamicLights", "continuity": "Continuity",
+    "appleskin": "AppleSkin", "xaerominimap": "Xaero's Minimap", "xaerosminimap": "Xaero's Minimap",
+    "journeymap": "JourneyMap", "jei": "Just Enough Items", "rei": "Roughly Enough Items",
+    "zoomify": "Zoomify", "betterf3": "BetterF3", "fabricapi": "Fabric API", "c2me": "C2ME",
+    "krypton": "Krypton", "noisium": "Noisium", "moreculling": "More Culling",
+}
+
+
+def pretty_mod_name(filename: str) -> str:
+    """'sodium-fabric-0.8.13+mc1.21.1.jar' -> 'Sodium'."""
+    import re
+    base = re.sub(r"\.(jar|zip)(\.disabled)?$", "", filename)
+    parts = re.split(r"[-_ ]", base)
+    words = []
+    for part in parts:
+        if re.match(r"^v?\d", part) or part.lower() in ("fabric", "mc", "neoforge", "forge", "quilt"):
+            if words:
+                break
+            continue
+        words.append(part)
+    key = "".join(words).lower()
+    if key in KNOWN_MODS:
+        return KNOWN_MODS[key]
+    return " ".join(w[:1].upper() + w[1:] for w in words) or base
+
+
 # ================================================================== home
 
 class InstanceCard(QFrame):
@@ -117,9 +193,17 @@ class InstanceCard(QFrame):
         v.addLayout(top)
 
         desc = inst.data.get("description") or "No description yet."
-        d = QLabel(desc, objectName="muted")
+        d = QLabel(desc, objectName="muted" if inst.data.get("description") else "faint")
         d.setWordWrap(True)
         v.addWidget(d)
+        played = QHBoxLayout()
+        played.setSpacing(6)
+        clock = QLabel()
+        clock.setPixmap(icon_pixmap("clock", Theme.p["faint"], 14))
+        played.addWidget(clock)
+        played.addWidget(QLabel(last_played(inst.data.get("last_played")), objectName="faint"))
+        played.addStretch()
+        v.addLayout(played)
         v.addStretch()
 
         content = QPushButton("Content", objectName="outline")
@@ -129,6 +213,8 @@ class InstanceCard(QFrame):
                            objectName="accent")
         play.setCursor(Qt.PointingHandCursor)
         play.setMinimumHeight(38)
+        if state == "":
+            play.setIcon(icon("play", on_color(Theme.accent), 16))
         play.setEnabled(state == "")
         play.clicked.connect(lambda: self.play.emit(inst))
         trash.setEnabled(state == "")
@@ -317,10 +403,10 @@ class ContentPage(QWidget):
         items = inst.content(self.kind)
         if not items:
             label = dict(self.KINDS)[self.kind].lower()
-            hint = QLabel(f"No {label} yet. Drop files into the folder, then come back here.",
-                          objectName="muted")
-            hint.setContentsMargins(0, 24, 0, 0)
-            self.list.addWidget(hint)
+            icon_name = {"mods": "cube", "resourcepacks": "image", "shaderpacks": "sun"}[self.kind]
+            how = ("Use Add mods, or drop .jar files into the folder."
+                   if self.kind == "mods" else "Drop .zip files into the folder, then come back here.")
+            self.list.addWidget(empty_state(icon_name, f"No {label} yet", how))
         for path, enabled in items:
             self.list.addWidget(self._row(path, enabled))
         self.list.addStretch()
@@ -332,14 +418,30 @@ class ContentPage(QWidget):
         check = Toggle(enabled)
         check.setToolTip("Turn on or off")
         check.toggled.connect(lambda on, p=path: self._toggle(p, on))
-        name = path.name.removesuffix(".disabled")
-        label = QLabel(name)
+        filename = path.name.removesuffix(".disabled")
+        built_in = next((v for k, v in BUILT_IN.items() if filename.lower().startswith(k)), None)
+        texts = QVBoxLayout()
+        texts.setSpacing(1)
+        top = QHBoxLayout()
+        top.setSpacing(8)
+        title = QLabel(built_in[0] if built_in else
+                       (pretty_mod_name(filename) if self.kind == "mods" else filename.rsplit(".", 1)[0]))
+        title.setStyleSheet("font-weight: 600;" if enabled else "")
         if not enabled:
-            label.setObjectName("faint")
-        label.setTextInteractionFlags(Qt.TextSelectableByMouse)
+            title.setObjectName("faint")
+        top.addWidget(title)
+        if built_in:
+            top.addWidget(QLabel(built_in[1], objectName="badge"))
+        top.addStretch()
+        texts.addLayout(top)
+        detail = QLabel(built_in[2] if built_in else filename, objectName="faint")
+        detail.setTextInteractionFlags(Qt.TextSelectableByMouse)
+        detail.setToolTip(filename)
+        texts.addWidget(detail)
         size = path.stat().st_size if path.is_file() else 0
         h.addWidget(check)
-        h.addWidget(label, 1)
+        h.addSpacing(6)
+        h.addLayout(texts, 1)
         if size:
             h.addWidget(QLabel(f"{size / 1_048_576:.1f} MB", objectName="faint"))
         trash = icon_button("trash", "Remove", Theme.p["danger"])
@@ -471,6 +573,10 @@ class SettingsPage(QWidget):
         size = QHBoxLayout()
         w = QSpinBox(minimum=0, maximum=7680, singleStep=10, specialValueText="Auto")
         h = QSpinBox(minimum=0, maximum=4320, singleStep=10, specialValueText="Auto")
+        for box in (w, h):
+            box.setButtonSymbols(QSpinBox.NoButtons)
+            box.setAlignment(Qt.AlignCenter)
+            box.setFixedWidth(84)
         w.setValue(cfg["width"])
         h.setValue(cfg["height"])
         w.valueChanged.connect(lambda v: self.save("width", v))

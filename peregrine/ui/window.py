@@ -167,13 +167,32 @@ class MainWindow(QMainWindow):
         return b
 
     def go(self, index):
+        changed = self.stack.currentIndex() != index
         self.stack.setCurrentIndex(index)
+        if changed:
+            self._fade_in(self.stack.currentWidget())
         if index == 2:
             self.settings.build()
         nav_index = 0 if index == 1 else index  # Content lives under Home
         for i, (b, name) in self.nav_buttons.items():
             b.setChecked(i == nav_index)
             b.setIcon(icon(name, Theme.accent if i == nav_index else None, 18))
+
+    def _fade_in(self, page):
+        """A quick fade as pages change, so switching feels smooth rather than abrupt."""
+        from PySide6.QtCore import QEasingCurve, QPropertyAnimation
+        from PySide6.QtWidgets import QGraphicsOpacityEffect
+        effect = QGraphicsOpacityEffect(page)
+        page.setGraphicsEffect(effect)
+        anim = QPropertyAnimation(effect, b"opacity", page)
+        anim.setDuration(160)
+        anim.setStartValue(0.0)
+        anim.setEndValue(1.0)
+        anim.setEasingCurve(QEasingCurve.OutCubic)
+        # Drop the effect afterwards: it would otherwise slow down scrolling.
+        anim.finished.connect(lambda: page.setGraphicsEffect(None))
+        anim.start()
+        self._page_anim = anim
 
     def apply_theme(self):
         cfg = config.load()
@@ -263,6 +282,8 @@ class MainWindow(QMainWindow):
         self.console.clear()
         if cfg["open_console"]:
             self.console_btn.setChecked(True)
+        import time
+        inst.update(last_played=time.time())
         task = workers.Task(inst.launch, account, with_progress=True)
         task.log.connect(self.console.appendPlainText)
         task.log.connect(self._watch_game_log)
@@ -331,6 +352,10 @@ class MainWindow(QMainWindow):
         discord.update("idle")
         if self.game_inst:
             self.home.set_state(self.game_inst.folder, "")
+            # Show what Play and installs added (Peregrine Client, Fabric API, mods).
+            if self.stack.currentWidget() is self.content and self.content.inst is not None \
+                    and self.content.inst.folder == self.game_inst.folder:
+                self.content.refresh()
         if self.isHidden() or self.isMinimized():
             self.showNormal()
             self.activateWindow()

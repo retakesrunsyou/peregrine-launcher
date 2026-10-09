@@ -78,7 +78,10 @@ def stylesheet() -> str:
     #accountChip:hover {{ background: {p['raised']}; }}
 
     #card {{ background: {p['surface']}; border: 1px solid {p['border']}; border-radius: 10px; }}
+    #card:hover {{ border-color: {p['faint']}; }}
     #row {{ background: {p['surface']}; border: 1px solid {p['border']}; border-radius: 8px; }}
+    #row:hover {{ border-color: {p['faint']}; }}
+    #emptyIcon {{ background: {tint(a, 0.12)}; border-radius: 16px; }}
 
     QPushButton {{ background: {p['raised']}; border: 1px solid {p['border']}; border-radius: 6px;
                    padding: 8px 16px; color: {p['text']}; }}
@@ -101,6 +104,9 @@ def stylesheet() -> str:
     QLineEdit, QComboBox, QSpinBox, QPlainTextEdit {{
         background: {p['bg']}; border: 1px solid {p['border']}; border-radius: 6px; padding: 7px 9px; }}
     QLineEdit:focus, QComboBox:focus, QSpinBox:focus {{ border-color: {a}; }}
+    QLineEdit:hover, QComboBox:hover, QSpinBox:hover {{ border-color: {p['faint']}; }}
+    QSpinBox::up-button, QSpinBox::down-button {{ width: 0; border: none; }}
+    QComboBox::drop-down {{ border: none; width: 26px; }}
     QComboBox QAbstractItemView {{ background: {p['surface']}; border: 1px solid {p['border']};
                                    selection-background-color: {tint(a, 0.2)}; }}
     #segmented {{ background: {p['bg']}; border: 1px solid {p['border']}; border-radius: 7px; }}
@@ -111,6 +117,8 @@ def stylesheet() -> str:
     QPushButton#segment:disabled {{ color: {p['faint']}; }}
     #badge {{ background: {tint(a, 0.16)}; color: {a}; border-radius: 4px; padding: 2px 7px;
               font-size: 12px; font-weight: 600; }}
+    #badgeMuted {{ background: {p['raised']}; color: {p['muted']}; border-radius: 4px; padding: 2px 7px;
+                   font-size: 12px; font-weight: 600; }}
     QCheckBox {{ spacing: 10px; }}
     QCheckBox::indicator {{ width: 18px; height: 18px; border-radius: 5px;
                             border: 1px solid {p['faint']}; background: {p['bg']}; }}
@@ -148,6 +156,13 @@ _PATHS = {
     "check": '<path d="M5 12.5l4.5 4.5L19 7.5"/>',
     "search": '<circle cx="11" cy="11" r="6.5"/><path d="M16 16l4 4"/>',
     "package": '<path d="M12 3 4 7v10l8 4 8-4V7z"/><path d="M4 7l8 4 8-4M12 11v10"/>',
+    "play": '<path d="M8 5.8v12.4a.6.6 0 0 0 .9.5l9.8-6.2a.6.6 0 0 0 0-1L8.9 5.3a.6.6 0 0 0-.9.5z"/>',
+    "clock": '<circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/>',
+    "cube": '<path d="M12 3 4 7v10l8 4 8-4V7z"/><path d="M4 7l8 4 8-4M12 11v10"/>',
+    "image": '<rect x="3.5" y="5" width="17" height="14" rx="2"/><circle cx="9" cy="10" r="1.6"/>'
+             '<path d="M5 17l4.5-4.5 3 3 2.5-2.5L19.5 17"/>',
+    "sun": '<circle cx="12" cy="12" r="4"/><path d="M12 2.5v2M12 19.5v2M2.5 12h2M19.5 12h2'
+           'M5.3 5.3l1.4 1.4M17.3 17.3l1.4 1.4M5.3 18.7l1.4-1.4M17.3 6.7l1.4-1.4"/>',
     "gauge": '<path d="M4.5 17a8.5 8.5 0 1 1 15 0"/><path d="M12 13l4-4"/><circle cx="12" cy="13" r="1"/>',
 }
 

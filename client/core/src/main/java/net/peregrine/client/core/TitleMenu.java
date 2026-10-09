@@ -84,7 +84,7 @@ public final class TitleMenu {
         int a = pc.accent();
 
         // Darken the panorama slightly so the text reads clearly, more towards the bottom.
-        d.rect(0, 0, sw, sh, 0x38000000);
+        d.rect(0, 0, sw, sh, 0x4A000000);
         for (int i = 0; i < 8; i++) {
             int band = sh / 3 / 8;
             d.rect(0, sh - (i + 1) * band, sw, band, Theme.withAlpha(0, 0x0A * (8 - i)));
@@ -104,7 +104,7 @@ public final class TitleMenu {
 
         d.rect((sw - 24) / 2, subY + 15, 24, 1, Theme.withAlpha(a, 0xC0));
         String welcome = "Welcome back, " + p.playerName();
-        d.text(welcome, (sw - d.width(welcome)) / 2, subY + 21, Theme.MUTED, true);
+        d.text(welcome, (sw - d.width(welcome)) / 2, subY + 21, 0xFFC9CDD6, true);
 
         long now = System.currentTimeMillis();
         float dt = lastFrame == 0 ? 0f : Math.min(0.1f, (now - lastFrame) / 1000f);
