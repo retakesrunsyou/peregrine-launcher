@@ -45,6 +45,9 @@ final class HudEditor {
     private int doneX, doneY, doneW, doneH;
     private int resetAllX, resetAllW;
     private int panelX, panelY, panelH;
+    private int panelY0, panelSw;
+    private float panelScale;
+    private HudModule panelFor;
     private int closeX, closeY;
     private int sizeY, textY, labelY, bgY, alphaY, shadowY, buttonsY;
     private int sliderX, sliderW;
@@ -54,6 +57,7 @@ final class HudEditor {
     }
 
     void open() {
+        panelFor = null;
         selected = null;
         styleOpen = false;
         drag = Drag.NONE;
@@ -234,11 +238,19 @@ final class HudEditor {
     private void layoutPanel(int screenW, int screenH) {
         HudModule s = selected;
         panelH = 150 + (s.background ? 18 : 0);
-        int right = ui(s.lastX + s.lastW) + 8;
-        int left = ui(s.lastX) - 8 - PANEL_W;
         int sw = ui(screenW), sh = ui(screenH);
-        panelX = right + PANEL_W <= sw - 4 ? right : Math.max(4, left);
-        panelY = Math.max(32, Math.min(ui(s.lastY), sh - panelH - 4));
+        // The panel stays put while the item's text changes width (like FPS going
+        // from 99 to 100); it only follows when the item is moved or resized.
+        if (s != panelFor || drag == Drag.MOVE || drag == Drag.RESIZE || (s.scale != panelScale && drag != Drag.SIZE_SLIDER) || panelSw != sw) {
+            int right = ui(s.lastX + s.lastW) + 8;
+            int left = ui(s.lastX) - 8 - PANEL_W;
+            panelX = right + PANEL_W <= sw - 4 ? right : Math.max(4, left);
+            panelY0 = ui(s.lastY);
+            panelFor = s;
+            panelScale = s.scale;
+            panelSw = sw;
+        }
+        panelY = Math.max(32, Math.min(panelY0, sh - panelH - 4));
         int y = panelY + 24;
         sizeY = y;
         y += 24;
@@ -416,6 +428,7 @@ final class HudEditor {
             selected = h;
             if (button == 1) {
                 styleOpen = true;
+                panelFor = null;  // place it next to the item afresh
                 return true;
             }
             if (button == 0) {
