@@ -152,6 +152,21 @@ except Exception as e:
 
 # ---------------------------------------------------------------- play
 
+def window_titles():
+    """Titles of the windows on screen, read the way taskbars do (_NET_WM_NAME, then WM_NAME)."""
+    ids = subprocess.run(["xdotool", "search", "--onlyvisible", "--classname", "."],
+                         capture_output=True, text=True).stdout.split()
+    titles = []
+    for wid in ids:
+        out = subprocess.run(["xprop", "-id", wid, "_NET_WM_NAME", "WM_NAME"], capture_output=True, text=True).stdout
+        for line in out.splitlines():
+            if "=" in line and '"' in line:
+                titles.append(line.split("=", 1)[1].strip().strip('"'))
+                break
+    match = "\n".join(t for t in titles if t.startswith("Peregrine Client"))
+    return match, " | ".join(titles)
+
+
 class VirtualScreen:
     """Our own Xvfb, restarted if it dies (it occasionally crashes on CI machines)."""
     def __init__(self):
@@ -193,10 +208,7 @@ def handle(command: str, label: str):
         time.sleep(0.5)
         shot(OUT / f"{label}-{parts[1]}.png")
         if label == "title" and parts[1] == "01-title":
-            names = subprocess.run(["xdotool", "search", "--name", "Peregrine Client", "getwindowname", "%@"],
-                                   capture_output=True, text=True).stdout.strip()
-            every = subprocess.run(["xdotool", "search", "--name", ".", "getwindowname", "%@"],
-                                   capture_output=True, text=True).stdout.strip().replace("\n", " | ")
+            names, every = window_titles()
             note("PASS" if names.startswith("Peregrine Client") else "FAIL",
                  f"game window is titled {names.splitlines()[0]!r}" if names
                  else f"game window isn't titled Peregrine Client (windows: {every[:200]})")
