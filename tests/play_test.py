@@ -260,8 +260,9 @@ def play_once(phase: str, plan: str, extra_game_args: list, timeout: int):
             shot(OUT / f"timeout-{phase}.png")
             proc.kill()
             break
-        for req in sorted(st.glob("req-*"), key=lambda p: int(p.name.split("-")[1])):
-            if req.name.endswith(".tmp") or req.name in handled:
+        ready = [r for r in st.glob("req-*") if not r.name.endswith(".tmp")]  # skip half-written ones
+        for req in sorted(ready, key=lambda p: int(p.name.split("-")[1])):
+            if req.name in handled:
                 continue
             handled.add(req.name)
             handle(req.read_text().strip(), phase)
