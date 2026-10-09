@@ -144,7 +144,7 @@ class NewInstanceDialog(QDialog):
         loaders.addWidget(self.loader)
         loaders.addStretch()
 
-        perf_row = _toggle_row("Performance mode: Sodium and 7 more speed-up mods picked for this "
+        perf_row = _toggle_row("Performance mode: Sodium and 9 more speed-up mods picked for this "
                                "version, plus fast game settings", True)
         self.perf, self.perf_row = perf_row.toggle, perf_row
         self.version.currentTextChanged.connect(self.update_options)

@@ -475,9 +475,18 @@ def jvm_tuning(cfg: dict, java_major: int) -> list:
     ms = min(int(cfg.get("min_memory_mb") or mx), mx)
     gc = cfg.get("gc", "auto")
     common = [
+        # A flag one Java version doesn't know must never stop the game from starting.
+        "-XX:+IgnoreUnrecognizedVMOptions",
         f"-Xmx{mx}M", f"-Xms{ms}M",
         "-XX:+DisableExplicitGC",        # mods can't force full-pause collections
         "-XX:+PerfDisableSharedMem",     # avoids disk stalls from JVM stats files
+        # The JIT compiler: let it compile Minecraft's biggest methods (rendering and
+        # chunk building have some), with room for all the compiled code mods add.
+        "-XX:-DontCompileHugeMethods",
+        "-XX:ReservedCodeCacheSize=400M",
+        "-XX:+AlwaysActAsServerClassMachine",
+        # Bigger memory pages where the kernel offers them: fewer TLB misses.
+        "-XX:+UseTransparentHugePages",
     ]
     # ZGC: tiny pauses even with lots of RAM. Generational ZGC needs Java 21+.
     if gc == "zgc" and java_major >= 21:
@@ -505,6 +514,9 @@ def launch_env(cfg: dict) -> dict:
         env.setdefault("mesa_glthread", "true")
         env.setdefault("__GL_THREADED_OPTIMIZATIONS", "1")
         env.setdefault("__GL_SHADER_DISK_CACHE", "1")
+        # Keep compiled shaders between launches (no hitching while they rebuild).
+        env.setdefault("__GL_SHADER_DISK_CACHE_SKIP_CLEANUP", "1")
+        env.setdefault("MESA_SHADER_CACHE_MAX_SIZE", "1G")
     if cfg.get("dedicated_gpu"):
         # Laptops with two GPUs: run on the stronger one.
         env["DRI_PRIME"] = "1"

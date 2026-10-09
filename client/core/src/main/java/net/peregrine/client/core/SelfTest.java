@@ -158,12 +158,23 @@ public final class SelfTest {
     }
 
     private static void worldSteps() {
+        run("hold Stable FPS off for the benchmark", new Runnable() {
+            public void run() {
+                pc.module("stable_fps").setEnabled(false);
+            }
+        });
         waitFor("joins the world", 6000, new Cond() {
             public boolean ok() {
                 return p.inWorld() && p.showing(Platform.Screen.NONE);
             }
         });
-        waitTicks(100);  // chunks load in
+        waitTicks(200);  // chunks load in
+        benchmark(400);
+        run("Stable FPS back on", new Runnable() {
+            public void run() {
+                pc.module("stable_fps").setEnabled(true);
+            }
+        });
         check("HUD draws in game", new Cond() {
             public boolean ok() {
                 return get("hud") > 20;
@@ -465,6 +476,31 @@ public final class SelfTest {
     }
 
     // ------------------------------------------------------------ step builders
+
+    /** Averages the FPS counter over a number of ticks, standing still, and logs it. */
+    private static void benchmark(final int ticks) {
+        steps.add(new Step("benchmark") {
+            long sum;
+            int n;
+            int low = Integer.MAX_VALUE;
+
+            boolean run(int t) {
+                if (t % 20 == 10) {  // the counter updates once a second
+                    int f = p.fps();
+                    sum += f;
+                    n++;
+                    low = Math.min(low, f);
+                }
+                if (t < ticks) {
+                    return false;
+                }
+                log("INFO", "benchmark: " + (n == 0 ? 0 : Math.round(sum / (double) n)) + " fps average, "
+                        + (n == 0 ? 0 : low) + " lowest, render distance " + p.renderDistance()
+                        + ", over " + (ticks / 20) + " s");
+                return true;
+            }
+        });
+    }
 
     private static void run(String label, final Runnable r) {
         steps.add(new Step(label) {

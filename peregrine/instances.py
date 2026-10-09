@@ -22,7 +22,8 @@ CONTENT_FOLDERS = {
 # performance mode tracked its files.
 _ID_TO_SLUG = {"sodium": "sodium", "lithium": "lithium", "ferritecore": "ferrite-core",
                "entityculling": "entityculling", "immediatelyfast": "immediatelyfast",
-               "modernfix": "modernfix", "dynamic_fps": "dynamic-fps", "moreculling": "moreculling"}
+               "modernfix": "modernfix", "dynamic_fps": "dynamic-fps", "moreculling": "moreculling",
+               "badoptimizations": "badoptimizations", "scalablelux": "scalablelux"}
 
 
 def _write_json(path: Path, data) -> None:

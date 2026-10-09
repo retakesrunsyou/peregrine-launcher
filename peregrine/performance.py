@@ -31,6 +31,8 @@ MODS = [
     ("immediatelyfast", "ImmediatelyFast", "faster HUD, text, maps and entities"),
     ("modernfix", "ModernFix", "faster start-up and lower memory"),
     ("moreculling", "More Culling", "skips hidden faces of leaves, glass and more"),
+    ("badoptimizations", "BadOptimizations", "caches lightmap, sky and clouds work every frame"),
+    ("scalablelux", "ScalableLux", "a faster lighting engine: smoother chunk loading"),
     ("dynamic-fps", "Dynamic FPS", "slows down in the background to save power and heat"),
 ]
 SLUGS = [m[0] for m in MODS]
