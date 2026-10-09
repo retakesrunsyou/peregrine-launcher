@@ -376,6 +376,32 @@ def bench_each():
         toggle([name], True)
 
 
+def bench_settings():
+    """Which fast setting helps or hurts: Minecraft's own settings with one changed at a time
+    (no performance mods)."""
+    from peregrine import performance
+    mods = inst.game_dir / "mods"
+    ours = [v for k, v in (inst.data.get("perf_files") or {}).items() if not k.startswith("dep:")]
+    for n in ours:
+        if (mods / n).exists():
+            (mods / n).rename(mods / (n + ".disabled"))
+    opts = inst.game_dir / "options.txt"
+    base = (OUT / "options-vanilla.txt").read_text() if (OUT / "options-vanilla.txt").exists() else ""
+
+    def run(label, change):
+        lines = dict(l.split(":", 1) for l in base.splitlines() if ":" in l)
+        lines.update(change)
+        opts.write_text("\n".join(f"{k}:{v}" for k, v in lines.items()) + "\n")
+        shutil.rmtree(inst.game_dir / "saves" / "world", ignore_errors=True)
+        shutil.copytree(OUT / "server" / "world", inst.game_dir / "saves" / "world")
+        guarded(label, "bench", ["--quickPlaySingleplayer", "world"], 900)
+
+    run("bench-vanilla", {})
+    for key, value in performance.FAST_SETTINGS.items():
+        run(f"bench-only-{key}", {key: value})
+    run("bench-vanilla-again", {})
+
+
 def guarded(*args):
     try:
         play(*args)
@@ -398,7 +424,9 @@ if (inst.game_dir / "saves" / "world").is_dir():
         shutil.rmtree(inst.game_dir / "saves" / "world")
         shutil.copytree(OUT / "server" / "world", inst.game_dir / "saves" / "world")
         guarded("fps-mods", "world", ["--quickPlaySingleplayer", "world"], 1500)
-        if os.environ.get("BENCH_EACH"):
+        if os.environ.get("BENCH_EACH") == "settings":
+            bench_settings()
+        elif os.environ.get("BENCH_EACH"):
             bench_each()
     except Exception as e:
         note("FAIL", f"couldn't install the FPS mods: {e!r}")

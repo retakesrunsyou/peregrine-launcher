@@ -209,7 +209,7 @@ jobs:
               v="${d%/}"
               if [ -f "$v/summary.txt" ]; then
                 fails="$(grep -c '^FAIL' "$v/summary.txt" || true)"
-                bench="$(grep -o '^INFO [a-z0-9-]*: benchmark: [0-9]* fps' "$v/summary.txt" | sed -E 's/^INFO ([a-z0-9-]*): benchmark: ([0-9]*) fps/\1 \2/' | tr '\n' ' ')"
+                bench="$(grep -o '^INFO [A-Za-z0-9-]*: benchmark: [0-9]* fps' "$v/summary.txt" | sed -E 's/^INFO ([A-Za-z0-9-]*): benchmark: ([0-9]*) fps/\1 \2/' | tr '\n' ' ')"
                 echo "$v: $fails failed${bench:+   fps: $bench}"
               else
                 echo "$v: no summary (the test didn't run to the end)"
