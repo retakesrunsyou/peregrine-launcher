@@ -121,8 +121,9 @@ import time as _t  # noqa: E402
 win.go(0)
 pump(0.5)
 win.sky.set_paused(False)
-win.sky.next_bird = _t.monotonic()
-win.sky.next_meteor = _t.monotonic() + 1.0
+# Catch the bird as it crosses the sidebar's divider (it should fly over it, not behind).
+win.sky.bird = (_t.monotonic() + 0.05, True, 330.0, 10.0)  # reaches x≈200 at the shot
+win.sky.next_meteor = _t.monotonic() + 1.5
 pump(2.2)
 shot(win, "sky-bird")
 pump(0.6)
@@ -131,6 +132,7 @@ frames = 60
 start = _t.perf_counter()
 for _ in range(frames):
     win.sky.repaint()  # the sky plus every widget drawn over it, like a real frame
+    win.sky.overlay.repaint()
 ms = (_t.perf_counter() - start) * 1000 / frames
 note("PASS" if ms < 15 else "FAIL", f"animated background costs {ms:.1f} ms per frame at 24 fps "
      f"(about {ms * 24 / 10:.0f}% of one CPU core, and nothing while playing)")

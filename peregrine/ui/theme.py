@@ -34,6 +34,12 @@ class Theme:
         cls.p = THEMES[cls.name]
 
 
+def rgba(hex_color: str, alpha: float) -> str:
+    c = hex_color.lstrip("#")
+    r, g, b = int(c[0:2], 16), int(c[2:4], 16), int(c[4:6], 16)
+    return f"rgba({r}, {g}, {b}, {round(alpha * 255)})"
+
+
 def on_color(hex_color: str) -> str:
     """Readable text color (dark or white) to put on top of a fill."""
     c = QColor(hex_color)
@@ -56,14 +62,16 @@ def stylesheet() -> str:
     p, a = Theme.p, Theme.accent
     on_a = on_color(a)
     hover_a = shade(a, 112)
+    # Frosted panels (header, sidebar, footer): the night sky shows through a little.
+    glass = rgba(p['surface'], 0.55 if Theme.name != "light" else 0.72)
     return f"""
     QWidget {{ color: {p['text']}; font-size: 14px; }}
     QMainWindow, QDialog {{ background: {p['bg']}; }}
     #page {{ background: transparent; }}
     QScrollArea, #scrollBody {{ background: transparent; border: none; }}
 
-    #header {{ background: {p['surface']}; border-bottom: 1px solid {p['border']}; }}
-    #nav {{ background: {p['surface']}; border-right: 1px solid {p['border']}; }}
+    #header {{ background: {glass}; border-bottom: 1px solid {p['border']}; }}
+    #nav {{ background: {glass}; border-right: 1px solid {p['border']}; }}
     #appName {{ font-size: 18px; font-weight: 700; }}
     #h1 {{ font-size: 28px; font-weight: 700; }}
     #h2 {{ font-size: 16px; font-weight: 650; }}
@@ -134,7 +142,7 @@ def stylesheet() -> str:
     QProgressBar::chunk {{ background: {a}; border-radius: 2px; }}
     #console {{ background: {p['bg']}; border: none; border-top: 1px solid {p['border']};
                 border-radius: 0; font-family: monospace; font-size: 12px; color: {p['muted']}; }}
-    #footer {{ background: {p['surface']}; border-top: 1px solid {p['border']}; }}
+    #footer {{ background: {glass}; border-top: 1px solid {p['border']}; }}
     QScrollBar:vertical {{ background: transparent; width: 10px; }}
     QScrollBar::handle:vertical {{ background: {p['border']}; border-radius: 4px; min-height: 30px; }}
     QScrollBar::add-line, QScrollBar::sub-line {{ height: 0; }}

@@ -28,7 +28,10 @@ class MainWindow(QMainWindow):
         self.game_task = None    # the instance being installed/played
         self.game_inst = None
 
-        root = QWidget()
+        # The whole window sits on an animated night sky (see sky.py); the header,
+        # sidebar and footer are see-through panels over it.
+        self.sky = Sky()
+        root = self.sky
         outer = QVBoxLayout(root)
         outer.setContentsMargins(0, 0, 0, 0)
         outer.setSpacing(0)
@@ -113,12 +116,7 @@ class MainWindow(QMainWindow):
         self.modpacks = ModpacksPage()
         for page in (self.home, self.content, self.settings, self.accounts, self.modpacks):
             self.stack.addWidget(page)
-        # The pages sit on an animated night sky (see sky.py).
-        self.sky = Sky()
-        sky_layout = QVBoxLayout(self.sky)
-        sky_layout.setContentsMargins(0, 0, 0, 0)
-        sky_layout.addWidget(self.stack)
-        body.addWidget(self.sky, 1)
+        body.addWidget(self.stack, 1)
         outer.addLayout(body, 1)
 
         self.home.play.connect(self.play)

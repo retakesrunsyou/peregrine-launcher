@@ -43,7 +43,26 @@ class Sky(QWidget):
         self.paused = False
         self.timer = QTimer(self)
         self.timer.setInterval(1000 // FPS)
-        self.timer.timeout.connect(self.update)
+        self.timer.timeout.connect(self._tick)
+        # The bird and shooting stars fly on a see-through layer above everything,
+        # so they cross the sidebar and dividers instead of being cut off by them.
+        self.overlay = _Flyers(self)
+
+    def _tick(self):
+        self.update()
+        now = time.monotonic()
+        if self.bird or self.meteor or now >= min(self.next_bird, self.next_meteor):
+            self.overlay.update()
+
+    def resizeEvent(self, e):
+        self.overlay.setGeometry(self.rect())
+        self.overlay.raise_()
+        super().resizeEvent(e)
+
+    def childEvent(self, e):
+        super().childEvent(e)
+        if hasattr(self, "overlay") and e.added():
+            self.overlay.raise_()  # stay on top of anything added later
 
     # ------------------------------------------------------------ on / off
 
@@ -152,9 +171,15 @@ class Sky(QWidget):
             p.setBrush(star)
             p.drawEllipse(QRectF(x, y, size, size))
 
-        self._meteor(p, now, w, h)
-        self._bird(p, now, w, h)
         p.end()
+
+    def paint_flyers(self, p):
+        if not self.enabled or self.paused:
+            return
+        now = time.monotonic()
+        p.setRenderHint(QPainter.Antialiasing)
+        self._meteor(p, now, self.width(), self.height())
+        self._bird(p, now, self.width(), self.height())
 
     def _meteor(self, p, now, w, h):
         if self.meteor is None and now >= self.next_meteor:
@@ -215,3 +240,18 @@ class Sky(QWidget):
         p.scale(flap, 1.0)  # squeezing the wingspan reads as a wing beat
         p.drawPixmap(QPointF(-size / 2, -size / 2), pm)
         p.restore()
+
+
+class _Flyers(QWidget):
+    """The top layer: draws only the bird and shooting stars, never takes clicks."""
+
+    def __init__(self, sky: Sky):
+        super().__init__(sky)
+        self.sky = sky
+        self.setAttribute(Qt.WA_TransparentForMouseEvents)
+        self.setAttribute(Qt.WA_NoSystemBackground)
+
+    def paintEvent(self, e):
+        p = QPainter(self)
+        self.sky.paint_flyers(p)
+        p.end()
