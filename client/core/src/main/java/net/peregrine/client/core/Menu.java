@@ -305,7 +305,7 @@ public final class Menu {
         int fy = py + ph - FOOTER_H + 5;
         d.rect(listX, py + ph - FOOTER_H - 1, listW, 1, Theme.HAIRLINE);
         String hint = searching ? mods.size() + (mods.size() == 1 ? " result" : " results")
-                : "Type to search, Esc to close";
+                : "Type to search";
         d.text(d.trim(hint, listW - 60), listX + 4, fy, Theme.FAINT, false);
         String counts = count(null, true) + " / " + count(null, false) + " on";
         d.text(counts, px + pw - 9 - d.width(counts), fy, Theme.FAINT, false);
