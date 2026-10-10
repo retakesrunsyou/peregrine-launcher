@@ -85,13 +85,13 @@ class _Cloud:
             top = QColor(color).lighter(125)
             for bx, by, r in blobs:
                 _soft_blob(p, bx + r * 0.12, by - r * 0.32, r * 0.62, top, strength * 0.42)
-            # A flatter, darker underside, like real clouds.
-            p.setCompositionMode(QPainter.CompositionMode_DestinationIn)
             # Wispy edges: a few faint stray puffs around the outside.
             for _ in range(10):
                 t = rng.random()
                 _soft_blob(p, cw * (0.05 + 0.9 * t), ch * rng.uniform(0.35, 0.8),
                            ch * rng.uniform(0.08, 0.16), color, strength * 0.35)
+            # A flatter, softer underside, like real clouds.
+            p.setCompositionMode(QPainter.CompositionMode_DestinationIn)
             p.resetTransform()
             fade = QLinearGradient(0, 0, 0, ch * q)
             fade.setColorAt(0, QColor(0, 0, 0, 255))

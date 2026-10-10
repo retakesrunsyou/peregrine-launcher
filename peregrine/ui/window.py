@@ -86,7 +86,7 @@ class MainWindow(QMainWindow):
         body = QHBoxLayout()
         body.setSpacing(0)
         nav = QFrame(objectName="nav")
-        nav.setFixedWidth(200)
+        nav.setFixedWidth(216)
         n = QVBoxLayout(nav)
         n.setContentsMargins(14, 18, 14, 16)
         n.setSpacing(4)
