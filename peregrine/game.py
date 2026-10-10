@@ -459,6 +459,7 @@ def build_command(profile: dict, info: dict, java: str, account: dict,
             tuned.append("-Xlog:aot*=off")
     if info.get("log_arg"):
         tuned.append(info["log_arg"])
+    tuned.append(f"-Dperegrine.config={paths.CLIENT_SETTINGS}")
     tuned += cfg.get("extra_jvm_args", "").split()
 
     cmd = [java] + tuned + jvm + [profile["mainClass"]] + game

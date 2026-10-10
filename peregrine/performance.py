@@ -33,6 +33,7 @@ MODS = [
     ("moreculling", "More Culling", "skips hidden faces of leaves, glass and more"),
     ("badoptimizations", "BadOptimizations", "caches lightmap, sky and clouds work every frame"),
     ("scalablelux", "ScalableLux", "a faster lighting engine: smoother chunk loading"),
+    ("clumps", "Clumps", "groups XP orbs together, so piles of XP don't drag FPS down"),
     ("dynamic-fps", "Dynamic FPS", "slows down in the background to save power and heat"),
 ]
 SLUGS = [m[0] for m in MODS]

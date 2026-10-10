@@ -48,7 +48,7 @@ public final class StableFps extends Module {
      * If it's still there at the next start, those are put back first.
      */
     private java.nio.file.Path leftovers(Platform p) {
-        java.nio.file.Path cfg = p.configFile();
+        java.nio.file.Path cfg = net.peregrine.client.core.Peregrine.get().configPath();
         return cfg == null ? null : cfg.resolveSibling("peregrine-stable-fps.txt");
     }
 

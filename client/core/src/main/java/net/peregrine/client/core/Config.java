@@ -29,7 +29,7 @@ final class Config {
 
     @SuppressWarnings("deprecation")
     static void load(Peregrine p) {
-        Path file = p.platform().configFile();
+        Path file = p.configPath();
         if (!Files.isRegularFile(file)) {
             return;
         }
@@ -138,7 +138,7 @@ final class Config {
         }
         root.add("modules", mods);
 
-        Path file = p.platform().configFile();
+        Path file = p.configPath();
         try {
             Files.createDirectories(file.getParent());
             Path tmp = file.resolveSibling(file.getFileName() + ".tmp");

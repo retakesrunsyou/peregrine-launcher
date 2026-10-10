@@ -145,6 +145,7 @@ note("PASS" if not win.sky.timer.isActive() else "FAIL", "the background stops w
 from PySide6.QtWidgets import QComboBox  # noqa: E402
 from peregrine.ui import pages as pages_mod  # noqa: E402
 pages_mod.screen_resolution = lambda: (2560, 1440)  # pretend to be a 1440p monitor
+pages_mod.work_area = lambda: (2560, 1400)  # ...with a panel taking some of it
 win.settings.build()
 win.go(2)
 pump(1)

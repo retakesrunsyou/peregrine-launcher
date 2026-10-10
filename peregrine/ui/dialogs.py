@@ -144,10 +144,21 @@ class NewInstanceDialog(QDialog):
         loaders.addWidget(self.loader)
         loaders.addStretch()
 
-        perf_row = _toggle_row("Performance mode: Sodium and 9 more speed-up mods picked for this "
+        perf_row = _toggle_row("Performance mode: Sodium and 10 more speed-up mods picked for this "
                                "version, plus fast game settings", True)
         self.perf, self.perf_row = perf_row.toggle, perf_row
         self.version.currentTextChanged.connect(self.update_options)
+
+        # Bring settings, packs and mods over from an instance you already have.
+        self.copy_from = QComboBox()
+        self.copy_from.addItem("Start fresh", None)
+        played = sorted(instances.all_instances(), key=lambda i: -(i.data.get("last_played") or 0))
+        for inst in played:
+            self.copy_from.addItem(f"{inst.name}   ·   {inst.subtitle()}", str(inst.folder))
+        if played:
+            self.copy_from.setCurrentIndex(1)  # the one played last
+        self.copy_from.setToolTip("Copies game settings and keybinds, resource packs, shaders and mods. "
+                                  "Mods are fetched again for the version you pick here.")
 
         form.addRow("Name", self.name)
         form.addRow("Description", self.description)
@@ -155,6 +166,7 @@ class NewInstanceDialog(QDialog):
         form.addRow("", snap_row)
         form.addRow("Loader", loaders)
         form.addRow("", perf_row)
+        form.addRow("Bring over", self.copy_from)
         v.addLayout(form)
         v.addSpacing(8)
         row, self.ok = _buttons(self, "Create instance")
@@ -208,10 +220,18 @@ class NewInstanceDialog(QDialog):
 
     def create(self):
         loader = self.loader.value()
-        return instances.create(self.name.text().strip() or self.version.currentText(),
+        inst = instances.create(self.name.text().strip() or self.version.currentText(),
                                 self.version.currentText(), loader,
                                 loader == "fabric" and self.perf.isChecked(),
                                 self.description.text().strip())
+        src = self.copy_from.currentData()
+        if src:
+            from pathlib import Path
+            try:
+                inst.copy_setup_from(instances.Instance(Path(src)))
+            except (OSError, ValueError) as e:
+                print(f"[peregrine] couldn't copy the setup: {e}")
+        return inst
 
 
 class InstanceSettingsDialog(QDialog):
@@ -238,6 +258,17 @@ class InstanceSettingsDialog(QDialog):
             found = self.memory.count() - 1
         self.memory.setCurrentIndex(found)
 
+        # Minecraft version: change it and the player's mods follow (fetched for the new version).
+        self.mc = QComboBox()
+        self.mc.addItem(inst.data["mc_version"])
+        self.mc.setToolTip("Worlds, settings and your Modrinth mods come along; "
+                           "the mods are fetched again for the new version on the next Play.")
+        if not inst.data.get("modpack"):
+            workers.run(game.list_versions, False, done=self.got_versions)
+        else:
+            self.mc.setEnabled(False)
+            self.mc.setToolTip("A modpack's version is set by the pack.")
+
         colors = QHBoxLayout()
         self.color = inst.color
         self.swatches = []
@@ -254,6 +285,7 @@ class InstanceSettingsDialog(QDialog):
         form.addRow("Name", self.name)
         form.addRow("Description", self.description)
         form.addRow("Color", colors)
+        form.addRow("Version", self.mc)
         form.addRow("Memory", self.memory)
         perf_row = _toggle_row("Performance mode: speed-up mods matched to this version, "
                                "kept up to date, and fast settings", inst.performance)
@@ -269,6 +301,19 @@ class InstanceSettingsDialog(QDialog):
         row, _ = _buttons(self, "Save")
         v.addLayout(row)
         self.resize(460, 0)
+
+    def got_versions(self, versions):
+        try:
+            current = self.inst.data["mc_version"]
+            self.mc.blockSignals(True)
+            self.mc.clear()
+            if current not in versions:
+                self.mc.addItem(current)
+            self.mc.addItems(versions)
+            self.mc.setCurrentText(current)
+            self.mc.blockSignals(False)
+        except RuntimeError:
+            pass  # the dialog was closed first
 
     def optimize(self):
         try:
@@ -292,6 +337,17 @@ class InstanceSettingsDialog(QDialog):
         d["color"] = self.color
         d["memory_mb"] = int(self.memory.currentData() or 0)
         self.inst.save()
+        new_mc = self.mc.currentText().strip()
+        if new_mc and new_mc != self.inst.data["mc_version"]:
+            if self.inst.data["loader"] == "fabric":
+                try:
+                    ok = new_mc in fabric.supported_game_versions()
+                except Exception:
+                    ok = True
+                if not ok:
+                    QMessageBox.warning(self, "Version", f"Fabric isn't available for Minecraft {new_mc} yet.")
+                    return
+            self.inst.change_version(new_mc)
         if self.perf.isChecked() != self.inst.performance:
             try:
                 self.inst.set_performance(self.perf.isChecked())

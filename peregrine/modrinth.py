@@ -53,18 +53,40 @@ def install(projects: list, game_version: str, loader: str, mods_dir: Path,
 
 
 def search(query: str = "", project_type: str = "mod", game_version: str = None,
-           loader: str = "fabric", offset: int = 0, limit: int = 20) -> list:
-    """Search Modrinth. Returns hits with title, description, author, downloads, icon_url."""
+           loader: str = "fabric", offset: int = 0, limit: int = 20, category: str = None,
+           sort: str = None) -> list:
+    """Search Modrinth. Returns hits with title, description, author, downloads, icon_url.
+    category: one of Modrinth's categories (e.g. "optimization", "simplistic", "16x").
+    sort: relevance, downloads, follows, newest or updated."""
     facets = [[f"project_type:{project_type}"]]
-    if loader:
+    if loader and project_type in ("mod", "modpack"):
         facets.append([f"categories:{loader}"])
+    if category:
+        facets.append([f"categories:{category}"])
     if game_version:
         facets.append([f"versions:{game_version}"])
     data = net.get_json(f"{API}/search", params={
         "query": query, "facets": json.dumps(facets), "limit": limit, "offset": offset,
-        "index": "relevance" if query else "downloads",
+        "index": sort or ("relevance" if query else "downloads"),
     })
     return data.get("hits", [])
+
+
+def install_pack(project: str, game_version: str, folder: Path, progress=None) -> str:
+    """Download a resource pack into folder. Uses the release for this game version, or
+    the newest one if the pack doesn't list it (most packs work across versions).
+    Returns the file name."""
+    version = best_version(project, game_version, "minecraft")
+    if version is None:
+        versions = net.get_json(f"{API}/project/{project}/version")
+        version = next((v for v in versions if v.get("version_type") == "release"), versions[0] if versions else None)
+    if version is None:
+        raise RuntimeError("This pack has no files to download.")
+    file = next((f for f in version["files"] if f.get("primary")), version["files"][0])
+    folder.mkdir(parents=True, exist_ok=True)
+    net.fetch_all([net.Download(file["url"], folder / file["filename"], file.get("hashes", {}).get("sha1"),
+                                size=file.get("size"))], "Resource pack", progress)
+    return file["filename"]
 
 
 def icon_path(url: str):

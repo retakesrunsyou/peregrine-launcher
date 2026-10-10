@@ -148,13 +148,31 @@ def screen_resolution() -> tuple:
     return round(size.width() * ratio), round(size.height() * ratio)
 
 
+TITLE_BAR = 40  # room for the game window's own title bar (logical pixels)
+
+
+def work_area() -> tuple:
+    """The part of the main monitor a normal window may use, in real pixels: the screen
+    minus panels and taskbars, minus the window's title bar. A game window this size
+    fills the screen but leaves the taskbar, the Super/Windows key and other apps usable."""
+    from PySide6.QtGui import QGuiApplication
+    screen = QGuiApplication.primaryScreen()
+    if screen is None:
+        return 0, 0
+    area, ratio = screen.availableGeometry(), screen.devicePixelRatio()
+    w, h = area.width(), area.height() - TITLE_BAR
+    if w <= 0 or h <= 0:
+        return screen_resolution()
+    return round(w * ratio), round(h * ratio)
+
+
 def sync_screen_size() -> None:
-    """With "Fit my screen" chosen, keep the saved size matching the monitor
-    (it may have changed since last time)."""
+    """With "Fit my screen" chosen, keep the saved size matching the monitor's usable
+    area (it may have changed since last time)."""
     cfg = config.load()
     if cfg.get("window_mode", "screen") != "screen":
         return
-    w, h = screen_resolution()
+    w, h = work_area()
     if w and h and (cfg.get("width"), cfg.get("height")) != (w, h):
         cfg.update(width=w, height=h)
         config.save(cfg)
@@ -573,10 +591,11 @@ class SettingsPage(QWidget):
         """A menu of sizes: fit the screen (detected), every common size that fits, or
         Minecraft's own default."""
         sw, sh = screen_resolution()
+        fw, fh = work_area()
         box = QComboBox()
         box.setMinimumWidth(300)
         box.setMaxVisibleItems(14)
-        box.addItem(f"Fit my screen   ·   {sw} × {sh}" if sw else "Fit my screen", ("screen", sw, sh))
+        box.addItem(f"Fit my screen   ·   {fw} × {fh}" if fw else "Fit my screen", ("screen", fw, fh))
         for w, h, nick in display.presets_for(sw or 7680, sh or 4320):
             box.addItem(display.label(w, h, nick), ("size", w, h))
         dw, dh = display.MINECRAFT_DEFAULT
@@ -654,7 +673,7 @@ class SettingsPage(QWidget):
         gamesec.row("Memory", mem, "4 GB suits most packs. More isn't always faster.")
 
         gamesec.row("Window size", self._window_sizes(cfg),
-                    "Fit my screen picks your monitor's full resolution automatically.")
+                    "Fit my screen fills your monitor but leaves the taskbar and other apps usable.")
         gamesec.row("Start in fullscreen", self._check(cfg, "fullscreen"))
         gamesec.row("Use GameMode", self._check(cfg, "use_gamemode"),
                     "Boosts performance while playing, if Feral GameMode is installed.")

@@ -23,7 +23,7 @@ CONTENT_FOLDERS = {
 _ID_TO_SLUG = {"sodium": "sodium", "lithium": "lithium", "ferritecore": "ferrite-core",
                "entityculling": "entityculling", "immediatelyfast": "immediatelyfast",
                "modernfix": "modernfix", "dynamic_fps": "dynamic-fps", "moreculling": "moreculling",
-               "badoptimizations": "badoptimizations", "scalablelux": "scalablelux"}
+               "badoptimizations": "badoptimizations", "scalablelux": "scalablelux", "clumps": "clumps"}
 
 
 def _write_json(path: Path, data) -> None:
@@ -95,6 +95,26 @@ class Instance:
         self.update(perf_settings=performance.PRESET_VERSION)
         return changed
 
+    def enable_resource_pack(self, filename: str) -> None:
+        """Switch a resource pack on in options.txt (on top of the others), so it's
+        active the next time the game starts."""
+        import json as _json
+        opts = self.game_dir / "options.txt"
+        lines = opts.read_text(errors="replace").splitlines() if opts.exists() else []
+        current = dict(l.split(":", 1) for l in lines if ":" in l)
+        try:
+            packs = _json.loads(current.get("resourcePacks", "[]"))
+        except ValueError:
+            packs = []
+        if not packs:
+            packs = ["vanilla"]
+        entry = f"file/{filename}"
+        if entry not in packs:
+            packs.append(entry)  # the last one listed is on top
+        current["resourcePacks"] = _json.dumps(packs, separators=(",", ":"))
+        self.game_dir.mkdir(parents=True, exist_ok=True)
+        opts.write_text("\n".join(f"{k}:{v}" for k, v in current.items()) + "\n")
+
     def delete(self) -> None:
         shutil.rmtree(self.folder)
 
@@ -144,6 +164,75 @@ class Instance:
                 self.update(loader="vanilla", loader_version=None, auto_fabric=False)
         else:
             self.update(perf_checked=0, perf_off=[])
+
+    # ---- mods the player added from Modrinth, kept across Minecraft versions
+
+    def remember_mods(self, added) -> None:
+        """Record mods added from Modrinth ([(project id, filename)]), so they can be
+        fetched again for another Minecraft version."""
+        mods = dict(self.data.get("user_mods") or {})
+        for pid, name in added:
+            mods[pid] = name
+        self.update(user_mods=mods)
+
+    def change_version(self, mc_version: str) -> None:
+        """Move this instance to another Minecraft version. Worlds and settings stay;
+        the player's Modrinth mods are fetched again for the new version on the next
+        Play (performance mods and Peregrine Client take care of themselves)."""
+        if mc_version == self.data["mc_version"]:
+            return
+        mods = self.game_dir / "mods"
+        user = dict(self.data.get("user_mods") or {})
+        for name in user.values():
+            for f in (mods / name, mods / (name + ".disabled")):
+                if f.exists():
+                    f.unlink()
+        pending = sorted(set(self.data.get("pending_mods") or []) | set(user))
+        self.update(mc_version=mc_version, loader_version=None, user_mods={}, pending_mods=pending)
+
+    def _fetch_pending_mods(self, progress) -> list:
+        """Mods waiting to be fetched for this version. Returns the ones that aren't out
+        for it yet (they're tried again next time)."""
+        pending = list(self.data.get("pending_mods") or [])
+        if not pending or self.data["loader"] != "fabric":
+            return []
+        waiting = []
+        for pid in pending:
+            try:
+                added = modrinth.install([pid], self.data["mc_version"], "fabric", self.game_dir / "mods", progress)
+            except Exception as e:
+                print(f"[peregrine] {pid} not fetched: {e}")
+                waiting.append(pid)
+                continue
+            if added:
+                self.remember_mods(added)
+            else:
+                waiting.append(pid)
+        self.update(pending_mods=waiting)
+        return waiting
+
+    def copy_setup_from(self, other: "Instance") -> None:
+        """Start this instance with another one's game settings, resource packs, shaders
+        and mods (the mods are fetched for this instance's version on the first Play)."""
+        self.game_dir.mkdir(parents=True, exist_ok=True)
+        opts = other.game_dir / "options.txt"
+        if opts.is_file():
+            shutil.copy2(opts, self.game_dir / "options.txt")
+        for kind in ("resourcepacks", "shaderpacks"):
+            src = other.game_dir / kind
+            if src.is_dir():
+                shutil.copytree(src, self.game_dir / kind, dirs_exist_ok=True)
+        pending = sorted(set(other.data.get("user_mods") or {}) | set(other.data.get("pending_mods") or []))
+        self.update(pending_mods=pending, perf_settings=other.data.get("perf_settings", 0))
+
+    def _share_client_settings(self) -> None:
+        """Peregrine Client's settings now live in one file for all instances. The first
+        time, start it from this instance's own copy, so nobody loses their HUD layout."""
+        shared = paths.CLIENT_SETTINGS
+        own = self.game_dir / "config" / "peregrine-client.json"
+        if not shared.exists() and own.is_file():
+            shared.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(own, shared)
 
     def _migrate_performance(self) -> None:
         """Instances from before performance mode: adopt the FPS mods they already have."""
@@ -206,6 +295,11 @@ class Instance:
         if self.data.get("memory_mb"):
             cfg["max_memory_mb"] = self.data["memory_mb"]
         self._prepare_performance(progress)
+        self._share_client_settings()
+        try:
+            self._fetch_pending_mods(progress)
+        except Exception as e:
+            print(f"[peregrine] mods not fetched: {e}")
         prof = self.profile()
         info = game.install(prof, progress)
         try:

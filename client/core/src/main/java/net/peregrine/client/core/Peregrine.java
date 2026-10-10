@@ -172,6 +172,19 @@ public final class Peregrine {
         return null;
     }
 
+    /**
+     * Where settings are saved. The launcher passes one shared file for every
+     * instance (-Dperegrine.config), so HUD layout and options follow the player
+     * across Minecraft versions; otherwise it's this instance's config folder.
+     */
+    public java.nio.file.Path configPath() {
+        String shared = System.getProperty("peregrine.config");
+        if (shared != null && !shared.isEmpty()) {
+            return java.nio.file.Paths.get(shared);
+        }
+        return platform.configFile();
+    }
+
     public Menu menu() {
         return menu;
     }

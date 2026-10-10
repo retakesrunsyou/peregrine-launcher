@@ -1,8 +1,10 @@
 """The launcher's animated background: a night sky behind the whole window.
 
-Stars twinkle and drift, a moon glows with soft moonbeams, clouds slide past and
-dim the moonlight when they cover it, shooting stars streak by, and now and then
-a peregrine glides across. In the Light theme it becomes a calm daytime sky.
+Stars twinkle and drift, a moon glows, clouds slide past and dim its glow when
+they cover it, shooting stars streak by, and now and then a peregrine glides
+across. Every launch gets its own sky: star field, clouds, the paths and timing
+of shooting stars and the bird are all random. In the Light theme it becomes a
+calm daytime sky.
 
 Kept light on purpose: everything heavy (gradients, the moon, its halo, clouds)
 is drawn once into images and reused; each frame only places them. Nothing runs
@@ -15,7 +17,7 @@ import time
 
 from PySide6.QtCore import QByteArray, QPointF, QRectF, Qt, QTimer
 from PySide6.QtGui import (QColor, QImage, QLinearGradient, QPainter, QPainterPath, QPixmap,
-                           QPolygonF, QRadialGradient)
+                           QRadialGradient)
 from PySide6.QtSvg import QSvgRenderer
 from PySide6.QtWidgets import QWidget
 
@@ -43,7 +45,8 @@ class _Cloud:
     passes the moon) that drifts slowly across."""
 
     def __init__(self, rng: random.Random, w: int, h: int, first: bool):
-        self.scale = rng.uniform(0.7, 1.35)
+        self.scale = rng.uniform(0.6, 1.5)
+        self.stretch = rng.uniform(0.8, 1.5)  # some long and flat, some tall and puffy
         self.speed = rng.uniform(4, 9) * self.scale  # px a second; bigger ones are nearer and faster
         self.y = rng.uniform(0.08, 0.62) * h
         self.seed = rng.randrange(1 << 30)
@@ -56,11 +59,12 @@ class _Cloud:
         if key == self.key:
             return
         rng = random.Random(self.seed)
-        cw, ch = int(300 * self.scale), int(110 * self.scale)
+        cw, ch = int(300 * self.scale * self.stretch), int(110 * self.scale)
+        q = 2  # drawn at twice the size, so edges stay smooth on sharp screens
         base_color = QColor(118, 128, 156) if dark else QColor(255, 255, 255)
         lit_color = QColor(214, 220, 236) if dark else QColor(255, 248, 232)
         blobs = []
-        for _ in range(30):
+        for _ in range(rng.randint(34, 52)):
             t = rng.random()
             bx = cw * (0.12 + 0.76 * t)
             hump = math.sin(t * math.pi)  # puffier in the middle
@@ -69,11 +73,12 @@ class _Cloud:
             blobs.append((bx, by, r))
         images = []
         for color, strength in ((base_color, 0.30 if dark else 0.55), (lit_color, 0.42 if dark else 0.6)):
-            img = QImage(cw, ch, QImage.Format_ARGB32_Premultiplied)
+            img = QImage(cw * q, ch * q, QImage.Format_ARGB32_Premultiplied)
             img.fill(Qt.transparent)
             p = QPainter(img)
             p.setRenderHint(QPainter.Antialiasing)
             p.setPen(Qt.NoPen)
+            p.scale(q, q)
             for bx, by, r in blobs:
                 _soft_blob(p, bx, by, r, color, strength)
             # Light catching the tops of the puffs gives the cloud some volume.
@@ -82,33 +87,43 @@ class _Cloud:
                 _soft_blob(p, bx + r * 0.12, by - r * 0.32, r * 0.62, top, strength * 0.42)
             # A flatter, darker underside, like real clouds.
             p.setCompositionMode(QPainter.CompositionMode_DestinationIn)
-            fade = QLinearGradient(0, 0, 0, ch)
+            # Wispy edges: a few faint stray puffs around the outside.
+            for _ in range(10):
+                t = rng.random()
+                _soft_blob(p, cw * (0.05 + 0.9 * t), ch * rng.uniform(0.35, 0.8),
+                           ch * rng.uniform(0.08, 0.16), color, strength * 0.35)
+            p.resetTransform()
+            fade = QLinearGradient(0, 0, 0, ch * q)
             fade.setColorAt(0, QColor(0, 0, 0, 255))
             fade.setColorAt(0.75, QColor(0, 0, 0, 230))
             fade.setColorAt(1, QColor(0, 0, 0, 0))
             p.fillRect(img.rect(), fade)
             p.end()
-            images.append(QPixmap.fromImage(img))
+            pm = QPixmap.fromImage(img)
+            pm.setDevicePixelRatio(q)
+            images.append(pm)
         self.images, self.key = images, key
 
     def rect(self) -> QRectF:
         pm = self.images[0]
-        return QRectF(self.x, self.y, pm.width(), pm.height())
+        d = pm.devicePixelRatio()
+        return QRectF(self.x, self.y, pm.width() / d, pm.height() / d)
 
 
 class Sky(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setAttribute(Qt.WA_OpaquePaintEvent)  # we paint every pixel; Qt can skip clearing
-        rng = random.Random(7)
+        rng = random.Random()  # a new sky every launch
         tints = [(255, 255, 255)] * 6 + [(200, 218, 255), (255, 236, 210)]
         # x, y (0-1), size, brightness, twinkle speed, phase, depth (0 far - 1 near), tint
         self.stars = [(rng.random(), rng.random() ** 1.2, rng.choice((1, 1, 1, 1, 1.4, 1.8)),
                        rng.uniform(0.25, 0.95), rng.uniform(0.5, 2.4), rng.uniform(0, 6.3),
-                       rng.random(), rng.choice(tints)) for _ in range(190)]
+                       rng.random(), rng.choice(tints)) for _ in range(rng.randint(170, 230))]
         # A few bright stars that sparkle with a little cross of light.
         self.bright = [(rng.random(), rng.uniform(0.04, 0.55), rng.uniform(1.2, 2.2), rng.uniform(0, 6.3))
-                       for _ in range(7)]
+                       for _ in range(rng.randint(5, 9))]
+        self.cloud_seed = rng.randrange(1 << 30)
         self.rng = random.Random()
         self.start = time.monotonic()
         self.last = self.start
@@ -273,20 +288,23 @@ class Sky(QWidget):
         p.end()
         c["halo"] = QPixmap.fromImage(img)
 
-        # Moonbeams: drawn once at full strength, then shown dimmer when clouds pass.
-        beams = QPixmap(w, h)
-        beams.fill(Qt.transparent)
-        p = QPainter(beams)
-        p.setRenderHint(QPainter.Antialiasing)
-        p.setPen(Qt.NoPen)
-        self._beams(p, self._moon_pos(), w, h, dark)
+        # A soft star sprite (drawn once, placed many times) for smooth, glowing stars.
+        img = QImage(32, 32, QImage.Format_ARGB32_Premultiplied)
+        img.fill(Qt.transparent)
+        p = QPainter(img)
+        glow = QRadialGradient(QPointF(16, 16), 16)
+        for stop, a in ((0, 1.0), (0.18, 0.85), (0.4, 0.22), (1, 0)):
+            glow.setColorAt(stop, QColor(255, 255, 255, int(255 * a)))
+        p.fillRect(img.rect(), glow)
         p.end()
-        c["beams"] = beams
+        star = QPixmap.fromImage(img)
+        star.setDevicePixelRatio(4)
+        c["star"] = star
 
         self.cache, self.cache_key = c, key
-        if not self.clouds or len(self.clouds) != 5:
-            rng = random.Random(11)
-            self.clouds = [_Cloud(rng, w, h, first=True) for _ in range(5)]
+        if not self.clouds:
+            rng = random.Random(self.cloud_seed)
+            self.clouds = [_Cloud(rng, w, h, first=True) for _ in range(rng.randint(4, 7))]
         for cloud in self.clouds:
             cloud.build(dark)
         return c
@@ -307,14 +325,14 @@ class Sky(QWidget):
         if key != self.bird_key:
             svg = (f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="14 18 100 90">'
                    f'{LOGO_SVG.format(c=Theme.accent)}</svg>')
-            img = QImage(size * 2, size * 2, QImage.Format_ARGB32_Premultiplied)
+            img = QImage(size * 3, size * 3, QImage.Format_ARGB32_Premultiplied)
             img.fill(Qt.transparent)
             p = QPainter(img)
             p.setRenderHint(QPainter.Antialiasing)
             QSvgRenderer(QByteArray(svg.encode())).render(p)
             p.end()
             pm = QPixmap.fromImage(img)
-            pm.setDevicePixelRatio(2)
+            pm.setDevicePixelRatio(3)
             self.bird_pix, self.bird_key = pm, key
         return self.bird_pix
 
@@ -336,7 +354,7 @@ class Sky(QWidget):
         p.setPen(Qt.NoPen)
 
         if dark:
-            self._stars(p, t, w, h)
+            self._stars(p, t, w, h, c["star"])
 
         # Clouds move first, so the moonlight knows how much of the moon they cover.
         for cloud in self.clouds:
@@ -358,12 +376,10 @@ class Sky(QWidget):
         self.moon_light += (target - self.moon_light) * min(1.0, dt * 2.5)
         light = self.moon_light
 
-        # Halo and moonbeams, dimmed by any cloud in front of the moon.
+        # The halo, dimmed by any cloud in front of the moon.
         halo = c["halo"]
         p.setOpacity((0.75 if dark else 0.9) * (0.25 + 0.75 * light))
         p.drawPixmap(QPointF(moon.x() - halo.width() / 2, moon.y() - halo.height() / 2), halo)
-        p.setOpacity(light)
-        p.drawPixmap(0, 0, c["beams"])
         p.setOpacity(1.0)
         mp = c["moon"]
         p.drawPixmap(QPointF(moon.x() - mp.width() / 2 / mp.devicePixelRatio(),
@@ -382,47 +398,39 @@ class Sky(QWidget):
         p.setOpacity(1.0)
         p.end()
 
-    def _stars(self, p, t, w, h):
-        star = QColor()
+    def _stars(self, p, t, w, h, sprite):
         for sx, sy, size, bright, speed, phase, depth, tint in self.stars:
             x = (sx * w - t * (1.2 + depth * 3.5)) % w   # slow drift; nearer stars a bit faster
             y = sy * h * 0.95
             twinkle = 0.55 + 0.45 * math.sin(t * speed + phase)
-            star.setRgb(*tint)
-            star.setAlphaF(max(0.0, min(1.0, bright * twinkle)))
-            p.setBrush(star)
-            p.drawEllipse(QRectF(x, y, size, size))
+            p.setOpacity(max(0.0, min(1.0, bright * twinkle)))
+            d = size * 2.6  # the sprite's soft glow reaches past the star itself
+            p.drawPixmap(QRectF(x - d / 2, y - d / 2, d, d), sprite, QRectF(sprite.rect()))
+        p.setOpacity(1.0)
+        col = QColor(255, 255, 255)
         for sx, sy, size, phase in self.bright:
             x = (sx * w - t * 2.2) % w
             y = sy * h
             s = 0.5 + 0.5 * math.sin(t * 1.3 + phase)
-            arm = size * (2.5 + 3.5 * s)
-            col = QColor(255, 255, 255)
-            col.setAlphaF(0.35 + 0.5 * s)
-            p.setBrush(col)
-            p.drawEllipse(QPointF(x, y), size * 0.9, size * 0.9)
-            col.setAlphaF(0.18 + 0.3 * s)
-            p.setBrush(col)
-            p.drawRect(QRectF(x - arm, y - 0.4, arm * 2, 0.8))
-            p.drawRect(QRectF(x - 0.4, y - arm, 0.8, arm * 2))
-
-    def _beams(self, p, moon, w, h, dark):
-        """Long, faint shafts of light falling from the moon."""
-        tone = QColor(205, 218, 255) if dark else QColor(255, 230, 180)
-        length = math.hypot(w, h) * 0.9
-        for i, (ang, spread, strength) in enumerate(((200, 5, 0.07), (214, 3, 0.05), (228, 6, 0.06),
-                                                     (242, 4, 0.045), (188, 3, 0.04))):
-            a = math.radians(ang)
-            s = math.radians(spread)
-            tip1 = QPointF(moon.x() + math.cos(a - s) * length, moon.y() - math.sin(a - s) * length)
-            tip2 = QPointF(moon.x() + math.cos(a + s) * length, moon.y() - math.sin(a + s) * length)
-            grad = QLinearGradient(moon, QPointF((tip1.x() + tip2.x()) / 2, (tip1.y() + tip2.y()) / 2))
-            tone.setAlphaF(strength * (1.0 if dark else 0.8))
-            grad.setColorAt(0, tone)
-            tone.setAlphaF(0)
-            grad.setColorAt(1, tone)
-            p.setBrush(grad)
-            p.drawPolygon(QPolygonF([moon, tip1, tip2]))
+            arm = size * (3 + 4 * s)
+            d = size * (5 + 2 * s)
+            p.setOpacity(0.55 + 0.4 * s)
+            p.drawPixmap(QRectF(x - d / 2, y - d / 2, d, d), sprite, QRectF(sprite.rect()))
+            # Fine spikes of light that fade towards their tips.
+            for dx, dy in ((1, 0), (0, 1)):
+                g = QLinearGradient(QPointF(x - arm * dx, y - arm * dy), QPointF(x + arm * dx, y + arm * dy))
+                col.setAlphaF(0)
+                g.setColorAt(0, col)
+                col.setAlphaF(0.55 * s + 0.15)
+                g.setColorAt(0.5, col)
+                col.setAlphaF(0)
+                g.setColorAt(1, col)
+                p.setBrush(g)
+                if dx:
+                    p.drawRect(QRectF(x - arm, y - 0.35, arm * 2, 0.7))
+                else:
+                    p.drawRect(QRectF(x - 0.35, y - arm, 0.7, arm * 2))
+        p.setOpacity(1.0)
 
     # ------------------------------------------------------------ flyers (top layer)
 
@@ -437,66 +445,82 @@ class Sky(QWidget):
 
     def _meteor(self, p, now, w, h):
         if self.meteor is None and now >= self.next_meteor:
-            self.meteor = (now, self.rng.uniform(0.25, 0.95) * w, self.rng.uniform(0.02, 0.32) * h,
-                           self.rng.uniform(0.7, 1.2))
-        if self.meteor is None:
+            rng = self.rng
+            to_left = rng.random() < 0.7
+            self.meteor = {
+                "born": now, "x": rng.uniform(0.15, 0.95) * w, "y": rng.uniform(0.02, 0.35) * h,
+                "life": rng.uniform(0.6, 1.4), "dir": -1 if to_left else 1,
+                "slope": rng.uniform(0.25, 0.7), "reach": rng.uniform(0.6, 1.1) * min(w, 620),
+                "tail": rng.uniform(50, 130), "width": rng.uniform(1.2, 2.4),
+                "fireball": rng.random() < 0.12,  # now and then a bright one with a glowing head
+            }
+        m = self.meteor
+        if m is None:
             return
-        born, x0, y0, life = self.meteor
-        age = (now - born) / life
+        age = (now - m["born"]) / m["life"]
         if age >= 1:
             self.meteor = None
             # Now and then two come close together.
             self.next_meteor = now + (self.rng.uniform(0.4, 1.2) if self.rng.random() < 0.18
-                                      else self.rng.uniform(8, 20))
+                                      else self.rng.uniform(6, 22))
             return
-        dist = age * min(w, 560)
-        x, y = x0 - dist, y0 + dist * 0.42
+        ease = 1 - (1 - age) ** 1.6  # quick at first, slowing as it burns out
+        dist = ease * m["reach"]
+        x, y = m["x"] + m["dir"] * dist, m["y"] + dist * m["slope"]
         fade = math.sin(age * math.pi)
-        tail_len = 60 + 50 * fade
-        tx, ty = x + tail_len, y - tail_len * 0.42
+        tail_len = m["tail"] * (0.5 + 0.5 * fade)
+        norm = math.hypot(1, m["slope"])
+        tx, ty = x - m["dir"] * tail_len / norm, y - tail_len * m["slope"] / norm
         tail = QLinearGradient(QPointF(x, y), QPointF(tx, ty))
         c = QColor("#ffffff" if self._dark() else Theme.accent)
-        c.setAlphaF(0.9 * fade)
+        c.setAlphaF(0.95 * fade)
         tail.setColorAt(0, c)
+        c.setAlphaF(0.35 * fade)
+        tail.setColorAt(0.3, c)
         c.setAlphaF(0)
         tail.setColorAt(1, c)
         p.save()
         pen = p.pen()
         pen.setBrush(tail)
-        pen.setWidthF(1.7)
+        pen.setWidthF(m["width"] * (1.6 if m["fireball"] else 1.0))
         pen.setCapStyle(Qt.RoundCap)
         p.setPen(pen)
         p.drawLine(QPointF(x, y), QPointF(tx, ty))
-        self.flyer_rects.append(QRectF(QPointF(x, ty), QPointF(tx, y)).normalized())
-        head = QColor(255, 255, 255)
-        head.setAlphaF(0.85 * fade)
+        self.flyer_rects.append(QRectF(QPointF(x, y), QPointF(tx, ty)).normalized().adjusted(-8, -8, 8, 8))
         p.setPen(Qt.NoPen)
-        p.setBrush(head)
-        p.drawEllipse(QPointF(x, y), 1.3, 1.3)
+        r = 7 if m["fireball"] else 3.5
+        glow = QRadialGradient(QPointF(x, y), r)
+        head = QColor(255, 244, 220) if m["fireball"] else QColor(255, 255, 255)
+        head.setAlphaF(0.95 * fade)
+        glow.setColorAt(0, head)
+        head.setAlphaF(0)
+        glow.setColorAt(1, head)
+        p.setBrush(glow)
+        p.drawEllipse(QPointF(x, y), r, r)
         p.restore()
 
     def _bird(self, p, now, w, h):
         if self.bird is None and now >= self.next_bird:
-            left_to_right = self.rng.random() < 0.5
-            self.bird = (now, left_to_right, self.rng.uniform(0.12, 0.5) * h, self.rng.uniform(9, 13))
+            rng = self.rng
+            self.bird = (now, rng.random() < 0.5, rng.uniform(0.1, 0.55) * h, rng.uniform(8, 15),
+                         rng.randint(30, 52), rng.uniform(-0.18, 0.18) * h, rng.uniform(1.5, 4), rng.uniform(8, 22))
         if self.bird is None:
             return
-        born, ltr, base_y, duration = self.bird
+        born, ltr, base_y, duration, size, climb, waves, sway = self.bird
         age = (now - born) / duration
         if age >= 1:
             self.bird = None
-            self.next_bird = now + self.rng.uniform(25, 45)
+            self.next_bird = now + self.rng.uniform(20, 50)
             return
         if age < 0:
             return
-        size = 40
         travel = w + size * 4
         x = -size * 2 + age * travel if ltr else w + size * 2 - age * travel
         # Gentle rise and fall as it glides, with bursts of wing beats.
-        y = base_y + math.sin(age * math.pi * 3) * 14
+        y = base_y + climb * age + math.sin(age * math.pi * waves) * sway
         flapping = int((now - born) * 0.9) % 2 == 0
         flap = 1.0 - 0.45 * abs(math.cos((now - born) * 9)) if flapping else 1.0
-        tilt = math.cos(age * math.pi * 3) * 8 * (1 if ltr else -1)
+        tilt = (math.cos(age * math.pi * waves) * 8 + math.degrees(math.atan2(climb, travel)) * 0.6) * (1 if ltr else -1)
         fade = min(1.0, age * 6, (1 - age) * 6)
         pm = self._bird_pixmap(size)
         p.save()

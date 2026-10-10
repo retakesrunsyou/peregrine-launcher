@@ -12,7 +12,7 @@ from PySide6.QtWidgets import (
 from .. import NAME, UPDATE_REPO, VERSION, auth, avatars, config, discord, paths, performance, updater
 from . import workers
 from .dialogs import LoginDialog, NewInstanceDialog
-from .browse import ModBrowser, ModpacksPage
+from .browse import BrowsePage, ModBrowser, ModpacksPage
 from .pages import AccountsPage, ContentPage, HomePage, SettingsPage, icon_button
 from .sky import Sky
 from .theme import Theme, avatar_pixmap, icon, logo_pixmap, stylesheet, tint
@@ -93,6 +93,8 @@ class MainWindow(QMainWindow):
         self.nav_group = QButtonGroup(self)
         self.nav_buttons = {}
         n.addWidget(self._nav("Home", "home", 0))
+        n.addWidget(self._nav("Mods", "cube", 5))
+        n.addWidget(self._nav("Resource packs", "image", 6))
         n.addWidget(self._nav("Modpacks", "package", 4))
         n.addStretch()
         line = QFrame()
@@ -114,7 +116,11 @@ class MainWindow(QMainWindow):
         self.settings = SettingsPage()
         self.accounts = AccountsPage(self.skins)
         self.modpacks = ModpacksPage()
-        for page in (self.home, self.content, self.settings, self.accounts, self.modpacks):
+        self.mods = BrowsePage("mod", "Mods", "Fabric mods from Modrinth, for the instance you pick. "
+                                              "Required libraries come along automatically.")
+        self.packs = BrowsePage("resourcepack", "Resource packs",
+                                "Texture packs from Modrinth. Added packs are switched on for the next launch.")
+        for page in (self.home, self.content, self.settings, self.accounts, self.modpacks, self.mods, self.packs):
             self.stack.addWidget(page)
         body.addWidget(self.stack, 1)
         outer.addLayout(body, 1)

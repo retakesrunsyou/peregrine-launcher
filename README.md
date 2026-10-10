@@ -10,7 +10,7 @@ play: more FPS, smoother frames and fewer lag spikes, out of the box.
 
 **Makes the game faster**
 - **Performance mode, on for every instance**: Sodium, Lithium, FerriteCore, Entity Culling,
-  ImmediatelyFast, ModernFix, More Culling, BadOptimizations, ScalableLux and Dynamic FPS, picked for the instance's exact
+  ImmediatelyFast, ModernFix, More Culling, BadOptimizations, ScalableLux, Clumps and Dynamic FPS, picked for the instance's exact
   Minecraft version, checked for updates daily, and swapped automatically when you change version
 - **Fast game settings** the first time you play: Fast graphics, no clouds or entity shadows,
   smooth lighting and biome blend off, V-Sync off, render distance 10 (your later changes are kept)

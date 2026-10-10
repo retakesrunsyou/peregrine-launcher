@@ -324,5 +324,37 @@ explicit = instances.create("Pure", "1.21.1", "vanilla")
 explicit._prepare_performance(None)
 check("an instance made as Vanilla stays Vanilla", explicit.data["loader"] == "vanilla")
 
+# ---------------------------------------------------------------- mods and settings across versions
+
+def fake_install(projects, mc, loader, folder, progress=None):
+    folder.mkdir(parents=True, exist_ok=True)
+    for p in projects:
+        (folder / f"{p}-for-{mc}.jar").write_bytes(b"x")
+    return [(p, f"{p}-for-{mc}.jar") for p in projects]
+
+
+instances.modrinth.install = fake_install
+a1 = instances.create("Main", "1.21.1", "fabric")
+a1.remember_mods([("xaeros", "xaeros-for-1.21.1.jar"), ("appleskin", "appleskin-for-1.21.1.jar")])
+(a1.game_dir / "mods").mkdir(parents=True, exist_ok=True)
+for n in ("xaeros-for-1.21.1.jar", "appleskin-for-1.21.1.jar"):
+    (a1.game_dir / "mods" / n).write_bytes(b"x")
+(a1.game_dir / "options.txt").write_text("key_key.jump:key.keyboard.space\nfov:0.7\n")
+a1.change_version("1.21.4")
+check("changing version removes the old builds of the player's mods",
+      not (a1.game_dir / "mods" / "xaeros-for-1.21.1.jar").exists())
+a1._fetch_pending_mods(None)
+check("...and fetches them for the new version on the next Play",
+      (a1.game_dir / "mods" / "xaeros-for-1.21.4.jar").exists() and a1.data["pending_mods"] == []
+      and set(a1.data["user_mods"]) == {"xaeros", "appleskin"})
+b1 = instances.create("Second", "26.3", "fabric")
+b1.copy_setup_from(a1)
+check("a new instance can bring over settings and keybinds", "fov:0.7" in (b1.game_dir / "options.txt").read_text())
+b1._fetch_pending_mods(None)
+check("...and the same mods, for its own version", (b1.game_dir / "mods" / "appleskin-for-26.3.jar").exists())
+b1.enable_resource_pack("Faithful.zip")
+o = dict(l.split(":", 1) for l in (b1.game_dir / "options.txt").read_text().splitlines())
+check("an added resource pack is switched on", o["resourcePacks"] == '["vanilla","file/Faithful.zip"]' and o["fov"] == "0.7")
+
 print("\nALL LAUNCHER TESTS PASSED" if not failures else f"\n{failures} FAILED")
 sys.exit(1 if failures else 0)

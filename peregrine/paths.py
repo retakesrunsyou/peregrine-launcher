@@ -22,6 +22,9 @@ CACHE = DATA / "cache"
 LOGS = DATA / "logs"
 
 CONFIG_FILE = CONFIG / "config.json"
+# Peregrine Client's settings (HUD layout, features, options), shared by every instance
+# so they follow the player to any Minecraft version.
+CLIENT_SETTINGS = DATA / "client" / "peregrine-client.json"
 ACCOUNTS_FILE = CONFIG / "accounts.json"
 
 
