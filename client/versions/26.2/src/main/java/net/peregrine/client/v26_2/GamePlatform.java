@@ -434,11 +434,23 @@ final class GamePlatform implements Platform {
         }
         Object v = icons.get(itemId);
         if (v instanceof net.minecraft.world.item.Item) {
-            v = new ItemStack((net.minecraft.world.item.Item) v);
+            if (System.currentTimeMillis() < iconsRetryAt) {
+                return null;
+            }
+            try {
+                v = new ItemStack((net.minecraft.world.item.Item) v);
+            } catch (RuntimeException notReady) {
+                // Some versions can't make item stacks on the main menu yet (their item
+                // data isn't loaded); the menu draws its own icon and tries again later.
+                iconsRetryAt = System.currentTimeMillis() + 3000;
+                return null;
+            }
             icons.put(itemId, v);
         }
         return v;
     }
+
+    private long iconsRetryAt;
 
     @Override
     public void reloadResources() {
