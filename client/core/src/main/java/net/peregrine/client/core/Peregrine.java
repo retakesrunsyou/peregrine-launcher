@@ -160,6 +160,7 @@ public final class Peregrine {
         modules.add(new net.peregrine.client.core.modules.Fog());
         modules.add(new net.peregrine.client.core.modules.SwingSpeed());
         modules.add(new net.peregrine.client.core.modules.BlockOutline());
+        modules.add(new net.peregrine.client.core.modules.OreOutline());
         modules.add(new net.peregrine.client.core.modules.StaticSky());
         modules.add(new net.peregrine.client.core.modules.ChunkFade());
         modules.add(new net.peregrine.client.core.modules.SoundFilters());

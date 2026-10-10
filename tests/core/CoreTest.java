@@ -74,7 +74,7 @@ public class CoreTest {
     public static void main(String[] a) throws Exception {
         cfg = Files.createTempDirectory("pc").resolve("config/peregrine-client.json");
         Peregrine pc = Peregrine.init(new P()); D d = new D(); Menu m = pc.menu();
-        check(pc.modules().size()==69, "69 modules registered");
+        check(pc.modules().size()==70, "70 modules registered");
         for (String id : new String[]{"health","nether_coords","session","totems","arrows","durability_alert",
                 "reach","combo","target","block_info","block_count","players","rotation","stopwatch","xp","chunk","light",
                 "anti_leak","crosshair","freelook","hit_color","item_physics"}) check(pc.module(id)!=null, id+" exists");
@@ -430,9 +430,12 @@ public class CoreTest {
         check(Hooks.swingDuration(6) == 10, "60% swing speed: 6-tick swing takes 10 ticks");
         pc10.module("swing_speed").setEnabled(false); check(Hooks.swingDuration(6) == 6, "normal swing when off");
         pc10.module("block_outline").setEnabled(true); pc10.tick();
-        check((Hooks.outlineColor & 0xFFFFFF) == (pc10.accent() & 0xFFFFFF) && Hooks.oreOutlines, "outline in the accent color, ores outlined");
-        check(Hooks.oreColor("minecraft:deepslate_diamond_ore") == 0xFF4FE3E8 && Hooks.oreColor("minecraft:stone") == 0, "ore colors");
-        pc10.module("block_outline").setEnabled(false); check(Hooks.outlineColor == 0 && !Hooks.oreOutlines, "outline back to normal");
+        check((Hooks.outlineColor & 0xFFFFFF) == (pc10.accent() & 0xFFFFFF) && !Hooks.oreOutlines, "block outline in the accent color, ores left alone");
+        pc10.module("block_outline").setEnabled(false); check(Hooks.outlineColor == 0, "outline back to normal");
+        pc10.module("ore_outline").setEnabled(true); pc10.tick();
+        check(Hooks.oreOutlines && Hooks.oreColor("minecraft:deepslate_diamond_ore") == 0xFF4FE3E8 && Hooks.oreColor("minecraft:stone") == 0, "ore outline: diamond in cyan, stone not an ore");
+        check(Hooks.oreColor("minecraft:coal_ore") == 0 && Hooks.oreColor("minecraft:nether_quartz_ore") != 0, "coal is off by default, quartz on");
+        pc10.module("ore_outline").setEnabled(false); check(!Hooks.oreOutlines, "ore outline off");
         pc10.module("static_sky").setEnabled(true); pc10.tick(); check(Hooks.staticClouds && Hooks.staticSky, "static sky");
         pc10.module("static_sky").setEnabled(false); check(!Hooks.staticClouds, "sky moves again");
         pc10.module("sound_filters").setEnabled(true); pc10.tick();

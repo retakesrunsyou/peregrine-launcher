@@ -19,7 +19,7 @@ final class OreOutlines {
     }
 
     static void draw(PoseStack pose, MultiBufferSource buffers, Camera camera) {
-        java.util.List<long[]> ores = OreScan.ores();
+        java.util.List<OreScan.Vein> ores = OreScan.veins();
         Minecraft mc = Minecraft.getInstance();
         if (ores.isEmpty() || mc.level == null) {
             return;
@@ -29,10 +29,10 @@ final class OreOutlines {
         }
         Vec3 cam = camera.getPosition();
         VertexConsumer lines = buffers.getBuffer(RenderType.lines());
-        for (long[] o : ores) {
-            BlockPos pos = new BlockPos((int) o[0], (int) o[1], (int) o[2]);
-            VoxelShape shape = mc.level.getBlockState(pos).getShape(mc.level, pos);
-            int c = (int) o[3];
+        for (OreScan.Vein o : ores) {
+            BlockPos pos = o.origin;
+            VoxelShape shape = o.shape;
+            int c = o.color;
             LevelRendererShapes.peregrine$renderShape(pose, lines, shape, pos.getX() - cam.x, pos.getY() - cam.y, pos.getZ() - cam.z,
                     ((c >> 16) & 0xFF) / 255f, ((c >> 8) & 0xFF) / 255f, (c & 0xFF) / 255f, 1f);
         }

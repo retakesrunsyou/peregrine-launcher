@@ -16,7 +16,7 @@ import net.minecraft.client.renderer.state.level.BlockOutlineRenderState;
 import net.minecraft.client.renderer.state.level.LevelRenderState;
 import net.peregrine.client.v26_2.mixin.LevelRendererOutline;
 
-/** Ore outlines: a colored outline on each ore you can see (drawn like the block outline, so never through walls). */
+/** Ore outlines: one colored outline around each ore vein you can see (drawn like the block outline, so never through walls). */
 @Mixin(net.minecraft.client.renderer.LevelRenderer.class)
 public abstract class OreOutlineMixin {
 
@@ -27,7 +27,7 @@ public abstract class OreOutlineMixin {
         }
         float width = mc$width();
         Minecraft mc = Minecraft.getInstance();
-        java.util.List<long[]> ores = OreScan.ores();
+        java.util.List<OreScan.Vein> ores = OreScan.veins();
         if (ores.isEmpty() || mc.level == null) {
             return;
         }
@@ -36,10 +36,10 @@ public abstract class OreOutlineMixin {
         }
         Hooks.drawingOres = true;
         try {
-            for (long[] o : ores) {
-                BlockPos pos = new BlockPos((int) o[0], (int) o[1], (int) o[2]);
-                VoxelShape shape = mc.level.getBlockState(pos).getShape(mc.level, pos);
-                int color = (int) o[3];
+            for (OreScan.Vein o : ores) {
+                BlockPos pos = o.origin;
+                VoxelShape shape = o.shape;
+                int color = o.color;
                 ((LevelRendererOutline) (Object) this).peregrine$submitHitOutline(pose, collector, RenderTypes.lines(),
                         new BlockOutlineRenderState(pos, false, false, shape), color, width, false);
             }
@@ -49,6 +49,6 @@ public abstract class OreOutlineMixin {
     }
 
     private static float mc$width() {
-        return Minecraft.getInstance().getWindow().getAppropriateLineWidth();
+        return Minecraft.getInstance().getWindow().getAppropriateLineWidth() * Hooks.oreWidth;
     }
 }

@@ -130,26 +130,39 @@ public final class Hooks {
     /** True while Peregrine draws ore outlines through Minecraft's own outline code (keep their colors). */
     public static volatile boolean drawingOres;
 
-    /** Outline color for an ore block ("minecraft:deep_diamond_ore"), or 0 if it isn't an ore. */
-    public static int oreColor(String id) {
+    /** Ore outline: which ores, their colors, and how thick (1 = normal, 1.21.11 and newer). */
+    public static final String[] ORE_TYPES = {"Diamond", "Emerald", "Gold", "Iron", "Redstone", "Lapis", "Copper",
+        "Coal", "Nether quartz", "Ancient debris"};
+    public static final int[] ORE_COLORS = {0xFF4FE3E8, 0xFF3BE070, 0xFFFFD23C, 0xFFE8C9A8, 0xFFFF3B3B, 0xFF3A62F0,
+        0xFFE8814A, 0xFF8C8C8C, 0xFFF2EEE6, 0xFFA0644C};
+    public static volatile boolean[] oreEnabled = {true, true, true, true, true, true, true, false, true, true};
+    public static volatile float oreWidth = 1f;
+
+    /** Which ore type a block is ("minecraft:deepslate_diamond_ore" is Diamond), or -1. */
+    public static int oreType(String id) {
         if (id == null) {
-            return 0;
+            return -1;
         }
         String n = id.contains(":") ? id.substring(id.indexOf(':') + 1) : id;
-        if (!(n.endsWith("_ore") || n.equals("ancient_debris"))) {
-            return 0;
+        if (n.equals("ancient_debris")) {
+            return 9;
         }
-        if (n.contains("diamond")) return 0xFF4FE3E8;
-        if (n.contains("emerald")) return 0xFF3BE070;
-        if (n.contains("gold")) return 0xFFFFD23C;
-        if (n.contains("iron")) return 0xFFE8C9A8;
-        if (n.contains("lapis")) return 0xFF3A62F0;
-        if (n.contains("redstone")) return 0xFFFF3B3B;
-        if (n.contains("copper")) return 0xFFE8814A;
-        if (n.contains("coal")) return 0xFF505050;
-        if (n.contains("quartz")) return 0xFFF2EEE6;
-        if (n.equals("ancient_debris")) return 0xFF8A5A44;
-        return 0xFFFFFFFF;
+        if (!n.endsWith("_ore")) {
+            return -1;
+        }
+        String[] keys = {"diamond", "emerald", "gold", "iron", "redstone", "lapis", "copper", "coal", "quartz"};
+        for (int i = 0; i < keys.length; i++) {
+            if (n.contains(keys[i])) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    /** Outline color for an ore block, or 0 if it isn't an ore (or that ore is switched off). */
+    public static int oreColor(String id) {
+        int t = oreType(id);
+        return t < 0 || !oreEnabled[t] ? 0 : ORE_COLORS[t];
     }
 
     /** Static sky: clouds and/or the sun, moon and stars stop moving (only on your screen). */

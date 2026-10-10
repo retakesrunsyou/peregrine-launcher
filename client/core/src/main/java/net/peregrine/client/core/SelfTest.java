@@ -634,7 +634,7 @@ public final class SelfTest {
         // Batch 8: fog, swing speed, block outline and ores, static sky, sound filters
         run("turn on fog, swing speed, block outline, static sky and sound filters", new Runnable() {
             public void run() {
-                for (String id : new String[] {"fog", "swing_speed", "block_outline", "static_sky", "sound_filters"}) {
+                for (String id : new String[] {"fog", "swing_speed", "block_outline", "ore_outline", "static_sky", "sound_filters"}) {
                     if (p.supports(id)) {
                         pc.module(id).setEnabled(true);
                     }

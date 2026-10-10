@@ -48,7 +48,8 @@ The play test can repeat this on any version, and with each mod left out in turn
 - **Hit color** for mobs and for crit sparks, **no hurt camera shake**, **low fire**, **1.7 animations**
 - **Small totem**: a smaller totem in your hand, and a smaller one flying at you when it pops
 - **Fog**: switch it off, clear water and clear lava, and pick its color
-- **Block outline**: its color, opacity and (on 1.21.11+) thickness, plus colored outlines on ores you can see
+- **Block outline**: the color, opacity and (on 1.21.11+) thickness of the outline on the block you look at
+- **Ore outline**: one glowing outline around each ore vein you can see, in the ore's color (never through walls), with a switch per ore
   (never through walls)
 - **Swing speed** (only on your screen), **static sky** (clouds, sun, moon and stars stay still),
   **chunk animation** (new chunks fade in, 1.21.11+), **sound filters** (explosions, rain, footsteps, mobs and more)

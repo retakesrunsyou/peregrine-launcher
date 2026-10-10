@@ -4,14 +4,10 @@ import net.peregrine.client.core.Hooks;
 import net.peregrine.client.core.Module;
 import net.peregrine.client.core.Peregrine;
 import net.peregrine.client.core.Platform;
-import net.peregrine.client.core.settings.BoolSetting;
 import net.peregrine.client.core.settings.ChoiceSetting;
 import net.peregrine.client.core.settings.SliderSetting;
 
-/**
- * Block outline: the color and thickness of the box around the block you're
- * looking at, and colored outlines on ores you can already see (never through walls).
- */
+/** Block outline: the color and thickness of the box around the block you're looking at. */
 public final class BlockOutline extends Module {
 
     static final String[] COLORS = {"Accent", "Minecraft's", "White", "Black", "Red", "Orange", "Yellow", "Green", "Cyan", "Blue", "Purple", "Pink"};
@@ -21,11 +17,9 @@ public final class BlockOutline extends Module {
     private final ChoiceSetting color = add(new ChoiceSetting("color", "Outline color", 0, COLORS));
     private final SliderSetting opacity = add(new SliderSetting("opacity", "Opacity", 20f, 100f, 5f, 85f, "%.0f%%"));
     private final SliderSetting width = add(new SliderSetting("width", "Thickness (1.21.11 and newer)", 1f, 6f, 0.5f, 2f, "%.1fx"));
-    private final BoolSetting ores = add(new BoolSetting("ores", "Outline ores you can see", true));
-    private final SliderSetting range = add(new SliderSetting("range", "Ore outline range", 4f, 24f, 1f, 12f, "%.0f blocks"));
 
     public BlockOutline() {
-        super("block_outline", "Block outline", "Color the block outline and outline ores you can see",
+        super("block_outline", "Block outline", "The color and thickness of the box around the block you're looking at",
                 Category.VISUALS, false);
     }
 
@@ -40,8 +34,6 @@ public final class BlockOutline extends Module {
         }
         Hooks.outlineColor = on ? c : 0;
         Hooks.outlineWidth = on ? width.value : 1f;
-        Hooks.oreOutlines = on && ores.value;
-        Hooks.oreRange = Math.round(range.value);
     }
 
     @Override

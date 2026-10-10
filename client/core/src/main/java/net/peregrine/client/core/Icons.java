@@ -73,7 +73,9 @@ final class Icons {
         put("scaffolding", "chunk_borders");
         put("cobweb", "fog");
         put("wooden_sword", "swing_speed");
-        put("diamond_ore", "block_outline");
+        put("diamond_ore", "ore_outline");
+        put("glass", "hitboxes");
+        put("black_stained_glass", "block_outline");
         put("white_wool", "static_sky");
         put("moss_block", "chunk_fade");
         put("note_block", "sound_filters");

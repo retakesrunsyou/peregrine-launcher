@@ -17,7 +17,7 @@ import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.ShapeRenderer;
 import net.minecraft.world.phys.Vec3;
 
-/** Ore outlines: a colored outline on each ore you can see (drawn like the block outline, so never through walls). */
+/** Ore outlines: one colored outline around each ore vein you can see (drawn like the block outline, so never through walls). */
 @Mixin(net.minecraft.client.renderer.LevelRenderer.class)
 public abstract class OreOutlineMixin {
 
@@ -30,7 +30,7 @@ public abstract class OreOutlineMixin {
         Vec3 cam = camera.getPosition();
         VertexConsumer lines = buffers.getBuffer(RenderType.lines());
         Minecraft mc = Minecraft.getInstance();
-        java.util.List<long[]> ores = OreScan.ores();
+        java.util.List<OreScan.Vein> ores = OreScan.veins();
         if (ores.isEmpty() || mc.level == null) {
             return;
         }
@@ -39,10 +39,10 @@ public abstract class OreOutlineMixin {
         }
         Hooks.drawingOres = true;
         try {
-            for (long[] o : ores) {
-                BlockPos pos = new BlockPos((int) o[0], (int) o[1], (int) o[2]);
-                VoxelShape shape = mc.level.getBlockState(pos).getShape(mc.level, pos);
-                int color = (int) o[3];
+            for (OreScan.Vein o : ores) {
+                BlockPos pos = o.origin;
+                VoxelShape shape = o.shape;
+                int color = o.color;
                 ShapeRenderer.renderShape(pose, lines, shape, pos.getX() - cam.x, pos.getY() - cam.y, pos.getZ() - cam.z, color);
             }
         } finally {
