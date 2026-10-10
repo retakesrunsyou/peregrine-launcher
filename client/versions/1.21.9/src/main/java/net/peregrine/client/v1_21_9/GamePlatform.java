@@ -396,6 +396,7 @@ final class GamePlatform implements Platform {
             mc().level.addEntity(item);
             net.minecraft.core.BlockPos ore = net.minecraft.core.BlockPos.containing(px + fx * 4 + fz * 2, py, pz + fz * 4 - fx * 2);
             mc().level.setBlock(ore, net.minecraft.world.level.block.Blocks.DIAMOND_ORE.defaultBlockState(), 3);  // ore outlines
+            mc().level.setBlock(ore.above(), net.minecraft.world.level.block.Blocks.AIR.defaultBlockState(), 3);  // with an open side
             for (int i = 0; i < 40; i++) {  // lava sparks, for the particle test
                 mc().level.addParticle(net.minecraft.core.particles.ParticleTypes.LAVA,
                         px + fx * 3, py + 1, pz + fz * 3, 0, 0, 0);

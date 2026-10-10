@@ -10,4 +10,9 @@ public final class Compat {
     public static float attackAnim(net.minecraft.world.entity.player.Player player, float partial) {
         return player.getAttackAnim(partial);
     }
+
+    /** Swings the main hand (anti-AFK). */
+    public static void swing(net.minecraft.client.player.LocalPlayer player) {
+        player.swing(net.minecraft.world.InteractionHand.MAIN_HAND);
+    }
 }

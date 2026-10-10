@@ -641,6 +641,7 @@ public final class SelfTest {
                 }
                 p.testScene();
                 p.afkSwing();
+                p.afkLook(0f, 90f);  // look down at the ground, so a block (not the dropped item) is outlined
             }
         });
         waitFor("fog is pushed away", 200, new Cond() {
