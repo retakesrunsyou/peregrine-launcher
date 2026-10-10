@@ -47,6 +47,12 @@ The play test can repeat this on any version, and with each mod left out in turn
 - **Hitboxes** without F3+B: pick which things show them (XP orbs and items off by default), their color, and whether the look line shows
 - **Hit color** for mobs and for crit sparks, **no hurt camera shake**, **low fire**, **1.7 animations**
 - **Small totem**: a smaller totem in your hand, and a smaller one flying at you when it pops
+- **Fog**: switch it off, clear water and clear lava, and pick its color
+- **Block outline**: its color, opacity and (on 1.21.11+) thickness, plus colored outlines on ores you can see
+  (never through walls)
+- **Swing speed** (only on your screen), **static sky** (clouds, sun, moon and stars stay still),
+  **chunk animation** (new chunks fade in, 1.21.11+), **sound filters** (explosions, rain, footsteps, mobs and more)
+- **Anti-AFK**: after you've been idle, jumps, swings and looks around now and then (check the server's rules)
 - **Keep packs out of menus** (on by default): resource packs you add change blocks, items, mobs and the HUD while
   you play, but not the title screen, buttons, menu backgrounds, fonts or splash texts
 - **Edit HUD** like Lunar: drag items (they snap to the screen and to each other), resize from the corner or with the
