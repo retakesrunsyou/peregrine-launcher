@@ -631,6 +631,45 @@ public final class SelfTest {
                 }
             });
         }
+        // Batch 8: fog, swing speed, block outline and ores, static sky, sound filters
+        run("turn on fog, swing speed, block outline, static sky and sound filters", new Runnable() {
+            public void run() {
+                for (String id : new String[] {"fog", "swing_speed", "block_outline", "static_sky", "sound_filters"}) {
+                    if (p.supports(id)) {
+                        pc.module(id).setEnabled(true);
+                    }
+                }
+                p.testScene();
+                p.afkSwing();
+            }
+        });
+        waitFor("fog is pushed away", 200, new Cond() {
+            public boolean ok() {
+                return Hooks.fogHits > 0;
+            }
+        });
+        waitFor("block outline in the chosen color", 200, new Cond() {
+            public boolean ok() {
+                return Hooks.outlineHits > 0;
+            }
+        });
+        waitFor("ores you can see get an outline", 200, new Cond() {
+            public boolean ok() {
+                return Hooks.oreHits > 0;
+            }
+        });
+        waitFor("the sky stops moving", 200, new Cond() {
+            public boolean ok() {
+                return Hooks.skyHits > 0;
+            }
+        });
+        waitFor("swing speed changes the swing", 200, new Cond() {
+            public boolean ok() {
+                return Hooks.swingHits > 0;
+            }
+        });
+        waitTicks(10);
+        shot("26-batch8");
         run("report hook counts", new Runnable() {
             public void run() {
                 log("INFO", "hooks: seed=" + Hooks.seedHits + " offset=" + Hooks.offsetHits + " model=" + Hooks.modelHits
@@ -640,7 +679,9 @@ public final class SelfTest {
                         + " animation=" + Hooks.animationHits + " hitbox=" + Hooks.hitboxHits
                         + " nametag=" + Hooks.nameTagHits + " scoreboard=" + Hooks.scoreboardHits
                         + " fire=" + Hooks.fireHits + " inventory=" + Hooks.inventoryTweakHits
-                        + " totem=" + Hooks.totemHits + " packs=" + Hooks.packFiltered);
+                        + " totem=" + Hooks.totemHits + " packs=" + Hooks.packFiltered
+                        + " fog=" + Hooks.fogHits + " outline=" + Hooks.outlineHits + " ores=" + Hooks.oreHits
+                        + " sky=" + Hooks.skyHits + " swing=" + Hooks.swingHits + " sound=" + Hooks.soundHits);
             }
         });
         finish();

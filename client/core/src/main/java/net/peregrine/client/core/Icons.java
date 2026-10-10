@@ -71,6 +71,13 @@ final class Icons {
         put("tripwire_hook", "steady_camera");
         put("glass_pane", "no_menu_blur");
         put("scaffolding", "chunk_borders");
+        put("cobweb", "fog");
+        put("wooden_sword", "swing_speed");
+        put("diamond_ore", "block_outline");
+        put("white_wool", "static_sky");
+        put("moss_block", "chunk_fade");
+        put("note_block", "sound_filters");
+        put("red_bed", "anti_afk");
     }
 
     static String of(Module m) {

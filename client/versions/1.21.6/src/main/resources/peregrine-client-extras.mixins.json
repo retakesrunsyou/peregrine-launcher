@@ -4,8 +4,13 @@
 	"compatibilityLevel": "JAVA_21",
 	"client": [
 		"AntiLeakSeedMixin",
+		"CloudsMixin",
 		"CrosshairMixin",
 		"DiamondBedrockMixin",
+		"FogAirMixin",
+		"FogColorMixin",
+		"FogLavaMixin",
+		"FogWaterMixin",
 		"FreelookCameraMixin",
 		"FreelookTurnMixin",
 		"HitboxFilterMixin",
@@ -17,14 +22,20 @@
 		"NightVisionMixin",
 		"NightVisionScaleMixin",
 		"OldAnimationsMixin",
+		"OreOutlineMixin",
+		"OutlineColorMixin",
 		"OverlayTextureAccessor",
 		"OwnNameLogoMixin",
 		"OwnNameShowMixin",
 		"PackFilterMixin",
 		"ParticlesMixin",
 		"ScoreboardMixin",
+		"SkyTimeMixin",
+		"SoundFilterMixin",
+		"SwingSpeedMixin",
 		"TotemHeldMixin",
-		"TotemPopMixin"
+		"TotemPopMixin",
+		"WaterOverlayMixin"
 	],
 	"injectors": {
 		"defaultRequire": 0

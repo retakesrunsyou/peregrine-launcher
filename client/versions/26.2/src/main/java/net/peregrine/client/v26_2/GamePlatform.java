@@ -399,6 +399,8 @@ final class GamePlatform implements Platform {
                     new ItemStack(net.minecraft.world.item.Items.DIAMOND_SWORD));
             item.setId(Integer.MAX_VALUE - 7);  // 26.2+ wants an id before the level takes it
             mc().level.addEntity(item);
+            net.minecraft.core.BlockPos ore = net.minecraft.core.BlockPos.containing(px + fx * 4 + fz * 2, py, pz + fz * 4 - fx * 2);
+            mc().level.setBlock(ore, net.minecraft.world.level.block.Blocks.DIAMOND_ORE.defaultBlockState(), 3);  // ore outlines
             for (int i = 0; i < 40; i++) {  // lava sparks, for the particle test
                 mc().level.addParticle(net.minecraft.core.particles.ParticleTypes.LAVA,
                         px + fx * 3, py + 1, pz + fz * 3, 0, 0, 0);
@@ -451,6 +453,34 @@ final class GamePlatform implements Platform {
     }
 
     private long iconsRetryAt;
+
+    // ---- batch 8
+
+    @Override
+    public boolean setChunkFade(double seconds) {
+        mc().options.chunkSectionFadeInTime().set(seconds);
+        return true;
+    }
+
+    @Override
+    public void afkJump(boolean held) {
+        mc().options.keyJump.setDown(held);
+    }
+
+    @Override
+    public void afkSwing() {
+        if (mc().player != null) {
+            mc().player.swing(net.minecraft.world.InteractionHand.MAIN_HAND);
+        }
+    }
+
+    @Override
+    public void afkLook(float yaw, float pitch) {
+        if (mc().player != null) {
+            mc().player.setYRot(mc().player.getYRot() + yaw);
+            mc().player.setXRot(Math.max(-60f, Math.min(60f, mc().player.getXRot() + pitch)));
+        }
+    }
 
     @Override
     public void reloadResources() {

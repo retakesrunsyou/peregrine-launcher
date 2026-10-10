@@ -95,6 +95,123 @@ public final class Hooks {
      * the HUD while playing) but not the menus: title screen, buttons, menu
      * backgrounds, fonts and splash texts stay Minecraft's own.
      */
+    // ---- batch 8
+
+    /** Fog: off, clear water, clear lava, and a color (0 = Minecraft's). */
+    public static volatile boolean fogOff;
+    public static volatile boolean clearWater;
+    public static volatile boolean clearLava;
+    public static volatile int fogColor;
+    public static volatile int fogHits;
+
+    /** Swing speed, visual only: 1 = normal, 2 = twice as fast. */
+    public static volatile float swingSpeed = 1f;
+    public static volatile int swingHits;
+
+    /** Swing duration in ticks after the speed setting (always at least 1). */
+    public static int swingDuration(int ticks) {
+        float s = swingSpeed;
+        if (s == 1f) {
+            return ticks;
+        }
+        if (swingHits < 1000) {
+            swingHits++;
+        }
+        return Math.max(1, Math.round(ticks / s));
+    }
+
+    /** Block outline: color (0 = Minecraft's), thickness (1 = normal), and outlines on ores you can see. */
+    public static volatile int outlineColor;
+    public static volatile float outlineWidth = 1f;
+    public static volatile boolean oreOutlines;
+    public static volatile int oreRange = 12;
+    public static volatile int oreHits;
+    public static volatile int outlineHits;
+    /** True while Peregrine draws ore outlines through Minecraft's own outline code (keep their colors). */
+    public static volatile boolean drawingOres;
+
+    /** Outline color for an ore block ("minecraft:deep_diamond_ore"), or 0 if it isn't an ore. */
+    public static int oreColor(String id) {
+        if (id == null) {
+            return 0;
+        }
+        String n = id.contains(":") ? id.substring(id.indexOf(':') + 1) : id;
+        if (!(n.endsWith("_ore") || n.equals("ancient_debris"))) {
+            return 0;
+        }
+        if (n.contains("diamond")) return 0xFF4FE3E8;
+        if (n.contains("emerald")) return 0xFF3BE070;
+        if (n.contains("gold")) return 0xFFFFD23C;
+        if (n.contains("iron")) return 0xFFE8C9A8;
+        if (n.contains("lapis")) return 0xFF3A62F0;
+        if (n.contains("redstone")) return 0xFFFF3B3B;
+        if (n.contains("copper")) return 0xFFE8814A;
+        if (n.contains("coal")) return 0xFF505050;
+        if (n.contains("quartz")) return 0xFFF2EEE6;
+        if (n.equals("ancient_debris")) return 0xFF8A5A44;
+        return 0xFFFFFFFF;
+    }
+
+    /** Static sky: clouds and/or the sun, moon and stars stop moving (only on your screen). */
+    public static volatile boolean staticClouds;
+    public static volatile boolean staticSky;
+    public static volatile int skyHits;
+
+    /** Sound filters: how loud each kind of sound is (1 = normal). */
+    public static final String[] SOUND_GROUPS = {"Explosions", "Rain and thunder", "Hits and hurt sounds",
+        "Footsteps", "Mobs", "Villagers", "Pistons and redstone", "Portals and ambience", "Fireworks"};
+    public static volatile float[] soundLevel = {1, 1, 1, 1, 1, 1, 1, 1, 1};
+    public static volatile boolean soundFiltered;
+    public static volatile int soundHits;
+    private static final java.util.Map<String, Integer> SOUND_GROUP_OF = new java.util.concurrent.ConcurrentHashMap<String, Integer>();
+
+    /** Which group a sound ("minecraft:entity.generic.explode") belongs to, or -1. */
+    public static int soundGroup(String id) {
+        Integer g = SOUND_GROUP_OF.get(id);
+        if (g == null) {
+            String n = id.contains(":") ? id.substring(id.indexOf(':') + 1) : id;
+            if (n.contains("explode") || n.contains("explosion") || n.contains("tnt.primed")) {
+                g = 0;
+            } else if (n.startsWith("weather.")) {
+                g = 1;
+            } else if (n.endsWith(".hurt") || n.contains(".hurt_") || n.startsWith("entity.player.attack")
+                    || n.endsWith(".damage") || n.contains("shield.block")) {
+                g = 2;
+            } else if (n.endsWith(".step")) {
+                g = 3;
+            } else if (n.contains("villager") || n.contains("wandering_trader")) {
+                g = 5;
+            } else if (n.contains("piston") || n.contains("dispenser") || n.contains("dropper")
+                    || n.contains("note_block") || n.contains("redstone") || n.contains("comparator")) {
+                g = 6;
+            } else if (n.contains("portal") || n.startsWith("ambient.") || n.contains(".ambient")) {
+                g = 7;
+            } else if (n.contains("firework")) {
+                g = 8;
+            } else if (n.startsWith("entity.") && !n.startsWith("entity.player") && !n.startsWith("entity.experience")
+                    && !n.startsWith("entity.item")) {
+                g = 4;
+            } else {
+                g = -1;
+            }
+            SOUND_GROUP_OF.put(id, g);
+        }
+        return g;
+    }
+
+    /** Volume multiplier for a sound under the filters. */
+    public static float soundFactor(String id) {
+        if (!soundFiltered) {
+            return 1f;
+        }
+        int g = soundGroup(id);
+        float f = g < 0 ? 1f : soundLevel[g];
+        if (f != 1f && soundHits < 1000) {
+            soundHits++;
+        }
+        return f;
+    }
+
     public static volatile boolean cleanMenus = true;
     public static volatile int packFiltered;
     private static final String[] MENU_ONLY = {

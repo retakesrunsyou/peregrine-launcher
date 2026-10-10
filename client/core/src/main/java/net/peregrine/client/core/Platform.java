@@ -203,6 +203,21 @@ public interface Platform {
         return null;
     }
 
+    /** Chunk animation: how long new chunks take to fade in, in seconds (false where Minecraft can't). */
+    default boolean setChunkFade(double seconds) {
+        return false;
+    }
+
+    /** Anti-AFK actions: hold jump, swing your hand, turn your view a little. */
+    default void afkJump(boolean held) {
+    }
+
+    default void afkSwing() {
+    }
+
+    default void afkLook(float yaw, float pitch) {
+    }
+
     /** Reloads resource packs (like F3+T), after a change to what they may replace. */
     default void reloadResources() {
     }

@@ -157,6 +157,13 @@ public final class Peregrine {
         modules.add(new LowFire());
         modules.add(new SmallTotem());
         modules.add(new net.peregrine.client.core.modules.CleanMenus());
+        modules.add(new net.peregrine.client.core.modules.Fog());
+        modules.add(new net.peregrine.client.core.modules.SwingSpeed());
+        modules.add(new net.peregrine.client.core.modules.BlockOutline());
+        modules.add(new net.peregrine.client.core.modules.StaticSky());
+        modules.add(new net.peregrine.client.core.modules.ChunkFade());
+        modules.add(new net.peregrine.client.core.modules.SoundFilters());
+        modules.add(new net.peregrine.client.core.modules.AntiAfk());
         modules.add(new InventoryTweaks());
         modules.add(new OldAnimations());
         this.menu = new Menu(this);

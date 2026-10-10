@@ -37,10 +37,11 @@ public class CoreTest {
         public int particleLevel(){return particles;} public void setParticleLevel(int l){particles=l;}
         public int blockItemCount(){return 211;}
         public boolean keyDown(int k){return k==keyHeld;}
+        public void afkJump(boolean h){if(h)afkActs++;} public void afkSwing(){afkActs++;} public void afkLook(float y, float p){afkActs++;}
         public double chatOption(String k){return chat.getOrDefault(k, 1.0);} public void setChatOption(String k, double v){chat.put(k, v);}
     }
     static java.util.Map<String, Double> chat = new java.util.HashMap<>();
-    static int keyHeld = -1;
+    static int keyHeld = -1, afkActs;
     static int reloads, camera, hitColor=-1, fpsNow=144, render=12, particles=0; static double entity=1.0; static boolean altDown;
     static boolean target; static int hurt; static String dim = "minecraft:overworld";
     static java.util.Set<Platform.Option> optionsOn=new java.util.HashSet<>();
@@ -73,7 +74,7 @@ public class CoreTest {
     public static void main(String[] a) throws Exception {
         cfg = Files.createTempDirectory("pc").resolve("config/peregrine-client.json");
         Peregrine pc = Peregrine.init(new P()); D d = new D(); Menu m = pc.menu();
-        check(pc.modules().size()==62, "62 modules registered");
+        check(pc.modules().size()==69, "69 modules registered");
         for (String id : new String[]{"health","nether_coords","session","totems","arrows","durability_alert",
                 "reach","combo","target","block_info","block_count","players","rotation","stopwatch","xp","chunk","light",
                 "anti_leak","crosshair","freelook","hit_color","item_physics"}) check(pc.module(id)!=null, id+" exists");
@@ -421,6 +422,31 @@ public class CoreTest {
         int[] blue = centerOfReflect(mt, "accent:1"); mt.mouseClicked(blue[0], blue[1], 0);
         check(pc10.accent() == 0xFF4FB3FF, "picking a color there changes the accent");
         mt.close();
+        // ---- batch 8: fog, swing speed, block outline, static sky, sound filters, anti-AFK
+        pc10.module("fog").setEnabled(true); pc10.tick();
+        check(Hooks.fogOff && Hooks.clearWater && Hooks.clearLava && Hooks.fogColor == 0, "fog off, clear water and lava by default");
+        pc10.module("fog").setEnabled(false); check(!Hooks.fogOff && !Hooks.clearWater, "fog back when switched off");
+        pc10.module("swing_speed").setEnabled(true); pc10.tick();
+        check(Hooks.swingDuration(6) == 10, "60% swing speed: 6-tick swing takes 10 ticks");
+        pc10.module("swing_speed").setEnabled(false); check(Hooks.swingDuration(6) == 6, "normal swing when off");
+        pc10.module("block_outline").setEnabled(true); pc10.tick();
+        check((Hooks.outlineColor & 0xFFFFFF) == (pc10.accent() & 0xFFFFFF) && Hooks.oreOutlines, "outline in the accent color, ores outlined");
+        check(Hooks.oreColor("minecraft:deepslate_diamond_ore") == 0xFF4FE3E8 && Hooks.oreColor("minecraft:stone") == 0, "ore colors");
+        pc10.module("block_outline").setEnabled(false); check(Hooks.outlineColor == 0 && !Hooks.oreOutlines, "outline back to normal");
+        pc10.module("static_sky").setEnabled(true); pc10.tick(); check(Hooks.staticClouds && Hooks.staticSky, "static sky");
+        pc10.module("static_sky").setEnabled(false); check(!Hooks.staticClouds, "sky moves again");
+        pc10.module("sound_filters").setEnabled(true); pc10.tick();
+        check(Math.abs(Hooks.soundFactor("minecraft:entity.generic.explode") - 0.4f) < 1e-6, "explosions at 40%");
+        check(Hooks.soundFactor("minecraft:entity.player.levelup") == 1f && Hooks.soundGroup("minecraft:block.stone.step") == 3, "other sounds untouched; footsteps found");
+        pc10.module("sound_filters").setEnabled(false); check(Hooks.soundFactor("minecraft:entity.generic.explode") == 1f, "filters off");
+        afkActs = 0; pc10.module("anti_afk").setEnabled(true);
+        for (int i = 0; i < 60 * 20 - 5; i++) pc10.tick();
+        check(afkActs == 0, "anti-AFK waits for a minute of idling");
+        for (int i = 0; i < 20 * 40; i++) pc10.tick();
+        check(afkActs >= 3, "...then jumps, swings or looks around now and then (" + afkActs + " times in 40 s)");
+        int before = afkActs; down.add(Platform.Key.FORWARD); for (int i = 0; i < 400; i++) pc10.tick(); down.clear();
+        check(afkActs == before, "walking yourself counts as being back");
+        pc10.module("anti_afk").setEnabled(false);
         pc10.shutdown(); String json10 = new String(Files.readAllBytes(cfg));
         check(json10.contains("\"key\": 51"), "keybinds are saved");
         playing = false; fpsNow = 144;

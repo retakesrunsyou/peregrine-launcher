@@ -4,6 +4,7 @@ import com.mojang.blaze3d.platform.InputConstants;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLifecycleEvents;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
+import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderEvents;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback;
 import net.minecraft.client.KeyMapping;
@@ -51,6 +52,13 @@ public final class PeregrineClientMod implements ClientModInitializer {
                 return;
             }
             Peregrine.get().renderHud(new GuiDraw(graphics));
+        });
+
+        // Ore outlines, drawn with Minecraft's outline lines (so blocks in front still hide them).
+        WorldRenderEvents.BEFORE_DEBUG_RENDER.register(ctx -> {
+            if (ctx.matrixStack() != null && ctx.consumers() != null) {
+                OreOutlines.draw(ctx.matrixStack(), ctx.consumers(), ctx.camera());
+            }
         });
 
         ClientLifecycleEvents.CLIENT_STOPPING.register(mc -> Peregrine.get().shutdown());
