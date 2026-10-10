@@ -418,6 +418,24 @@ final class GamePlatform implements Platform {
         });
     }
 
+    private java.util.Map<String, Object> icons;
+
+    @Override
+    public Object icon(String itemId) {
+        if (icons == null) {  // every item by its id, once (works the same on every version)
+            icons = new java.util.HashMap<String, Object>();
+            for (net.minecraft.world.item.Item item : net.minecraft.core.registries.BuiltInRegistries.ITEM) {
+                icons.put(String.valueOf(net.minecraft.core.registries.BuiltInRegistries.ITEM.getKey(item)), item);
+            }
+        }
+        Object v = icons.get(itemId);
+        if (v instanceof net.minecraft.world.item.Item) {
+            v = new ItemStack((net.minecraft.world.item.Item) v);
+            icons.put(itemId, v);
+        }
+        return v;
+    }
+
     @Override
     public void reloadResources() {
         if (mc() != null) {

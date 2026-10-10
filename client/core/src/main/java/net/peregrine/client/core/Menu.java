@@ -25,9 +25,13 @@ public final class Menu {
     public static final int KEY_ENTER = 257;
     public static final int KEY_BACKSPACE = 259;
 
-    private static final int TITLE_H = 26;
-    private static final int FOOTER_H = 18;
-    private static final int SIDE_W = 106;
+    private static final int TITLE_H = 28;
+    private static final int TABBAR_H = 18;
+    private static final int FOOTER_H = 0;
+    private static final int SIDE_W = 96;
+    private static final int TILE_GAP = 6;
+    /** The three views along the top: the mods grid, client settings, every keybind. */
+    private static final String[] VIEWS = {"Mods", "Settings", "Keybinds"};
     private static final int CARD_H = 50;
     private static final int GAP = 5;
     private static final int TAB_H = 18;
@@ -57,7 +61,11 @@ public final class Menu {
     private Module binding;       // waiting for a key for this feature's keybind
     private long boundAt;         // when a key was just bound (its typed character is swallowed)
     private int cols = 2;
+    private int tileW = 80, tileH = 76;
     private long listShownAt;
+    private int view;             // 0 mods, 1 settings, 2 keybinds
+    private boolean onlyOn;       // the ≡ button: show only what's switched on
+    private int tabsY, tabX0, tabW, menuBtnX;
 
     /** Something clickable on a settings page, from the last frame (menu pixels). */
     private static final class Hit {
@@ -168,7 +176,11 @@ public final class Menu {
         if (what.equals("edit")) {
             return editW > 0 ? new int[] {s(editX + editW / 2), s(editY + editH / 2)} : null;
         }
-        if (page != null) {
+        if (what.startsWith("view:")) {
+            int i = java.util.Arrays.asList(VIEWS).indexOf(what.substring(5));
+            return i < 0 ? null : new int[] {s(tabX0 + i * (tabW + 4) + tabW / 2), s(tabsY + TABBAR_H / 2)};
+        }
+        if (page != null || view != 0) {
             for (Hit h : hits) {
                 if (h.id.equals(what)) {
                     return new int[] {s(h.x + h.w / 2), s(h.y + h.h / 2)};
@@ -179,13 +191,14 @@ public final class Menu {
         List<Module> mods = visible();
         for (int i = 0; i < mods.size(); i++) {
             int[] c = card(i);
-            if (what.equals("gear:" + mods.get(i).id)) {
-                int y = c[1] + CARD_H - 10;
-                return y > listY && y < listY + listH ? new int[] {s(c[0] + 5 + optionsW(c[2]) / 2), s(y)} : null;
-            }
-            if (mods.get(i).id.equals(what)) {
-                int y = c[1] + 18;
+            if (what.equals("gear:" + mods.get(i).id)) {  // the tile itself opens its options
+                int y = c[1] + tileH / 2;
                 return y > listY && y < listY + listH ? new int[] {s(c[0] + c[2] / 2), s(y)} : null;
+            }
+            if (mods.get(i).id.equals(what)) {  // its switch
+                int[] tg = toggleAt(c);
+                int y = tg[1] + 5;
+                return y > listY && y < listY + listH ? new int[] {s(tg[0] + 12), s(y)} : null;
             }
         }
         return null;
@@ -211,10 +224,16 @@ public final class Menu {
     private List<Module> visible() {
         List<Module> out = new ArrayList<Module>();
         for (Module m : pc.modules()) {
-            if ((tab == null || m.category == tab) && m.matches(search) && pc.platform().supports(m.id)) {
+            if ((tab == null || m.category == tab) && m.matches(search) && pc.platform().supports(m.id)
+                    && (!onlyOn || m.enabled() || view != 0)) {
                 out.add(m);
             }
         }
+        java.util.Collections.sort(out, new java.util.Comparator<Module>() {  // A to Z, like a shelf
+            public int compare(Module x, Module y) {
+                return x.name.compareToIgnoreCase(y.name);
+            }
+        });
         return out;
     }
 
@@ -232,44 +251,50 @@ public final class Menu {
         return Math.max(lo, Math.min(hi, v));
     }
 
-    /** A medium window: about two thirds of the screen, never edge to edge. */
+    /** A large window in the middle of the screen, never edge to edge. */
     private void layout(Platform p) {
         int sw = Math.round(p.screenWidth() / k);
         int sh = Math.round(p.screenHeight() / k);
-        pw = Math.min(sw - 16, clamp(Math.round(sw * 0.66f), 300, 470));
-        ph = Math.min(sh - 16, clamp(Math.round(sh * 0.74f), 190, 290));
+        pw = Math.min(sw - 16, clamp(Math.round(sw * 0.72f), 330, 540));
+        ph = Math.min(sh - 16, clamp(Math.round(sh * 0.80f), 210, 330));
         px = (sw - pw) / 2;
         py = (sh - ph) / 2;
-        listX = px + SIDE_W + 6;
-        listY = py + TITLE_H + 4;
-        listW = pw - SIDE_W - 12;
-        listH = ph - TITLE_H - FOOTER_H - 6;
-        cols = listW >= 330 ? 3 : 2;
-        searchW = clamp(pw / 3, 90, 130);
-        searchX = px + pw - 22 - searchW;
-        searchY = py + 6;
-        closeX = px + pw - 16;
-        closeY = py + 8;
-        editW = SIDE_W - 12;
-        editH = 16;
+        tabsY = py + TITLE_H + 4;
+        int bodyY = tabsY + TABBAR_H + 6;
+        listX = px + SIDE_W + 14;
+        listY = bodyY;
+        listW = pw - SIDE_W - 24;
+        listH = py + ph - 8 - bodyY;
+        cols = Math.max(2, (listW + TILE_GAP) / (78 + TILE_GAP));
+        tileW = (listW - TILE_GAP * (cols - 1)) / cols;
+        tileH = clamp(Math.round(tileW * 0.9f), 64, 86);
+        searchW = clamp(Math.round(pw * 0.24f), 80, 130);
+        searchX = px + pw - 6 - searchW;
+        searchY = tabsY;
+        menuBtnX = searchX - 4 - TABBAR_H;
+        tabX0 = px + 6;
+        tabW = Math.min(96, (menuBtnX - 6 - tabX0 - 4 * (VIEWS.length - 1)) / VIEWS.length);
+        closeX = px + pw - 22;
+        closeY = py + 6;
+        editW = SIDE_W;
+        editH = 17;
         editX = px + 6;
-        editY = py + ph - FOOTER_H - editH - 2;
+        editY = py + ph - 8 - editH;
     }
 
-    /** Card i of the grid: x, y, width (menu pixels, scrolled). */
+    /** Tile i of the grid: x, y, width (menu pixels, scrolled). */
     private int[] card(int i) {
-        int w = (listW - 4 - GAP * (cols - 1)) / cols;
         int col = i % cols, row = i / cols;
-        return new int[] {listX + col * (w + GAP), listY + row * (CARD_H + GAP) - Math.round(smoothScroll), w};
+        return new int[] {listX + col * (tileW + TILE_GAP), listY + row * (tileH + TILE_GAP) - Math.round(smoothScroll), tileW};
     }
 
-    /** Width of a card's Options button. */
-    private static int optionsW(int cardW) {
-        return Math.round((cardW - 10) * 0.46f);
+    /** A tile's switch: x, y (24 x 11), centred along its bottom. */
+    private int[] toggleAt(int[] c) {
+        return new int[] {c[0] + (c[2] - 24) / 2, c[1] + tileH - 17};
     }
 
     private int tabY(int i) {
-        return py + TITLE_H + 6 + i * (TAB_H + 2);
+        return listY + 14 + i * (TAB_H + 3);
     }
 
     // ------------------------------------------------------------ drawing
@@ -310,51 +335,61 @@ public final class Menu {
             searchY += lift;
             closeY += lift;
             editY += lift;
+            tabsY += lift;
         }
         int a = pc.accent();
 
-        // Window
+        // Window: one dark panel, a slightly lighter title strip, a thin accent line on top
         d.shadow(px, py, pw, ph);
         d.roundRect(px, py, pw, ph, Theme.PANEL);
         d.roundOutline(px, py, pw, ph, Theme.HAIRLINE);
-        // Slightly darker towards the bottom, for depth.
-        for (int b = 0; b < 4; b++) {
-            int bh = (ph - TITLE_H) / 4;
-            d.rect(px + 1, py + TITLE_H + b * bh, pw - 2, bh, Theme.withAlpha(0, 0x06 * b));
-        }
         d.rect(px + 2, py, pw - 4, 1, Theme.withAlpha(a, 0xE0));
-        d.rect(px + 1, py + 1, pw - 2, 1, Theme.withAlpha(a, 0x50));
-        d.rect(px + 2, py + 2, pw - 4, 1, 0x10FFFFFF);  // a hairline of light along the top edge
+        d.rect(px + 1, py + 1, pw - 2, TITLE_H - 1, Theme.TITLE_BAR);
 
-        // Title bar: name, search, close
-        d.rect(px + 1, py + 2, pw - 2, TITLE_H - 2, Theme.TITLE_BAR);
-        d.rect(px + 1, py + TITLE_H, pw - 2, 1, Theme.HAIRLINE);
-        int ty = py + (TITLE_H - 8) / 2 + 1;
-        d.rect(px + 9, ty + 1, 3, 7, a);  // a small accent mark before the name
-        d.text("Peregrine", px + 16, ty, Theme.TEXT, false);
-        d.text("Client", px + 16 + d.width("Peregrine "), ty, Theme.MUTED, false);
-
-        boolean searching = !search.isEmpty();
-        d.roundRect(searchX, searchY, searchW, 15, Theme.FIELD);
-        d.roundOutline(searchX, searchY, searchW, 15, searching ? Theme.withAlpha(a, 0xC0) : Theme.HAIRLINE);
-        boolean caret = (now / 500) % 2 == 0;
-        String shown = searching ? search + (caret ? "_" : "") : "Search";
-        magnifier(d, searchX + 5, searchY + 4, searching ? a : Theme.FAINT);
-        d.text(d.trim(shown, searchW - 20), searchX + 15, searchY + 4, searching ? Theme.TEXT : Theme.FAINT, false);
-
-        boolean closeHover = in(mx, my, closeX - 3, closeY - 3, 13, 13);
-        if (closeHover) {
-            d.roundRect(closeX - 3, closeY - 3, 13, 13, Theme.ROW_HOVER);
-        }
-        int xc = closeHover ? Theme.TEXT : Theme.MUTED;
+        // Title: logo and name; a boxed × on the right
+        int ty = py + (TITLE_H - 8) / 2;
+        d.textScaled(Hooks.LOGO, px + 8, ty - 3, 0xFFFFFFFF, 1.5f, false);
+        d.text("§lPEREGRINE", px + 25, ty, Theme.TEXT, false);
+        d.text("CLIENT", px + 25 + d.width("§lPEREGRINE") + 4, ty, a, false);
+        boolean closeHover = in(mx, my, closeX, closeY, 16, 16);
+        d.roundRect(closeX, closeY, 16, 16, closeHover ? Theme.withAlpha(Theme.BAD, 0xC0) : Theme.FIELD);
+        d.roundOutline(closeX, closeY, 16, 16, closeHover ? Theme.BAD : Theme.HAIRLINE);
+        int xc = closeHover ? 0xFFFFFFFF : Theme.MUTED;
         for (int i = 0; i < 7; i++) {  // a small drawn ×, crisp at any GUI scale
-            d.rect(closeX + i, closeY + i, 1, 1, xc);
-            d.rect(closeX + 6 - i, closeY + i, 1, 1, xc);
+            d.rect(closeX + 4 + i, closeY + 4 + i, 1, 1, xc);
+            d.rect(closeX + 10 - i, closeY + 4 + i, 1, 1, xc);
         }
 
-        // Sidebar: categories with counts, Edit HUD at the bottom
-        d.rect(px + 1, py + TITLE_H + 1, SIDE_W, ph - TITLE_H - 3, Theme.SIDEBAR);
-        d.rect(px + SIDE_W + 1, py + TITLE_H + 1, 1, ph - TITLE_H - 3, Theme.HAIRLINE);
+        // Tabs along the top, then the ≡ button and search on the right
+        for (int i = 0; i < VIEWS.length; i++) {
+            int x = tabX0 + i * (tabW + 4);
+            boolean on = view == i;
+            boolean hover = in(mx, my, x, tabsY, tabW, TABBAR_H);
+            d.roundRect(x, tabsY, tabW, TABBAR_H, on ? a : hover ? Theme.CARD_HOVER : Theme.CARD);
+            if (!on) {
+                d.roundOutline(x, tabsY, tabW, TABBAR_H, Theme.HAIRLINE);
+            }
+            d.text(VIEWS[i], x + (tabW - d.width(VIEWS[i])) / 2, tabsY + 5, on ? 0xFF15171C : hover ? Theme.TEXT : Theme.MUTED, false);
+        }
+        boolean mh = in(mx, my, menuBtnX, tabsY, TABBAR_H, TABBAR_H);
+        d.roundRect(menuBtnX, tabsY, TABBAR_H, TABBAR_H, onlyOn ? Theme.withAlpha(a, 0x50) : mh ? Theme.CARD_HOVER : Theme.CARD);
+        d.roundOutline(menuBtnX, tabsY, TABBAR_H, TABBAR_H, onlyOn ? a : Theme.HAIRLINE);
+        for (int i = 0; i < 3; i++) {  // ≡ : show only what's on
+            d.rect(menuBtnX + 5, tabsY + 5 + i * 3, 8, 1, onlyOn ? a : mh ? Theme.TEXT : Theme.MUTED);
+        }
+        boolean searching = !search.isEmpty();
+        d.roundRect(searchX, searchY, searchW, TABBAR_H, Theme.FIELD);
+        d.roundOutline(searchX, searchY, searchW, TABBAR_H, searching ? Theme.withAlpha(a, 0xC0) : Theme.HAIRLINE);
+        boolean caret = (now / 500) % 2 == 0;
+        String shown = searching ? search + (caret ? "_" : "") : "Search...";
+        magnifier(d, searchX + 6, searchY + 6, searching ? a : Theme.FAINT);
+        d.text(d.trim(shown, searchW - 22), searchX + 16, searchY + 5, searching ? Theme.TEXT : Theme.FAINT, false);
+
+        // Sidebar: "Filter", the categories with their icons, Edit HUD at the bottom
+        int sideTop = listY;
+        d.roundRect(px + 6, sideTop, SIDE_W, py + ph - 8 - sideTop, Theme.SIDEBAR);
+        String filter = "Filter";
+        d.text(filter, px + 6 + (SIDE_W - d.width(filter)) / 2, sideTop + 4, Theme.MUTED, false);
         int chosen = 0;
         for (int i = 0; i < TABS.length; i++) {
             if (TABS[i] == tab) {
@@ -363,38 +398,44 @@ public final class Menu {
         }
         float target = tabY(chosen);
         tabSlide = tabSlide < 0 ? target : tabSlide + (target - tabSlide) * Math.min(1f, dt * 16f);
-        int sy = Math.round(tabSlide);
-        d.roundRect(px + 4, sy, SIDE_W - 8, TAB_H, Theme.withAlpha(a, 0x2C));
-        d.rect(px + 4, sy + 4, 2, TAB_H - 8, a);
+        if (view == 0) {
+            d.roundRect(px + 10, Math.round(tabSlide), SIDE_W - 8, TAB_H, a);
+        }
         for (int i = 0; i < TABS.length; i++) {
             int y = tabY(i);
-            boolean on = TABS[i] == tab;
-            boolean hover = in(mx, my, px + 4, y, SIDE_W - 8, TAB_H);
+            boolean on = view == 0 && TABS[i] == tab;
+            boolean hover = in(mx, my, px + 10, y, SIDE_W - 8, TAB_H);
             if (!on && hover) {
-                d.roundRect(px + 4, y, SIDE_W - 8, TAB_H, Theme.ROW_HOVER);
+                d.roundRect(px + 10, y, SIDE_W - 8, TAB_H, Theme.ROW_HOVER);
             }
             String label = TABS[i] == null ? "All" : TABS[i].label;
-            String n = String.valueOf(count(TABS[i], true));
-            d.roundRect(px + 11, y + 7, 4, 4, on ? a : hover ? Theme.MUTED : Theme.FAINT);
-            d.text(d.trim(label, SIDE_W - 34 - d.width(n)), px + 19, y + 5, on ? Theme.TEXT : hover ? Theme.TEXT : Theme.MUTED, false);
-            d.text(n, px + SIDE_W - 9 - d.width(n), y + 5, on ? Theme.withAlpha(a, 0xFF) : Theme.FAINT, false);
+            int c = on ? 0xFF15171C : hover ? Theme.TEXT : Theme.MUTED;
+            categoryIcon(d, TABS[i], px + 15, y + 5, c);
+            d.text(d.trim(label, SIDE_W - 30), px + 28, y + 5, c, false);
         }
         boolean editHover = in(mx, my, editX, editY, editW, editH);
-        d.roundRect(editX, editY, editW, editH, editHover ? Theme.withAlpha(a, 0xFF) : Theme.withAlpha(a, 0x26));
-        d.roundOutline(editX, editY, editW, editH, Theme.withAlpha(a, editHover ? 0xFF : 0x90));
+        d.roundRect(editX, editY, editW, editH, editHover ? a : Theme.CARD);
+        d.roundOutline(editX, editY, editW, editH, editHover ? a : Theme.HAIRLINE);
         String edit = "Edit HUD";
-        d.text(edit, editX + (editW - d.width(edit)) / 2, editY + 4,
-                editHover ? 0xFF15171C : Theme.withAlpha(a, 0xFF), false);
+        d.text(edit, editX + (editW - d.width(edit)) / 2, editY + 5, editHover ? 0xFF15171C : Theme.TEXT, false);
 
         if (page != null) {
             renderPage(d, mx, my, p, dt, now, a);
             return;
         }
+        if (view == 1) {
+            renderSettingsView(d, mx, my, dt, a);
+            return;
+        }
+        if (view == 2) {
+            renderKeybindView(d, mx, my, dt, now, a);
+            return;
+        }
 
-        // Feature cards
+        // Mod tiles
         List<Module> mods = visible();
         int rows = (mods.size() + cols - 1) / cols;
-        maxScroll = Math.max(0, rows * (CARD_H + GAP) - GAP - listH);
+        maxScroll = Math.max(0, rows * (tileH + TILE_GAP) - TILE_GAP - listH);
         scroll = clamp(scroll, 0, maxScroll);
         smoothScroll += (scroll - smoothScroll) * Math.min(1f, dt * 18f);
         if (Math.abs(scroll - smoothScroll) < 0.5f) {
@@ -410,84 +451,254 @@ public final class Menu {
             Module m = mods.get(i);
             int[] c = card(i);
             int cx = c[0], cy = c[1], cw = c[2];
-            if (cy + CARD_H < listY || cy > listY + listH) {
+            if (cy + tileH < listY || cy > listY + listH) {
                 continue;
             }
-            // Cards fade in one after another when the menu (or a new category) opens.
-            float appear = 0.15f + 0.85f * FadeDraw.progress(listShownAt + Math.min(i, 14) * 14L, 170);
+            // Tiles fade in one after another when the menu (or a new category) opens.
+            float appear = 0.15f + 0.85f * FadeDraw.progress(listShownAt + Math.min(i, 16) * 12L, 170);
             Draw cd = appear < 1f ? new FadeDraw(d, appear) : d;
             if (appear < 1f) {
                 cy += Math.round((1f - appear) * 4);
+                c = new int[] {cx, cy, cw};
             }
-            boolean hover = mouseInList && in(mx, my, cx, cy, cw, CARD_H);
+            boolean hover = mouseInList && in(mx, my, cx, cy, cw, tileH);
             float g = ease(rowGlow, m, hover ? 1f : 0f, dt * 10f);
             float on = animate(m, dt);
-            cd.roundRect(cx, cy, cw, CARD_H, Theme.mix(Theme.CARD, Theme.CARD_HOVER, g));
-            cd.roundOutline(cx, cy, cw, CARD_H, Theme.mix(Theme.HAIRLINE, Theme.withAlpha(a, 0x70), on * 0.8f + g * 0.2f));
-            cd.rect(cx + 2, cy + 1, cw - 4, 1, Theme.withAlpha(0xFFFFFF, 0x0C + Math.round(0x0C * g)));  // top sheen
+            cd.roundRect(cx, cy, cw, tileH, Theme.mix(Theme.CARD, Theme.CARD_HOVER, g));
+            cd.roundOutline(cx, cy, cw, tileH, Theme.mix(Theme.withAlpha(0xFFFFFF, 0x30), a, g * 0.9f));
+            cd.rect(cx + 2, cy + 1, cw - 4, 1, Theme.withAlpha(0xFFFFFF, 0x10 + Math.round(0x10 * g)));  // top sheen
 
-            int chipW = 0;
-            if (m.key >= 0) {  // its keybind, as a small key cap
-                String kn = Keys.name(m.key);
-                chipW = d.width(kn) + 8;
-                cd.roundRect(cx + cw - 6 - chipW, cy + 5, chipW, 11, Theme.FIELD);
-                cd.roundOutline(cx + cw - 6 - chipW, cy + 5, chipW, 11, Theme.HAIRLINE);
-                cd.text(kn, cx + cw - 2 - chipW, cy + 7, Theme.MUTED, false);
-                chipW += 4;
-            }
-            cd.text(cd.trim(m.name, cw - 14 - chipW), cx + 7, cy + 7, Theme.TEXT, false);
             boolean warn = hover && m.warning() != null;
-            String sub = warn ? m.warning() : m.description;
-            cd.text(cd.trim(sub, cw - 14), cx + 7, cy + 19, warn ? Theme.OK : Theme.FAINT, false);
-
-            // Bottom: Options on the left, the on/off state on the right.
-            int by = cy + CARD_H - 16, bh = 12;
-            int ow = optionsW(cw);
-            boolean oh = hover && in(mx, my, cx + 5, by, ow, bh);
-            cd.roundRect(cx + 5, by, ow, bh, oh ? Theme.withAlpha(a, 0x40) : Theme.FIELD);
-            int gc = oh ? a : Theme.MUTED;
-            String opt = "Options";
-            boolean label = d.width(opt) + 16 <= ow;
-            int gx = cx + 5 + (label ? (ow - d.width(opt) - 14) / 2 : (ow - 10) / 2);
-            gear(cd, gx, by + 1, gc);
-            if (label) {
-                cd.text(opt, gx + 14, by + 2, oh ? Theme.TEXT : Theme.MUTED, false);
+            String title = cd.trim(m.name, cw - 10);
+            cd.text(title, cx + (cw - d.width(title)) / 2, cy + 7, warn ? Theme.OK : Theme.TEXT, false);
+            if (m.key >= 0) {  // its keybind, as a small key cap in the corner
+                String kn = Keys.name(m.key);
+                int kw = d.width(kn) + 6;
+                cd.roundRect(cx + cw - 4 - kw, cy + tileH - 30, kw, 10, Theme.FIELD);
+                cd.text(kn, cx + cw - 1 - kw, cy + tileH - 29, Theme.MUTED, false);
             }
-            int sx = cx + 5 + ow + 3, sw = cw - 10 - ow - 3;
-            int track = Theme.mix(hover ? 0xFF353B48 : 0xFF2B303B, a, on);
-            cd.roundRect(sx, by, sw, bh, track);
-            String state = on > 0.5f ? "ON" : "OFF";
-            cd.text(state, sx + (sw - d.width(state)) / 2, by + 2, on > 0.5f ? 0xFF15171C : Theme.MUTED, false);
+            // The icon: a Minecraft item that fits the feature, drawn twice the size
+            int iconY = cy + 18 + (tileH - 18 - 20 - 32) / 2;
+            Object stack = p.icon(Icons.of(m));
+            if (stack != null) {
+                cd.pushScale(cx + cw / 2 - 16, iconY, 2f);
+                cd.item(stack, 0, 0);
+                cd.popScale();
+            } else {
+                cd.roundRect(cx + cw / 2 - 12, iconY + 4, 24, 24, Theme.withAlpha(a, 0x40));
+                categoryIcon(cd, m.category, cx + cw / 2 - 4, iconY + 12, Theme.TEXT);
+            }
+            int[] tg = toggleAt(c);
+            switchKnob(cd, tg[0], tg[1], on, a, hover && in(mx, my, tg[0] - 2, tg[1] - 2, 28, 15));
         }
         d.popScale();
         d.unclip();
         d.pushScale(0, 0, k);
 
         if (mods.isEmpty()) {
-            String none = "Nothing matches \"" + d.trim(search, listW - 80) + "\"";
+            String none = onlyOn && search.isEmpty() ? "Nothing switched on here" : "Nothing matches \"" + d.trim(search, listW - 80) + "\"";
             d.text(none, listX + (listW - d.width(none)) / 2, listY + listH / 2 - 8, Theme.MUTED, false);
-            String hint = "Backspace to clear the search";
+            String hint = onlyOn ? "The ≡ button shows everything again" : "Backspace to clear the search";
             d.text(hint, listX + (listW - d.width(hint)) / 2, listY + listH / 2 + 4, Theme.FAINT, false);
         }
-        if (maxScroll > 0) {
-            int track = listH - 4;
-            int barH = Math.max(14, track * listH / (listH + maxScroll));
-            int barY = listY + 2 + Math.round((track - barH) * (smoothScroll / maxScroll));
-            d.roundRect(px + pw - 5, barY, 2, barH, mouseInList ? Theme.withAlpha(a, 0xB0) : 0x40FFFFFF);
-        }
-
-        // Footer
-        int fy = py + ph - FOOTER_H + 5;
-        d.rect(listX, py + ph - FOOTER_H - 1, listW, 1, Theme.HAIRLINE);
-        String hint = searching ? mods.size() + (mods.size() == 1 ? " result" : " results")
-                : "Click a card to switch it  \u00b7  Options for settings & keybind";
-        String counts = count(null, true) + " / " + count(null, false) + " on";
-        int cw = d.width(counts) + 10;
-        d.text(d.trim(hint, px + pw - 9 - cw - 8 - (listX + 4)), listX + 4, fy, Theme.FAINT, false);
-        d.roundRect(px + pw - 9 - cw, fy - 3, cw, 13, Theme.withAlpha(a, 0x22));
-        d.text(counts, px + pw - 4 - cw, fy, Theme.withAlpha(a, 0xFF), false);
+        scrollbar(d, listY, listH, in(mx, my, listX, listY, listW + 8, listH), a);
     }
 
+    private void scrollbar(Draw d, int top, int viewH, boolean active, int a) {
+        if (maxScroll <= 0) {
+            return;
+        }
+        int track = viewH - 4;
+        int barH = Math.max(14, track * viewH / (viewH + maxScroll));
+        int barY = top + 2 + Math.round((track - barH) * (smoothScroll / maxScroll));
+        d.roundRect(px + pw - 8, top + 2, 3, track, 0x18FFFFFF);
+        d.roundRect(px + pw - 8, barY, 3, barH, active ? a : Theme.withAlpha(a, 0x90));
+    }
+
+    /**
+     * An on/off switch with a round knob: off is grey with a cross in the knob,
+     * on is the accent color with a tick. 24 x 11.
+     */
+    private static void switchKnob(Draw d, int x, int y, float on, int accent, boolean hover) {
+        int track = Theme.mix(hover ? 0xFF4A505E : 0xFF3A3F4B, accent, on);
+        d.roundRect(x, y, 24, 11, track);
+        int kx = x + 1 + Math.round(on * 13);
+        d.rect(kx + 1, y + 1, 8, 9, 0xFFFFFFFF);
+        d.rect(kx, y + 2, 10, 7, 0xFFFFFFFF);
+        int gc = on > 0.5f ? accent : 0xFF4A505E;
+        if (on > 0.5f) {  // ✓
+            d.rect(kx + 2, y + 5, 1, 1, gc);
+            d.rect(kx + 3, y + 6, 1, 1, gc);
+            d.rect(kx + 4, y + 7, 1, 1, gc);
+            d.rect(kx + 5, y + 6, 1, 1, gc);
+            d.rect(kx + 6, y + 5, 1, 1, gc);
+            d.rect(kx + 7, y + 4, 1, 1, gc);
+            d.rect(kx + 2, y + 6, 1, 1, gc);
+            d.rect(kx + 4, y + 6, 1, 1, gc);
+            d.rect(kx + 6, y + 4, 1, 1, gc);
+        } else {  // ×
+            for (int i = 0; i < 5; i++) {
+                d.rect(kx + 3 + i, y + 3 + i, 1, 1, gc);
+                d.rect(kx + 7 - i, y + 3 + i, 1, 1, gc);
+            }
+        }
+    }
+
+    /** Small pixel icons for the filter list (9 x 9). */
+    private static void categoryIcon(Draw d, Module.Category c, int x, int y, int col) {
+        if (c == null) {  // All: three lines
+            for (int i = 0; i < 3; i++) {
+                d.rect(x, y + i * 3, 9, 2, col);
+            }
+        } else if (c == Module.Category.HUD) {  // a screen
+            d.outline(x, y, 9, 7, col);
+            d.rect(x + 2, y + 2, 3, 1, col);
+            d.rect(x + 2, y + 4, 5, 1, col);
+            d.rect(x + 3, y + 8, 3, 1, col);
+        } else if (c == Module.Category.UTILITY) {  // a wrench
+            d.rect(x + 1, y, 3, 1, col);
+            d.rect(x, y + 1, 1, 3, col);
+            d.rect(x + 4, y + 1, 1, 2, col);
+            d.rect(x + 1, y + 4, 2, 1, col);
+            for (int i = 0; i < 5; i++) {
+                d.rect(x + 3 + i, y + 3 + i, 2, 1, col);
+            }
+        } else if (c == Module.Category.VISUALS) {  // an eye
+            d.rect(x + 2, y + 1, 5, 1, col);
+            d.rect(x + 1, y + 2, 1, 1, col);
+            d.rect(x + 7, y + 2, 1, 1, col);
+            d.rect(x, y + 3, 1, 3, col);
+            d.rect(x + 8, y + 3, 1, 3, col);
+            d.rect(x + 1, y + 6, 1, 1, col);
+            d.rect(x + 7, y + 6, 1, 1, col);
+            d.rect(x + 2, y + 7, 5, 1, col);
+            d.rect(x + 3, y + 3, 3, 3, col);
+        } else {  // Performance: a lightning bolt
+            d.rect(x + 4, y, 3, 1, col);
+            d.rect(x + 3, y + 1, 3, 1, col);
+            d.rect(x + 2, y + 2, 3, 1, col);
+            d.rect(x + 1, y + 3, 6, 1, col);
+            d.rect(x + 4, y + 4, 2, 1, col);
+            d.rect(x + 3, y + 5, 2, 1, col);
+            d.rect(x + 2, y + 6, 2, 1, col);
+            d.rect(x + 2, y + 7, 1, 1, col);
+        }
+    }
+
+    // ------------------------------------------------------- Settings and Keybinds views
+
+    /** Accent colors to pick from in Settings. */
+    static final int[] ACCENTS = {
+        Theme.AMBER, 0xFF4FB3FF, 0xFF6BE38B, 0xFFFF6B6B, 0xFFB57BFF, 0xFFFF7AD9, 0xFF5CE1E6, 0xFFFFE066, 0xFFEDEEF2,
+    };
+
+    private void renderSettingsView(Draw d, int mx, int my, float dt, int a) {
+        hits.clear();
+        int x = listX, w = listW, y = listY;
+        maxScroll = 0;
+        scroll = 0;
+        smoothScroll = 0;
+        heading(d, "Look", x, y);
+        y += 14;
+        d.text("Accent color", x + 6, y + 7, Theme.MUTED, false);
+        int sx = x + w - 6 - ACCENTS.length * 14 + 2;
+        for (int i = 0; i < ACCENTS.length; i++) {
+            int cx = sx + i * 14;
+            boolean chosen = (ACCENTS[i] & 0xFFFFFF) == (a & 0xFFFFFF);
+            boolean hv = in(mx, my, cx - 1, y + 4, 12, 12);
+            if (chosen || hv) {
+                d.roundOutline(cx - 2, y + 3, 14, 14, chosen ? 0xFFFFFFFF : 0x80FFFFFF);
+            }
+            d.roundRect(cx, y + 5, 10, 10, ACCENTS[i]);
+            hit("accent:" + i, cx - 1, y + 4, 12, 12, null);
+        }
+        y += SET_H + 4;
+        y = moduleRow(d, mx, my, dt, a, "main_menu", "Peregrine main menu", x, y, w);
+        y = moduleRow(d, mx, my, dt, a, "clean_menus", "Keep resource packs out of menus", x, y, w);
+        y += 8;
+        heading(d, "Reset", x, y);
+        y += 16;
+        y = actionRow(d, mx, my, a, "reset-hud", "HUD layout", "Reset positions & looks", x, y, w);
+        y = actionRow(d, mx, my, a, "clear-keys", "Keybinds", "Clear them all", x, y, w);
+    }
+
+    private void heading(Draw d, String text, int x, int y) {
+        d.text(text.toUpperCase(), x + 2, y + 2, Theme.FAINT, false);
+        d.rect(x + 4 + d.width(text.toUpperCase()), y + 6, listW - 8 - d.width(text.toUpperCase()), 1, Theme.HAIRLINE);
+    }
+
+    private int moduleRow(Draw d, int mx, int my, float dt, int a, String id, String label, int x, int y, int w) {
+        Module m = pc.module(id);
+        if (m == null || !pc.platform().supports(id)) {
+            return y;
+        }
+        boolean rh = in(mx, my, x, y, w, SET_H);
+        if (rh) {
+            d.roundRect(x, y, w, SET_H, Theme.ROW_HOVER);
+        }
+        d.text(label, x + 6, y + 7, rh ? Theme.TEXT : Theme.MUTED, false);
+        switchKnob(d, x + w - 30, y + 5, animate(m, dt), a, rh);
+        hit("module:" + id, x, y, w, SET_H, null);
+        return y + SET_H + 2;
+    }
+
+    private int actionRow(Draw d, int mx, int my, int a, String id, String label, String button, int x, int y, int w) {
+        d.text(label, x + 6, y + 7, Theme.MUTED, false);
+        int bw = d.width(button) + 16;
+        int bx = x + w - 6 - bw;
+        boolean bh = in(mx, my, bx, y + 3, bw, 16);
+        d.roundRect(bx, y + 3, bw, 16, bh ? Theme.withAlpha(Theme.BAD, 0x50) : Theme.CARD);
+        d.roundOutline(bx, y + 3, bw, 16, bh ? Theme.BAD : Theme.HAIRLINE);
+        d.text(button, bx + 8, y + 7, bh ? Theme.TEXT : Theme.MUTED, false);
+        hit(id, bx, y + 3, bw, 16, null);
+        return y + SET_H + 2;
+    }
+
+    /** Every feature with its keybind, to set them all in one place. */
+    private void renderKeybindView(Draw d, int mx, int my, float dt, long now, int a) {
+        hits.clear();
+        List<Module> mods = visible();
+        int rowH = 18;
+        maxScroll = Math.max(0, mods.size() * rowH - listH);
+        scroll = clamp(scroll, 0, maxScroll);
+        smoothScroll += (scroll - smoothScroll) * Math.min(1f, dt * 18f);
+        if (Math.abs(scroll - smoothScroll) < 0.5f) {
+            smoothScroll = scroll;
+        }
+        d.popScale();
+        d.clip(s(listX), s(listY), s(listW), s(listH));
+        d.pushScale(0, 0, k);
+        int y = listY - Math.round(smoothScroll);
+        for (Module m : mods) {
+            if (y + rowH >= listY && y <= listY + listH) {
+                boolean waiting = binding == m;
+                boolean rh = in(mx, my, listX, y, listW, rowH) && in(mx, my, listX, listY, listW, listH);
+                if (rh || waiting) {
+                    d.roundRect(listX, y, listW, rowH - 1, waiting ? Theme.withAlpha(a, 0x20) : Theme.ROW_HOVER);
+                }
+                Object stack = pc.platform().icon(Icons.of(m));
+                if (stack != null) {
+                    d.item(stack, listX + 3, y + 1);
+                }
+                d.text(d.trim(m.name, listW - 100), listX + 23, y + 5, rh ? Theme.TEXT : Theme.MUTED, false);
+                String val = waiting ? "Press a key…" : Keys.name(m.key);
+                int bw = Math.max(44, d.width(val) + 12);
+                int bx = listX + listW - 6 - bw;
+                float pulse = waiting ? 0.5f + 0.5f * (float) Math.sin(now / 160.0) : 0f;
+                d.roundRect(bx, y + 2, bw, rowH - 5, waiting ? Theme.withAlpha(a, 0x30 + Math.round(0x30 * pulse)) : Theme.FIELD);
+                d.roundOutline(bx, y + 2, bw, rowH - 5, waiting ? a : Theme.HAIRLINE);
+                d.text(val, bx + (bw - d.width(val)) / 2, y + 5, waiting ? a : m.key >= 0 ? Theme.TEXT : Theme.FAINT, false);
+                if (y + rowH / 2 >= listY && y + rowH / 2 <= listY + listH) {
+                    hit("bindrow:" + m.id, bx, y + 2, bw, rowH - 5, null);
+                }
+            }
+            y += rowH;
+        }
+        d.popScale();
+        d.unclip();
+        d.pushScale(0, 0, k);
+        scrollbar(d, listY, listH, in(mx, my, listX, listY, listW + 8, listH), a);
+    }
 
     // ------------------------------------------------------- settings page
 
@@ -515,7 +726,7 @@ public final class Menu {
         d.text(d.trim(m.name, w - 66), x + 22, listY + 2, Theme.TEXT, false);
         d.text(d.trim(m.description, w - 66), x + 22, listY + 13, Theme.FAINT, false);
         boolean th = in(mx, my, x + w - 30, listY + 6, 22, 10);
-        toggle(d, x + w - 30, listY + 6, animate(m, dt), a, th);
+        switchKnob(d, x + w - 32, listY + 6, animate(m, dt), a, th);
         hit("toggle", x + w - 32, listY + 3, 26, 16, null);
         d.rect(x, listY + 25, w - 4, 1, Theme.HAIRLINE);
 
@@ -610,7 +821,7 @@ public final class Menu {
                 float v = cur == null ? target : cur;
                 v = v < target ? Math.min(target, v + dt * 9f) : Math.max(target, v - dt * 9f);
                 settingKnob.put(st, v);
-                toggle(d, right - 22, y + 6, v, a, rh);
+                switchKnob(d, right - 24, y + 5, v, a, rh);
                 hit(id, x, y, w - 4, SET_H, st);
             } else if (st instanceof SliderSetting) {
                 SliderSetting sl = (SliderSetting) st;
@@ -673,21 +884,8 @@ public final class Menu {
                 }
             }
         }
-        if (maxScroll > 0) {
-            int track = viewH - 4;
-            int barH = Math.max(14, track * viewH / (viewH + maxScroll));
-            int barY = top + 2 + Math.round((track - barH) * (smoothScroll / maxScroll));
-            d.roundRect(px + pw - 5, barY, 2, barH, inView ? Theme.withAlpha(a, 0xB0) : 0x40FFFFFF);
-        }
+        scrollbar(d, top, viewH, inView, a);
 
-        // Footer
-        int fy = py + ph - FOOTER_H + 5;
-        d.rect(listX, py + ph - FOOTER_H - 1, listW, 1, Theme.HAIRLINE);
-        d.text(d.trim("Esc to go back", listW - 60), listX + 4, fy, Theme.FAINT, false);
-        String cat = m.category.label;
-        int cw = d.width(cat) + 10;
-        d.roundRect(px + pw - 9 - cw, fy - 3, cw, 13, Theme.withAlpha(a, 0x22));
-        d.text(cat, px + pw - 4 - cw, fy, Theme.withAlpha(a, 0xFF), false);
     }
 
     private void slideTo(SliderSetting sl, int mx) {
@@ -865,7 +1063,7 @@ public final class Menu {
         if (binding != null) {
             boolean onBind = false;
             for (Hit h : hits) {
-                if (h.id.equals("bind") && in(mx, my, h.x, h.y, h.w, h.h)) {
+                if ((h.id.equals("bind") || h.id.startsWith("bindrow:")) && in(mx, my, h.x, h.y, h.w, h.h)) {
                     onBind = true;
                 }
             }
@@ -874,12 +1072,12 @@ public final class Menu {
                 return true;
             }
         }
-        if (button == 1 && page == null && in(mx, my, listX, listY, listW, listH)) {
-            // Right-click a feature to open its settings, same as the gear.
+        if (button == 1 && page == null && view == 0 && in(mx, my, listX, listY, listW, listH)) {
+            // Right-click a tile to open its options, same as clicking the tile.
             List<Module> mods = visible();
             for (int i = 0; i < mods.size(); i++) {
                 int[] c = card(i);
-                if (in(mx, my, c[0], c[1], c[2], CARD_H)) {
+                if (in(mx, my, c[0], c[1], c[2], tileH)) {
                     openPage(mods.get(i));
                     return true;
                 }
@@ -888,20 +1086,42 @@ public final class Menu {
         if (button != 0) {
             return false;
         }
-        if (!in(mx, my, px, py, pw, ph) || in(mx, my, closeX - 3, closeY - 3, 13, 13)) {
+        if (!in(mx, my, px, py, pw, ph) || in(mx, my, closeX, closeY, 16, 16)) {
             // A click outside the window (or on ×) closes it, like any pop-up.
             p.openScreen(p.inWorld() ? Platform.Screen.NONE : Platform.Screen.TITLE);
             return true;
         }
-        for (int i = 0; i < TABS.length; i++) {
-            if (in(mx, my, px + 4, tabY(i), SIDE_W - 8, TAB_H)) {
+        for (int i = 0; i < VIEWS.length; i++) {
+            if (in(mx, my, tabX0 + i * (tabW + 4), tabsY, tabW, TABBAR_H)) {
                 if (page != null) {
                     closePage();
                 }
-                if (tab != TABS[i]) {
+                if (view != i) {
+                    listShownAt = System.currentTimeMillis();
+                }
+                view = i;
+                scroll = 0;
+                smoothScroll = 0;
+                hits.clear();
+                return true;
+            }
+        }
+        if (in(mx, my, menuBtnX, tabsY, TABBAR_H, TABBAR_H)) {
+            onlyOn = !onlyOn;
+            listShownAt = System.currentTimeMillis();
+            scroll = 0;
+            return true;
+        }
+        for (int i = 0; i < TABS.length; i++) {
+            if (in(mx, my, px + 10, tabY(i), SIDE_W - 8, TAB_H)) {
+                if (page != null) {
+                    closePage();
+                }
+                if (tab != TABS[i] || view != 0) {
                     listShownAt = System.currentTimeMillis();
                 }
                 tab = TABS[i];
+                view = 0;
                 scroll = 0;
                 smoothScroll = 0;
                 return true;
@@ -916,23 +1136,58 @@ public final class Menu {
             pageClicked(mx, my);
             return true;
         }
+        if (view != 0) {
+            viewClicked(mx, my);
+            return true;
+        }
         if (in(mx, my, listX, listY, listW, listH)) {
             List<Module> mods = visible();
             for (int i = 0; i < mods.size(); i++) {
                 int[] c = card(i);
-                if (in(mx, my, c[0], c[1], c[2], CARD_H)) {
+                if (in(mx, my, c[0], c[1], c[2], tileH)) {
                     Module m = mods.get(i);
-                    if (in(mx, my, c[0] + 5, c[1] + CARD_H - 16, optionsW(c[2]), 12)) {
+                    int[] tg = toggleAt(c);
+                    if (in(mx, my, tg[0] - 3, tg[1] - 3, 30, 17)) {  // the switch
+                        m.setEnabled(!m.enabled());
+                        pc.markDirty();
+                    } else {  // anywhere else on the tile: its options
                         openPage(m);
-                        return true;
                     }
-                    m.setEnabled(!m.enabled());
-                    pc.markDirty();
                     return true;
                 }
             }
         }
         return true;
+    }
+
+    private void viewClicked(int mx, int my) {
+        for (Hit h : new ArrayList<Hit>(hits)) {
+            if (!in(mx, my, h.x, h.y, h.w, h.h)) {
+                continue;
+            }
+            if (h.id.startsWith("accent:")) {
+                pc.setAccent(ACCENTS[Integer.parseInt(h.id.substring(7))]);
+            } else if (h.id.startsWith("module:")) {
+                Module m = pc.module(h.id.substring(7));
+                m.setEnabled(!m.enabled());
+            } else if (h.id.equals("reset-hud")) {
+                for (Module m : pc.modules()) {
+                    if (m instanceof HudModule) {
+                        ((HudModule) m).resetStyle();
+                    }
+                }
+            } else if (h.id.equals("clear-keys")) {
+                for (Module m : pc.modules()) {
+                    m.key = Keys.NONE;
+                }
+            } else if (h.id.startsWith("bindrow:")) {
+                Module m = pc.module(h.id.substring(8));
+                binding = binding == m ? null : m;
+                return;
+            }
+            pc.markDirty();
+            return;
+        }
     }
 
     public boolean mouseDragged(int screenMx, int screenMy) {
@@ -992,6 +1247,7 @@ public final class Menu {
         if (key == KEY_BACKSPACE && !search.isEmpty()) {
             search = search.substring(0, search.length() - 1);
             scroll = 0;
+            smoothScroll = 0;
             return true;
         }
         if (key == KEY_ENTER) {
@@ -1022,8 +1278,13 @@ public final class Menu {
         if (page != null) {  // typing goes back to the list to search
             closePage();
         }
+        if (view != 0) {
+            view = 0;
+            listShownAt = System.currentTimeMillis();
+        }
         search += c;
         scroll = 0;
+        smoothScroll = 0;  // results start at the top straight away
         return true;
     }
 }

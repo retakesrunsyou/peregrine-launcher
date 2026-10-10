@@ -198,6 +198,11 @@ public interface Platform {
     default void reloadChunks() {
     }
 
+    /** An item to show as an icon ("minecraft:clock"), as a stack for Draw.item, or null. */
+    default Object icon(String itemId) {
+        return null;
+    }
+
     /** Reloads resource packs (like F3+T), after a change to what they may replace. */
     default void reloadResources() {
     }

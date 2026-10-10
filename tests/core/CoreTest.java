@@ -62,7 +62,7 @@ public class CoreTest {
     /** Scrolls a settings page down until a row is in view, and returns its centre. */
     static int[] scrollTo(Menu m, String id) throws Exception {
         D d = new D();
-        for (int i = 0; i < 12; i++) {
+        for (int i = 0; i < 60; i++) {
             int[] c = centerOfReflect(m, id);
             if (c != null) return c;
             m.mouseScrolled(-1); Thread.sleep(120); m.render(d,0,0); Thread.sleep(120); m.render(d,0,0);
@@ -95,7 +95,7 @@ public class CoreTest {
         // menu: toggle CPS by clicking its card
         m.open(); Thread.sleep(200); texts.clear(); m.render(d,0,0);
         check(!pc.module("cps").enabled(), "CPS starts off");
-        int[] cps = find("CPS@"); m.mouseClicked(cps[0]+2, cps[1]+2, 0);
+        int[] cps = scrollTo(m, "cps"); m.mouseClicked(cps[0], cps[1], 0);
         check(pc.module("cps").enabled(), "clicking the CPS card turns it on");
         // search
         for(char c: "toggle spr".toCharArray()) m.charTyped(c);
@@ -111,7 +111,7 @@ public class CoreTest {
         texts.clear(); m.render(d,0,0); int[] util = find("Utility@"); m.mouseClicked(util[0]+1, util[1]+1, 0);
         Thread.sleep(450);  // the cards fade in one after another
         texts.clear(); m.render(d,0,0);
-        check(texts.stream().anyMatch(t->t.startsWith("Zoom@")) && texts.stream().noneMatch(t->t.startsWith("FPS@")), "Utility tab shows only utility");
+        check(scrollTo(m, "zoom") != null && scrollTo(m, "fps") == null, "Utility tab shows only utility");
         // zoom
         pc.module("zoom").setEnabled(true);
         for (net.peregrine.client.core.settings.Setting st : pc.module("zoom").settings()) if (st.id.equals("smooth")) ((net.peregrine.client.core.settings.BoolSetting)st).value=false;
@@ -193,12 +193,12 @@ public class CoreTest {
         check(!pc4.on("clean_edges"), "clean edges off by default"); pc4.module("clean_edges").setEnabled(true); check(pc4.on("clean_edges"), "hook flag turns on");
         pc4.menu().open(); Thread.sleep(200); texts.clear(); pc4.menu().render(d,0,0); int[] vis=find("Visuals@"); pc4.menu().mouseClicked(vis[0]+1,vis[1]+1,0);
         texts.clear(); pc4.menu().render(d,0,0);
-        check(texts.stream().anyMatch(x->x.startsWith("Steady camera@")) && texts.stream().noneMatch(x->x.startsWith("FPS@")), "Visuals tab");
+        check(scrollTo(pc4.menu(), "steady_camera") != null && centerOfReflect(pc4.menu(), "fps") == null, "Visuals tab");
         // ---- settings pages (gear on each row)
         Files.deleteIfExists(cfg);
         Peregrine pc5 = Peregrine.init(new P()); Menu m5 = pc5.menu();
         m5.open(); Thread.sleep(200); texts.clear(); m5.render(d,0,0);
-        int[] gear = centerOfReflect(m5, "gear:coords");
+        int[] gear = scrollTo(m5, "gear:coords");
         check(gear != null, "coordinates row has a gear");
         m5.mouseClicked(gear[0], gear[1], 0);
         texts.clear(); m5.render(d,0,0);
@@ -216,7 +216,7 @@ public class CoreTest {
         check(texts.stream().anyMatch(q->q.startsWith("Edit HUD@")) && texts.stream().noneMatch(q->q.startsWith("Show dimension@")), "back on the list");
         // right-click a row: same page
         int[] ut = find("Utility@"); m5.mouseClicked(ut[0]+1, ut[1]+1, 0); texts.clear(); m5.render(d,0,0);
-        int[] zoomRow = centerOfReflect(m5, "zoom"); m5.mouseClicked(zoomRow[0], zoomRow[1], 1);
+        int[] zoomRow = scrollTo(m5, "zoom"); m5.mouseClicked(zoomRow[0], zoomRow[1], 1);
         texts.clear(); m5.render(d,0,0);
         check(texts.stream().anyMatch(q->q.startsWith("Zoom level@")), "right-click opens settings too");
         int[] slider = centerOfReflect(m5, "set:level");
@@ -226,7 +226,7 @@ public class CoreTest {
         m5.keyPressed(Menu.KEY_ESCAPE);
         // customize: opens the HUD editor with the style panel for that item
         int[] all = find("All@"); m5.mouseClicked(all[0]+1, all[1]+1, 0);
-        texts.clear(); m5.render(d,0,0); gear = centerOfReflect(m5, "gear:fps"); m5.mouseClicked(gear[0], gear[1], 0);
+        texts.clear(); m5.render(d,0,0); gear = scrollTo(m5, "gear:fps"); m5.mouseClicked(gear[0], gear[1], 0);
         texts.clear(); m5.render(d,0,0); pc5.renderHud(d);
         int[] cust = centerOfReflect(m5, "customize"); m5.mouseClicked(cust[0], cust[1], 0);
         check(!m5.wantsShade(), "customize opens the HUD editor");
@@ -406,6 +406,21 @@ public class CoreTest {
         pc10.module("clean_menus").setEnabled(false);
         check(!Hooks.keepOutOfPack("file/Faithful.zip", "minecraft", "textures/gui/sprites/widget/button.png"), "switched off: packs change menus again");
         pc10.module("clean_menus").setEnabled(true);
+        // The Settings and Keybinds tabs
+        Menu mt = pc10.menu(); mt.open(); Thread.sleep(250); texts.clear(); mt.render(d, 0, 0);
+        int[] kt = centerOfReflect(mt, "view:Keybinds"); mt.mouseClicked(kt[0], kt[1], 0);
+        texts.clear(); mt.render(d, 0, 0);
+        int[] row = scrollTo(mt, "bindrow:clock");
+        check(row != null, "the Keybinds tab lists every feature with its key");
+        mt.mouseClicked(row[0], row[1], 0);
+        check(mt.binding() == pc10.module("clock"), "clicking a key there waits for a key");
+        mt.keyPressed(75); check(pc10.module("clock").key == 75, "...and binds it (Clock on K)");
+        int[] st = centerOfReflect(mt, "view:Settings"); mt.mouseClicked(st[0], st[1], 0);
+        texts.clear(); mt.render(d, 0, 0);
+        check(texts.stream().anyMatch(q -> q.startsWith("Accent color@")), "the Settings tab shows client settings");
+        int[] blue = centerOfReflect(mt, "accent:1"); mt.mouseClicked(blue[0], blue[1], 0);
+        check(pc10.accent() == 0xFF4FB3FF, "picking a color there changes the accent");
+        mt.close();
         pc10.shutdown(); String json10 = new String(Files.readAllBytes(cfg));
         check(json10.contains("\"key\": 51"), "keybinds are saved");
         playing = false; fpsNow = 144;

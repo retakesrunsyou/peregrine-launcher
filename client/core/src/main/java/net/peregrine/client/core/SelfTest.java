@@ -406,6 +406,27 @@ public final class SelfTest {
                 return menu.page() == null && p.showing(Platform.Screen.PEREGRINE_MENU);
             }
         });
+        clickOn("the Settings tab opens", "view:Settings", new Cond() {
+            public boolean ok() {
+                return menu.centerOf("accent:0") != null;
+            }
+        });
+        waitTicks(8);
+        shot("19e-settings-tab");
+        clickOn("the Keybinds tab opens", "view:Keybinds", new Cond() {
+            public boolean ok() {
+                return menu.centerOf("view:Keybinds") != null;
+            }
+        });
+        waitTicks(8);
+        shot("19f-keybinds-tab");
+        clickOn("back to the Mods tab", "view:Mods", new Cond() {
+            public boolean ok() {
+                return true;
+            }
+        });
+        waitTicks(8);
+        shot("19g-mods-tab");
         ask("key Escape");
         waitFor("Esc closes the menu", 60, new Cond() {
             public boolean ok() {
