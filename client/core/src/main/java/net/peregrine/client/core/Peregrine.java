@@ -13,6 +13,7 @@ import net.peregrine.client.core.modules.OwnNameTag;
 import net.peregrine.client.core.modules.ScoreboardSize;
 import net.peregrine.client.core.modules.ChatSize;
 import net.peregrine.client.core.modules.LowFire;
+import net.peregrine.client.core.modules.SmallTotem;
 import net.peregrine.client.core.modules.InventoryTweaks;
 import net.peregrine.client.core.modules.OldAnimations;
 import net.peregrine.client.core.modules.StableFps;
@@ -154,6 +155,7 @@ public final class Peregrine {
         modules.add(new ScoreboardSize());
         modules.add(new ChatSize());
         modules.add(new LowFire());
+        modules.add(new SmallTotem());
         modules.add(new InventoryTweaks());
         modules.add(new OldAnimations());
         this.menu = new Menu(this);
@@ -225,10 +227,71 @@ public final class Peregrine {
 
     // ---- called by the version adapter
 
+    // ---- keybinds: a key set on a feature's page switches it on and off while playing
+
+    private final java.util.Set<Module> keysHeld = java.util.Collections.newSetFromMap(
+            new java.util.IdentityHashMap<Module, Boolean>());
+    private String toast;
+    private boolean toastOn;
+    private long toastAt;
+
+    /** Called every tick and every frame; acts once per key press. */
+    void pollKeys() {
+        if (!platform.inWorld()) {
+            keysHeld.clear();
+            return;
+        }
+        for (Module m : modules) {
+            if (m.key < 0) {
+                continue;
+            }
+            boolean down = platform.keyDown(m.key);
+            if (down && keysHeld.add(m)) {
+                if (platform.supports(m.id)) {
+                    m.setEnabled(!m.enabled());
+                    markDirty();
+                    toast = m.name;
+                    toastOn = m.enabled();
+                    toastAt = System.currentTimeMillis();
+                    SelfTest.count("keybind:" + m.id);
+                }
+            } else if (!down) {
+                keysHeld.remove(m);
+            }
+        }
+    }
+
+    /** A small note under the top of the screen for a moment: "Low fire  On". */
+    private void renderToast(Draw d) {
+        if (toast == null) {
+            return;
+        }
+        long age = System.currentTimeMillis() - toastAt;
+        if (age > 1400) {
+            toast = null;
+            return;
+        }
+        float in = 0.3f + 0.7f * Math.min(1f, age / 120f);
+        float out = age > 1100 ? 1f - (age - 1100) / 300f : 1f;
+        float t = Math.max(0f, Math.min(in, out));
+        Draw f = t < 1f ? new FadeDraw(d, t) : d;
+        String state = toastOn ? "On" : "Off";
+        int w = d.width(toast) + d.width(state) + 22;
+        int h = 15;
+        int x = (platform.screenWidth() - w) / 2;
+        int y = 6 - Math.round((1f - in) * 4);
+        f.roundRect(x, y, w, h, Theme.withAlpha(Theme.PANEL, 0xE6));
+        f.roundOutline(x, y, w, h, Theme.HAIRLINE);
+        f.roundRect(x + 6, y + 5, 5, 5, toastOn ? accent : Theme.FAINT);
+        f.text(toast, x + 15, y + 4, Theme.TEXT, false);
+        f.text(state, x + w - 6 - d.width(state), y + 4, toastOn ? accent : Theme.MUTED, false);
+    }
+
     public void tick() {
         if (SelfTest.ACTIVE) {
             SelfTest.tick(this);
         }
+        pollKeys();
         if (platform.inWorld()) {
             for (Module m : modules) {
                 if (m.enabled() && platform.supports(m.id)) {
@@ -247,11 +310,13 @@ public final class Peregrine {
             return;
         }
         SelfTest.count("hud");
+        pollKeys();
         for (Module m : modules) {
             if (m.enabled() && m instanceof HudModule && platform.supports(m.id)) {
                 ((HudModule) m).renderAt(d, platform);
             }
         }
+        renderToast(d);
     }
 
     /** button: 0 = left, 1 = right. */

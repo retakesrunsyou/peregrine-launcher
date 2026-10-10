@@ -20,7 +20,9 @@
 		"OwnNameLogoMixin",
 		"OwnNameShowMixin",
 		"ParticlesMixin",
-		"ScoreboardMixin"
+		"ScoreboardMixin",
+		"TotemHeldMixin",
+		"TotemPopMixin"
 	],
 	"injectors": {
 		"defaultRequire": 0

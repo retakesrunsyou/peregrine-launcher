@@ -36,9 +36,11 @@ public class CoreTest {
         public double entityDistance(){return entity;} public void setEntityDistance(double e){entity=e;}
         public int particleLevel(){return particles;} public void setParticleLevel(int l){particles=l;}
         public int blockItemCount(){return 211;}
+        public boolean keyDown(int k){return k==keyHeld;}
         public double chatOption(String k){return chat.getOrDefault(k, 1.0);} public void setChatOption(String k, double v){chat.put(k, v);}
     }
     static java.util.Map<String, Double> chat = new java.util.HashMap<>();
+    static int keyHeld = -1;
     static int reloads, camera, hitColor=-1, fpsNow=144, render=12, particles=0; static double entity=1.0; static boolean altDown;
     static boolean target; static int hurt; static String dim = "minecraft:overworld";
     static java.util.Set<Platform.Option> optionsOn=new java.util.HashSet<>();
@@ -57,10 +59,21 @@ public class CoreTest {
     }
     static void check(boolean c, String m){ if(!c) throw new AssertionError(m); System.out.println("ok  " + m); }
     static int[] find(String prefix){ for(String t: texts) if(t.startsWith(prefix)){ String[] xy=t.substring(t.lastIndexOf('@')+1).split(","); return new int[]{Integer.parseInt(xy[0]),Integer.parseInt(xy[1])}; } throw new AssertionError("not drawn: "+prefix); }
+    /** Scrolls a settings page down until a row is in view, and returns its centre. */
+    static int[] scrollTo(Menu m, String id) throws Exception {
+        D d = new D();
+        for (int i = 0; i < 12; i++) {
+            int[] c = centerOfReflect(m, id);
+            if (c != null) return c;
+            m.mouseScrolled(-1); Thread.sleep(120); m.render(d,0,0); Thread.sleep(120); m.render(d,0,0);
+        }
+        return null;
+    }
+
     public static void main(String[] a) throws Exception {
         cfg = Files.createTempDirectory("pc").resolve("config/peregrine-client.json");
         Peregrine pc = Peregrine.init(new P()); D d = new D(); Menu m = pc.menu();
-        check(pc.modules().size()==60, "60 modules registered");
+        check(pc.modules().size()==61, "61 modules registered");
         for (String id : new String[]{"health","nether_coords","session","totems","arrows","durability_alert",
                 "reach","combo","target","block_info","block_count","players","rotation","stopwatch","xp","chunk","light",
                 "anti_leak","crosshair","freelook","hit_color","item_physics"}) check(pc.module(id)!=null, id+" exists");
@@ -96,6 +109,7 @@ public class CoreTest {
         check(m.keyPressed(Menu.KEY_ESCAPE)==false, "Esc left for the screen to close the menu");
         // tabs
         texts.clear(); m.render(d,0,0); int[] util = find("Utility@"); m.mouseClicked(util[0]+1, util[1]+1, 0);
+        Thread.sleep(450);  // the cards fade in one after another
         texts.clear(); m.render(d,0,0);
         check(texts.stream().anyMatch(t->t.startsWith("Zoom@")) && texts.stream().noneMatch(t->t.startsWith("FPS@")), "Utility tab shows only utility");
         // zoom
@@ -190,12 +204,11 @@ public class CoreTest {
         texts.clear(); m5.render(d,0,0);
         check(texts.stream().anyMatch(q->q.startsWith("Customize look & position@")) && texts.stream().anyMatch(q->q.startsWith("Show dimension@")), "gear opens the settings page");
         check(pc5.module("coords").enabled(), "the gear doesn't switch it off");
-        int[] dimRow = centerOfReflect(m5, "set:dimension"); m5.mouseClicked(dimRow[0], dimRow[1], 0);
+        check(centerOfReflect(m5, "set:decimals") == null, "rows below the fold aren't clickable");
+        int[] dimRow = scrollTo(m5, "set:dimension"); m5.mouseClicked(dimRow[0], dimRow[1], 0);
         texts.clear(); pc5.renderHud(d);
         check(texts.stream().noneMatch(q->q.startsWith("Overworld@")), "turning off 'Show dimension' hides it");
-        check(centerOfReflect(m5, "set:decimals") == null, "rows below the fold aren't clickable");
-        m5.mouseScrolled(-3); Thread.sleep(120); m5.render(d,0,0); Thread.sleep(120); m5.render(d,0,0);
-        int[] dec = centerOfReflect(m5, "set:decimals"); m5.mouseClicked(dec[0], dec[1], 0);
+        int[] dec = scrollTo(m5, "set:decimals"); m5.mouseClicked(dec[0], dec[1], 0);
         texts.clear(); pc5.renderHud(d);
         check(texts.stream().anyMatch(q->q.startsWith("12.35  64.00  -5.50")), "decimals cycle to two");
         check(m5.keyPressed(Menu.KEY_ESCAPE), "Esc goes back from a settings page");
@@ -329,6 +342,64 @@ public class CoreTest {
         pc10.module("hit_color").setEnabled(true); pc10.tick();
         check(Hooks.critColor == (0xFF000000 | 0x9B3BFF), "crit sparks follow the hit color");
         pc10.module("hit_color").setEnabled(false); check(Hooks.critColor == 0, "crit sparks back to Minecraft's");
+        // ---- batch 7: keybinds, steady resizing, RGB text, line styles, one-line coordinates
+        Menu m10 = pc10.menu(); m10.open(); Thread.sleep(250);
+        for (char c : "low fire".toCharArray()) m10.charTyped(c);
+        Thread.sleep(250); texts.clear(); m10.render(d, 0, 0);
+        int[] lfGear = centerOfReflect(m10, "gear:low_fire"); m10.mouseClicked(lfGear[0], lfGear[1], 0);
+        check(m10.page() == pc10.module("low_fire"), "Options opens Low fire's page");
+        texts.clear(); m10.render(d, 0, 0);
+        check(texts.stream().anyMatch(q -> q.startsWith("Keybind@")) && texts.stream().anyMatch(q -> q.startsWith("None@")), "every page has a keybind row");
+        int[] bind = centerOfReflect(m10, "bind"); m10.mouseClicked(bind[0], bind[1], 0);
+        check(m10.binding() == pc10.module("low_fire"), "clicking the keybind waits for a key");
+        texts.clear(); m10.render(d, 0, 0);
+        check(texts.stream().anyMatch(q -> q.startsWith("Press a key")), "...and says so");
+        check(m10.keyPressed(51) && m10.charTyped('3'), "pressing 3 binds it (and its character isn't typed)");
+        check(pc10.module("low_fire").key == 51 && m10.binding() == null, "Low fire is on the 3 key");
+        texts.clear(); m10.render(d, 0, 0);
+        check(texts.stream().anyMatch(q -> q.startsWith("3@")), "the page shows the key");
+        m10.keyPressed(Menu.KEY_ESCAPE); m10.close();
+        boolean lfWas = pc10.module("low_fire").enabled();
+        keyHeld = 51; pc10.tick();
+        check(pc10.module("low_fire").enabled() != lfWas, "pressing 3 in game switches Low fire");
+        texts.clear(); pc10.renderHud(d);
+        check(texts.stream().anyMatch(q -> q.startsWith("Low fire@")), "...with a small note saying so");
+        pc10.tick(); check(pc10.module("low_fire").enabled() != lfWas, "holding the key doesn't flicker it");
+        keyHeld = -1; pc10.tick(); keyHeld = 51; pc10.tick(); keyHeld = -1;
+        check(pc10.module("low_fire").enabled() == lfWas, "pressing it again switches it back");
+        // Resizing right at the screen edge: grows inward, never pushed back or off screen
+        HudModule f10 = (HudModule) pc10.module("fps"); f10.fx = 1f; f10.fy = 0f; f10.scale = 0.5f;
+        pc10.renderHud(d);
+        m10.open(); Thread.sleep(250); texts.clear(); m10.render(d, 0, 0);
+        int[] ed = find("Edit HUD@"); m10.mouseClicked(ed[0], ed[1], 0); pc10.renderHud(d);
+        int[] b0 = f10.drawnBox(); int rightEdge = b0[0] + b0[2];
+        boolean steady = true;
+        for (int i = 0; i < 60; i++) {
+            int[] b = f10.drawnBox();
+            m10.render(d, b[0] + 2, b[1] + 2); m10.mouseScrolled(1); pc10.renderHud(d);
+            b = f10.drawnBox();
+            if (b[0] + b[2] > 480 || b[1] + b[3] > 270 || f10.fx < 0.99f) steady = false;
+        }
+        int[] b1 = f10.drawnBox();
+        check(steady && b1[0] + b1[2] == rightEdge && f10.scale > 2f, "growing at the right edge keeps it there: x=" + b1[0] + " w=" + b1[2] + " scale=" + f10.scale);
+        m10.keyPressed(Menu.KEY_ESCAPE); m10.close();
+        f10.scale = 0.5f; f10.chroma = true; texts.clear(); pc10.renderHud(d);
+        check(texts.stream().anyMatch(q -> q.startsWith("F@")) && texts.stream().anyMatch(q -> q.startsWith("P@")), "RGB text colors each letter on its own");
+        f10.chroma = false;
+        HudModule cps10 = (HudModule) pc10.module("cps"); cps10.setEnabled(true);
+        for (net.peregrine.client.core.settings.Setting st : cps10.settings()) if (st.id.equals("style")) ((net.peregrine.client.core.settings.ChoiceSetting) st).index = 3;
+        texts.clear(); pc10.renderHud(d);
+        check(texts.stream().anyMatch(q -> q.startsWith("[CPS:@")), "line items can read [CPS: 0 | 0]");
+        for (net.peregrine.client.core.settings.Setting st : pc10.module("coords").settings()) if (st.id.equals("layout")) ((net.peregrine.client.core.settings.ChoiceSetting) st).index = 1;
+        texts.clear(); pc10.renderHud(d);
+        String xyz = texts.stream().filter(q -> q.startsWith("XYZ@")).findFirst().orElse("");
+        String fac = texts.stream().filter(q -> q.startsWith("Facing@")).findFirst().orElse("x,?");
+        check(!xyz.isEmpty() && xyz.split(",")[1].equals(fac.split(",")[1]), "coordinates on one line: " + xyz + " / " + fac);
+        pc10.module("small_totem").setEnabled(true); pc10.tick();
+        check(Math.abs(Hooks.totemHeld - 0.55f) < 1e-6 && Math.abs(Hooks.totemPop - 0.4f) < 1e-6, "small totem: 55% held, 40% pop");
+        pc10.module("small_totem").setEnabled(false); check(Hooks.totemHeld == 1f && Hooks.totemPop == 1f, "small totem off: normal size");
+        pc10.shutdown(); String json10 = new String(Files.readAllBytes(cfg));
+        check(json10.contains("\"key\": 51"), "keybinds are saved");
         playing = false; fpsNow = 144;
         System.out.println("\nALL CORE TESTS PASSED");
     }

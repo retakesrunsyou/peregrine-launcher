@@ -85,6 +85,16 @@ final class Config {
             if (o.has("shadow")) {
                 h.shadow = o.get("shadow").getAsBoolean();
             }
+            if (o.has("chroma")) {
+                h.chroma = o.get("chroma").getAsBoolean();
+            }
+            if (o.has("chromaSpeed")) {
+                h.chromaSpeed = Math.max(HudModule.MIN_CHROMA_SPEED,
+                        Math.min(HudModule.MAX_CHROMA_SPEED, o.get("chromaSpeed").getAsFloat()));
+            }
+        }
+        if (o.has("key")) {
+            m.key = o.get("key").getAsInt();
         }
         if (o.has("enabled") && (current || m instanceof MainMenu)) {
             m.setEnabledQuietly(o.get("enabled").getAsBoolean());
@@ -107,6 +117,9 @@ final class Config {
         for (Module m : p.modules()) {
             JsonObject o = new JsonObject();
             o.addProperty("enabled", m.enabled());
+            if (m.key >= 0) {
+                o.addProperty("key", m.key);
+            }
             if (m instanceof HudModule) {
                 HudModule h = (HudModule) m;
                 o.addProperty("x", h.fx);
@@ -128,6 +141,10 @@ final class Config {
                 }
                 if (!h.shadow) {
                     o.addProperty("shadow", false);
+                }
+                if (h.chroma) {
+                    o.addProperty("chroma", true);
+                    o.addProperty("chromaSpeed", h.chromaSpeed);
                 }
             }
             JsonObject so = new JsonObject();

@@ -28,7 +28,8 @@ public final class Menu {
     private static final int TITLE_H = 26;
     private static final int FOOTER_H = 18;
     private static final int SIDE_W = 82;
-    private static final int ROW_H = 28;
+    private static final int CARD_H = 50;
+    private static final int GAP = 5;
     private static final int TAB_H = 18;
     private static final Module.Category[] TABS = {
         null, Module.Category.HUD, Module.Category.UTILITY, Module.Category.VISUALS, Module.Category.PERFORMANCE
@@ -53,6 +54,10 @@ public final class Menu {
     private long pageOpenedAt;
     private SliderSetting draggingSlider;
     private final Map<Setting, Float> settingKnob = new IdentityHashMap<Setting, Float>();
+    private Module binding;       // waiting for a key for this feature's keybind
+    private long boundAt;         // when a key was just bound (its typed character is swallowed)
+    private int cols = 2;
+    private long listShownAt;
 
     /** Something clickable on a settings page, from the last frame (menu pixels). */
     private static final class Hit {
@@ -101,6 +106,8 @@ public final class Menu {
     /** Call when the menu screen opens. */
     public void open() {
         openedAt = System.currentTimeMillis();
+        listShownAt = openedAt;
+        binding = null;
         lastFrame = 0;
         search = "";
         scroll = 0;
@@ -125,13 +132,17 @@ public final class Menu {
         settingKnob.clear();
     }
 
-    Module page() {
+    public Module page() {
         return page;
     }
 
-    /** Features with a gear: anything with options, and every HUD item (for its look). */
+    /** Every feature has a page: its keybind, plus options and (for HUD items) its look. */
     static boolean hasPage(Module m) {
-        return m instanceof HudModule || !m.settings().isEmpty();
+        return true;
+    }
+
+    public Module binding() {
+        return binding;
     }
 
     // ---- for the self-test (see SelfTest)
@@ -167,13 +178,14 @@ public final class Menu {
         }
         List<Module> mods = visible();
         for (int i = 0; i < mods.size(); i++) {
-            if (what.equals("gear:" + mods.get(i).id) && hasPage(mods.get(i))) {
-                int y = rowY(i) + ROW_H / 2;
-                return y > listY && y < listY + listH ? new int[] {s(gearX() + 5), s(y)} : null;
+            int[] c = card(i);
+            if (what.equals("gear:" + mods.get(i).id)) {
+                int y = c[1] + CARD_H - 10;
+                return y > listY && y < listY + listH ? new int[] {s(c[0] + 5 + optionsW(c[2]) / 2), s(y)} : null;
             }
             if (mods.get(i).id.equals(what)) {
-                int y = rowY(i) + ROW_H / 2;
-                return y > listY && y < listY + listH ? new int[] {s(listX + listW / 2), s(y)} : null;
+                int y = c[1] + 18;
+                return y > listY && y < listY + listH ? new int[] {s(c[0] + c[2] / 2), s(y)} : null;
             }
         }
         return null;
@@ -181,6 +193,7 @@ public final class Menu {
 
     /** Call when the menu screen closes. */
     public void close() {
+        binding = null;
         editor.mouseReleased();
         editingHud = false;
         pc.markDirty();
@@ -223,14 +236,15 @@ public final class Menu {
     private void layout(Platform p) {
         int sw = Math.round(p.screenWidth() / k);
         int sh = Math.round(p.screenHeight() / k);
-        pw = Math.min(sw - 16, clamp(Math.round(sw * 0.62f), 300, 400));
-        ph = Math.min(sh - 16, clamp(Math.round(sh * 0.70f), 186, 264));
+        pw = Math.min(sw - 16, clamp(Math.round(sw * 0.66f), 300, 470));
+        ph = Math.min(sh - 16, clamp(Math.round(sh * 0.74f), 190, 290));
         px = (sw - pw) / 2;
         py = (sh - ph) / 2;
         listX = px + SIDE_W + 6;
         listY = py + TITLE_H + 4;
         listW = pw - SIDE_W - 12;
         listH = ph - TITLE_H - FOOTER_H - 6;
+        cols = listW >= 330 ? 3 : 2;
         searchW = clamp(pw / 3, 90, 130);
         searchX = px + pw - 22 - searchW;
         searchY = py + 6;
@@ -242,12 +256,16 @@ public final class Menu {
         editY = py + ph - FOOTER_H - editH - 2;
     }
 
-    private int rowY(int i) {
-        return listY + i * (ROW_H + 2) - Math.round(smoothScroll);
+    /** Card i of the grid: x, y, width (menu pixels, scrolled). */
+    private int[] card(int i) {
+        int w = (listW - 4 - GAP * (cols - 1)) / cols;
+        int col = i % cols, row = i / cols;
+        return new int[] {listX + col * (w + GAP), listY + row * (CARD_H + GAP) - Math.round(smoothScroll), w};
     }
 
-    private int gearX() {
-        return listX + listW - 48;
+    /** Width of a card's Options button. */
+    private static int optionsW(int cardW) {
+        return Math.round((cardW - 10) * 0.46f);
     }
 
     private int tabY(int i) {
@@ -373,9 +391,10 @@ public final class Menu {
             return;
         }
 
-        // Feature list
+        // Feature cards
         List<Module> mods = visible();
-        maxScroll = Math.max(0, mods.size() * (ROW_H + 2) - 2 - listH);
+        int rows = (mods.size() + cols - 1) / cols;
+        maxScroll = Math.max(0, rows * (CARD_H + GAP) - GAP - listH);
         scroll = clamp(scroll, 0, maxScroll);
         smoothScroll += (scroll - smoothScroll) * Math.min(1f, dt * 18f);
         if (Math.abs(scroll - smoothScroll) < 0.5f) {
@@ -387,39 +406,58 @@ public final class Menu {
         d.clip(s(listX), s(listY), s(listW), s(listH));
         d.pushScale(0, 0, k);
         boolean mouseInList = in(mx, my, listX, listY, listW, listH);
-        int textW = listW - 60;
         for (int i = 0; i < mods.size(); i++) {
             Module m = mods.get(i);
-            int ry = rowY(i);
-            if (ry + ROW_H < listY || ry > listY + listH) {
+            int[] c = card(i);
+            int cx = c[0], cy = c[1], cw = c[2];
+            if (cy + CARD_H < listY || cy > listY + listH) {
                 continue;
             }
-            boolean hover = mouseInList && in(mx, my, listX, ry, listW, ROW_H);
+            // Cards fade in one after another when the menu (or a new category) opens.
+            float appear = 0.15f + 0.85f * FadeDraw.progress(listShownAt + Math.min(i, 14) * 14L, 170);
+            Draw cd = appear < 1f ? new FadeDraw(d, appear) : d;
+            if (appear < 1f) {
+                cy += Math.round((1f - appear) * 4);
+            }
+            boolean hover = mouseInList && in(mx, my, cx, cy, cw, CARD_H);
             float g = ease(rowGlow, m, hover ? 1f : 0f, dt * 10f);
-            if (g > 0.01f) {
-                d.roundRect(listX, ry, listW, ROW_H, Theme.withAlpha(0xFFFFFF, Math.round(0x14 * g)));
+            float on = animate(m, dt);
+            cd.roundRect(cx, cy, cw, CARD_H, Theme.mix(Theme.CARD, Theme.CARD_HOVER, g));
+            cd.roundOutline(cx, cy, cw, CARD_H, Theme.mix(Theme.HAIRLINE, Theme.withAlpha(a, 0x70), on * 0.8f + g * 0.2f));
+            cd.rect(cx + 2, cy + 1, cw - 4, 1, Theme.withAlpha(0xFFFFFF, 0x0C + Math.round(0x0C * g)));  // top sheen
+
+            int chipW = 0;
+            if (m.key >= 0) {  // its keybind, as a small key cap
+                String kn = Keys.name(m.key);
+                chipW = d.width(kn) + 8;
+                cd.roundRect(cx + cw - 6 - chipW, cy + 5, chipW, 11, Theme.FIELD);
+                cd.roundOutline(cx + cw - 6 - chipW, cy + 5, chipW, 11, Theme.HAIRLINE);
+                cd.text(kn, cx + cw - 2 - chipW, cy + 7, Theme.MUTED, false);
+                chipW += 4;
             }
-            float on = knob.containsKey(m) ? knob.get(m) : (m.enabled() ? 1f : 0f);
-            if (on > 0.01f) {  // a thin accent bar marks what's switched on
-                d.rect(listX + 1, ry + 6, 2, ROW_H - 12, Theme.withAlpha(a, Math.round(0xFF * on)));
-            }
-            d.text(d.trim(m.name, textW), listX + 7, ry + 5, Theme.TEXT, false);
+            cd.text(cd.trim(m.name, cw - 14 - chipW), cx + 7, cy + 7, Theme.TEXT, false);
             boolean warn = hover && m.warning() != null;
             String sub = warn ? m.warning() : m.description;
-            d.text(d.trim(sub, textW), listX + 7, ry + 16, warn ? Theme.OK : Theme.FAINT, false);
-            float k = animate(m, dt);
-            toggle(d, listX + listW - 30, ry + (ROW_H - 10) / 2, k, a, hover);
-            if (hasPage(m)) {
-                int gx = gearX(), gy = ry + (ROW_H - 10) / 2;
-                boolean gh = mouseInList && in(mx, my, gx - 3, gy - 3, 16, 16);
-                if (gh) {
-                    d.roundRect(gx - 3, gy - 3, 16, 16, Theme.ROW_HOVER);
-                }
-                gear(d, gx, gy, gh ? a : hover ? Theme.MUTED : Theme.FAINT);
+            cd.text(cd.trim(sub, cw - 14), cx + 7, cy + 19, warn ? Theme.OK : Theme.FAINT, false);
+
+            // Bottom: Options on the left, the on/off state on the right.
+            int by = cy + CARD_H - 16, bh = 12;
+            int ow = optionsW(cw);
+            boolean oh = hover && in(mx, my, cx + 5, by, ow, bh);
+            cd.roundRect(cx + 5, by, ow, bh, oh ? Theme.withAlpha(a, 0x40) : Theme.FIELD);
+            int gc = oh ? a : Theme.MUTED;
+            String opt = "Options";
+            boolean label = d.width(opt) + 16 <= ow;
+            int gx = cx + 5 + (label ? (ow - d.width(opt) - 14) / 2 : (ow - 10) / 2);
+            gear(cd, gx, by + 1, gc);
+            if (label) {
+                cd.text(opt, gx + 14, by + 2, oh ? Theme.TEXT : Theme.MUTED, false);
             }
-            if (i < mods.size() - 1) {
-                d.rect(listX + 7, ry + ROW_H + 1, listW - 14, 1, 0x0CFFFFFF);
-            }
+            int sx = cx + 5 + ow + 3, sw = cw - 10 - ow - 3;
+            int track = Theme.mix(hover ? 0xFF353B48 : 0xFF2B303B, a, on);
+            cd.roundRect(sx, by, sw, bh, track);
+            String state = on > 0.5f ? "ON" : "OFF";
+            cd.text(state, sx + (sw - d.width(state)) / 2, by + 2, on > 0.5f ? 0xFF15171C : Theme.MUTED, false);
         }
         d.popScale();
         d.unclip();
@@ -442,7 +480,7 @@ public final class Menu {
         int fy = py + ph - FOOTER_H + 5;
         d.rect(listX, py + ph - FOOTER_H - 1, listW, 1, Theme.HAIRLINE);
         String hint = searching ? mods.size() + (mods.size() == 1 ? " result" : " results")
-                : "Type to search  \u00b7  Gear for settings";
+                : "Click a card to switch it  \u00b7  Options for settings & keybind";
         d.text(d.trim(hint, listW - 60), listX + 4, fy, Theme.FAINT, false);
         String counts = count(null, true) + " / " + count(null, false) + " on";
         int cw = d.width(counts) + 10;
@@ -483,7 +521,7 @@ public final class Menu {
 
         int top = listY + 28;
         int viewH = listH - 28;
-        int contentH = 0;
+        int contentH = SET_H + 6;  // the keybind row
         if (m instanceof HudModule) {
             contentH += 40;
         }
@@ -503,6 +541,43 @@ public final class Menu {
         d.pushScale(0, 0, k);
         boolean inView = in(mx, my, listX, top, listW, viewH);
         int y = top + 2 - Math.round(smoothScroll);
+
+        // Keybind: a key that switches this feature while playing.
+        {
+            boolean waiting = binding == m;
+            boolean rh = inView && in(mx, my, x, y, w - 4, SET_H);
+            if (rh || waiting) {
+                d.roundRect(x, y, w - 4, SET_H, Theme.withAlpha(waiting ? a : 0xFFFFFF, waiting ? 0x18 : 0x0E));
+            }
+            d.text("Keybind", x + 6, y + 7, rh || waiting ? Theme.TEXT : Theme.MUTED, false);
+            String hint = waiting ? "Esc to cancel, Backspace for none" : "Press it in game to switch on or off";
+            d.text(d.trim(hint, w / 2 - 20), x + 6 + d.width("Keybind  "), y + 7, Theme.FAINT, false);
+            String val = waiting ? "Press a key\u2026" : Keys.name(m.key);
+            int bw2 = Math.max(44, d.width(val) + 16);
+            int right = x + w - 8;
+            int clearW = !waiting && m.key >= 0 ? 14 : 0;
+            int bx = right - bw2 - clearW;
+            boolean bhv = inView && in(mx, my, bx, y + 3, bw2, 16);
+            float pulse = waiting ? 0.5f + 0.5f * (float) Math.sin(now / 160.0) : 0f;
+            d.roundRect(bx, y + 3, bw2, 16, waiting ? Theme.withAlpha(a, 0x30 + Math.round(0x30 * pulse))
+                    : bhv ? Theme.ROW_HOVER : Theme.FIELD);
+            d.roundOutline(bx, y + 3, bw2, 16, waiting || bhv ? Theme.withAlpha(a, 0xC0) : Theme.HAIRLINE);
+            d.text(val, bx + (bw2 - d.width(val)) / 2, y + 7, waiting ? a : m.key >= 0 ? Theme.TEXT : Theme.FAINT, false);
+            hit("bind", bx, y + 3, bw2, 16, null);
+            if (clearW > 0) {
+                int cx = right - 9, cy = y + 8;
+                boolean chv = inView && in(mx, my, cx - 3, cy - 3, 12, 12);
+                int xc = chv ? Theme.TEXT : Theme.FAINT;
+                for (int i = 0; i < 5; i++) {
+                    d.rect(cx + i, cy + i, 1, 1, xc);
+                    d.rect(cx + 4 - i, cy + i, 1, 1, xc);
+                }
+                hit("unbind", cx - 3, cy - 3, 12, 12, null);
+            }
+            y += SET_H + 1;
+            d.rect(x + 6, y, w - 16, 1, 0x0CFFFFFF);
+            y += 5;
+        }
 
         if (m instanceof HudModule) {
             String label = "Customize look & position";
@@ -591,7 +666,8 @@ public final class Menu {
         // Only what's inside the view can be clicked.
         for (int i = hits.size() - 1; i >= 0; i--) {
             Hit h = hits.get(i);
-            if (h.setting != null || h.id.equals("customize") || h.id.equals("reset")) {
+            if (h.setting != null || h.id.equals("customize") || h.id.equals("reset")
+                    || h.id.equals("bind") || h.id.equals("unbind")) {
                 if (h.y + h.h / 2 < top || h.y + h.h / 2 > top + viewH) {
                     hits.remove(i);
                 }
@@ -629,7 +705,13 @@ public final class Menu {
             if (!in(mx, my, h.x, h.y, h.w, h.h)) {
                 continue;
             }
-            if (h.id.equals("back")) {
+            if (h.id.equals("bind")) {
+                binding = binding == page ? null : page;
+                return true;
+            } else if (h.id.equals("unbind")) {
+                page.key = Keys.NONE;
+                binding = null;
+            } else if (h.id.equals("back")) {
                 closePage();
             } else if (h.id.equals("toggle")) {
                 page.setEnabled(!page.enabled());
@@ -661,6 +743,7 @@ public final class Menu {
     }
 
     private void closePage() {
+        binding = null;
         page = null;
         draggingSlider = null;
         hits.clear();
@@ -779,11 +862,24 @@ public final class Menu {
         int mx = Math.round(screenMx / k);
         int my = Math.round(screenMy / k);
         layout(p);
+        if (binding != null) {
+            boolean onBind = false;
+            for (Hit h : hits) {
+                if (h.id.equals("bind") && in(mx, my, h.x, h.y, h.w, h.h)) {
+                    onBind = true;
+                }
+            }
+            if (!onBind) {
+                binding = null;  // clicking anywhere else cancels
+                return true;
+            }
+        }
         if (button == 1 && page == null && in(mx, my, listX, listY, listW, listH)) {
             // Right-click a feature to open its settings, same as the gear.
             List<Module> mods = visible();
             for (int i = 0; i < mods.size(); i++) {
-                if (in(mx, my, listX, rowY(i), listW, ROW_H) && hasPage(mods.get(i))) {
+                int[] c = card(i);
+                if (in(mx, my, c[0], c[1], c[2], CARD_H)) {
                     openPage(mods.get(i));
                     return true;
                 }
@@ -801,6 +897,9 @@ public final class Menu {
             if (in(mx, my, px + 4, tabY(i), SIDE_W - 8, TAB_H)) {
                 if (page != null) {
                     closePage();
+                }
+                if (tab != TABS[i]) {
+                    listShownAt = System.currentTimeMillis();
                 }
                 tab = TABS[i];
                 scroll = 0;
@@ -820,10 +919,10 @@ public final class Menu {
         if (in(mx, my, listX, listY, listW, listH)) {
             List<Module> mods = visible();
             for (int i = 0; i < mods.size(); i++) {
-                if (in(mx, my, listX, rowY(i), listW, ROW_H)) {
+                int[] c = card(i);
+                if (in(mx, my, c[0], c[1], c[2], CARD_H)) {
                     Module m = mods.get(i);
-                    int gy = rowY(i) + (ROW_H - 10) / 2;
-                    if (hasPage(m) && in(mx, my, gearX() - 3, gy - 3, 16, 16)) {
+                    if (in(mx, my, c[0] + 5, c[1] + CARD_H - 16, optionsW(c[2]), 12)) {
                         openPage(m);
                         return true;
                     }
@@ -858,13 +957,24 @@ public final class Menu {
         if (editingHud) {
             return editor.mouseScrolled(amount, lastMx, lastMy);
         }
-        scroll -= (int) Math.round(amount * (ROW_H + 2));
+        scroll -= (int) Math.round(amount * (CARD_H + GAP) * 0.6);
         scroll = clamp(scroll, 0, maxScroll);
         return true;
     }
 
     /** Returns true if the key was used. Esc is used by the HUD editor and settings pages (to go back). */
     public boolean keyPressed(int key) {
+        if (binding != null) {
+            if (key == KEY_BACKSPACE || key == Keys.KEY_DELETE) {
+                binding.key = Keys.NONE;
+            } else if (key != KEY_ESCAPE) {
+                binding.key = key;
+                boundAt = System.currentTimeMillis();
+            }
+            binding = null;
+            pc.markDirty();
+            return true;
+        }
         if (editingHud) {
             if (key == KEY_ESCAPE || key == KEY_ENTER) {
                 editingHud = false;
@@ -896,6 +1006,13 @@ public final class Menu {
     }
 
     public boolean charTyped(char c) {
+        if (System.currentTimeMillis() - boundAt < 250) {
+            boundAt = 0;
+            return true;  // the character of the key that was just bound
+        }
+        if (binding != null) {
+            return true;
+        }
         if (editingHud || Character.isISOControl(c) || search.length() >= 24) {
             return false;
         }

@@ -19,6 +19,8 @@ public abstract class Module {
     public final Category category;
     private final boolean defaultOn;
     private boolean enabled;
+    /** A key that switches this feature on and off while playing (GLFW code), or Keys.NONE. */
+    public int key = Keys.NONE;
 
     protected Module(String id, String name, String description, Category category, boolean defaultOn) {
         this.id = id;

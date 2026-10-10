@@ -1,13 +1,11 @@
 package net.peregrine.client.core.modules;
 
-import net.peregrine.client.core.Draw;
-import net.peregrine.client.core.HudModule;
 import net.peregrine.client.core.Platform;
 
-public final class BiomeHud extends HudModule {
+public final class BiomeHud extends LineHud {
 
     public BiomeHud() {
-        super("biome", "Biome", "The biome you're standing in", false, 0f, 0.455f);
+        super("biome", "Biome", "The biome you're standing in", "Biome", 0f, 0.455f);
     }
 
     /** "minecraft:dark_forest" → "Dark Forest". */
@@ -27,18 +25,7 @@ public final class BiomeHud extends HudModule {
     }
 
     @Override
-    public int width(Draw d, Platform p) {
-        return d.width("Biome " + pretty(p.biome())) + 8;
-    }
-
-    @Override
-    public int height(Draw d, Platform p) {
-        return d.lineHeight() + 6;
-    }
-
-    @Override
-    public void render(Draw d, Platform p, int x, int y) {
-        panel(d, x, y, width(d, p), height(d, p));
-        labelled(d, x + 4, y + 4, "Biome", pretty(p.biome()));
+    String value(Platform p) {
+        return pretty(p.biome());
     }
 }

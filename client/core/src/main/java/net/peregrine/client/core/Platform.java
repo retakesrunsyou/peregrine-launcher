@@ -198,6 +198,11 @@ public interface Platform {
     default void reloadChunks() {
     }
 
+    /** Is this key (a GLFW key code) held right now, while playing with no screen open? */
+    default boolean keyDown(int key) {
+        return false;
+    }
+
     /** Is the freelook key (Left Alt by default) held, while playing? */
     default boolean freelookKeyDown() {
         return false;

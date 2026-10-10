@@ -1,10 +1,8 @@
 package net.peregrine.client.core.modules;
 
-import net.peregrine.client.core.Draw;
-import net.peregrine.client.core.HudModule;
 import net.peregrine.client.core.Platform;
 
-public final class SpeedHud extends HudModule {
+public final class SpeedHud extends LineHud {
 
     private double lastX = Double.NaN;
     private double lastZ;
@@ -13,7 +11,7 @@ public final class SpeedHud extends HudModule {
             new net.peregrine.client.core.settings.ChoiceSetting("unit", "Unit", 0, "Blocks a second", "km/h"));
 
     public SpeedHud() {
-        super("speed", "Speed", "How fast you're moving, in blocks per second", false, 0f, 0.385f);
+        super("speed", "Speed", "How fast you're moving, in blocks per second", "Speed", 0f, 0.385f);
     }
 
     @Override
@@ -36,23 +34,8 @@ public final class SpeedHud extends HudModule {
         lastX = Double.NaN;
     }
 
-    private String value() {
+    @Override
+    String value(Platform p) {
         return unit.index == 1 ? String.format("%.1f km/h", speed * 3.6) : String.format("%.1f b/s", speed);
-    }
-
-    @Override
-    public int width(Draw d, Platform p) {
-        return d.width("Speed " + value()) + 8;
-    }
-
-    @Override
-    public int height(Draw d, Platform p) {
-        return d.lineHeight() + 6;
-    }
-
-    @Override
-    public void render(Draw d, Platform p, int x, int y) {
-        panel(d, x, y, width(d, p), height(d, p));
-        labelled(d, x + 4, y + 4, "Speed", value());
     }
 }

@@ -404,6 +404,9 @@ final class GamePlatform implements Platform {
             }
             mc().player.setItemInHand(net.minecraft.world.InteractionHand.MAIN_HAND,
                     new ItemStack(net.minecraft.world.item.Items.DIAMOND_SWORD));  // for the animation test
+            mc().player.setItemInHand(net.minecraft.world.InteractionHand.OFF_HAND,
+                    new ItemStack(net.minecraft.world.item.Items.TOTEM_OF_UNDYING));  // for the small totem test
+            mc().gameRenderer.displayItemActivation(new ItemStack(net.minecraft.world.item.Items.TOTEM_OF_UNDYING));
         } catch (Throwable t) {
             System.err.println("[Peregrine] test scene: " + t);
         }
@@ -417,6 +420,15 @@ final class GamePlatform implements Platform {
                 mc().levelRenderer.allChanged();
             }
         });
+    }
+
+    @Override
+    public boolean keyDown(int key) {
+        if (key < 0 || Screens.current() != null) {
+            return false;
+        }
+        long window = org.lwjgl.glfw.GLFW.glfwGetCurrentContext();  // the game's window, on the render thread
+        return window != 0 && org.lwjgl.glfw.GLFW.glfwGetKey(window, key) == org.lwjgl.glfw.GLFW.GLFW_PRESS;
     }
 
     @Override

@@ -82,7 +82,7 @@ final class FadeDraw implements Draw {
 
     /** Smooth 0→1 over durationMs since startMs (ease-out). */
     static float progress(long startMs, long durationMs) {
-        float t = Math.min(1f, (System.currentTimeMillis() - startMs) / (float) durationMs);
+        float t = Math.max(0f, Math.min(1f, (System.currentTimeMillis() - startMs) / (float) durationMs));
         return 1f - (1f - t) * (1f - t) * (1f - t);
     }
 }

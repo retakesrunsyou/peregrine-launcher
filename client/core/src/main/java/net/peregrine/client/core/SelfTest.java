@@ -349,7 +349,8 @@ public final class SelfTest {
         });
         waitTicks(5);
         shot("19-editor-styled");
-        clickOn("Done closes the editor", "done", new Cond() {
+        ask("key Escape");
+        waitFor("Esc saves and closes the editor", 60, new Cond() {
             public boolean ok() {
                 return !menu.editingHud();
             }
@@ -373,6 +374,19 @@ public final class SelfTest {
                 return (Boolean) pc.module("clock").settings().get(0).save() != h24[0];
             }
         });
+        clickOn("the keybind button waits for a key", "bind", new Cond() {
+            public boolean ok() {
+                return menu.binding() == pc.module("clock");
+            }
+        });
+        waitTicks(5);
+        shot("19b2-keybind-waiting");
+        ask("key k");
+        waitFor("pressing K binds it", 60, new Cond() {
+            public boolean ok() {
+                return pc.module("clock").key == 75 && menu.binding() == null && menu.search().isEmpty();
+            }
+        });
         clickOn("Customize opens the editor with the style panel", "customize", new Cond() {
             public boolean ok() {
                 return menu.editingHud() && menu.editor().styleOpen();
@@ -380,7 +394,8 @@ public final class SelfTest {
         });
         waitTicks(10);
         shot("19c-customize");
-        clickOn("Done goes back to the settings page", "done", new Cond() {
+        ask("key Escape");
+        waitFor("Esc goes back to the settings page", 60, new Cond() {
             public boolean ok() {
                 return !menu.editingHud() && menu.page() != null;
             }
@@ -397,6 +412,20 @@ public final class SelfTest {
                 return p.showing(Platform.Screen.NONE);
             }
         });
+        final boolean[] clockBefore = new boolean[1];
+        run("remember the Clock before its key", new Runnable() {
+            public void run() {
+                clockBefore[0] = pc.module("clock").enabled();
+            }
+        });
+        ask("key k");
+        waitFor("pressing K in game switches the Clock", 60, new Cond() {
+            public boolean ok() {
+                return pc.module("clock").enabled() != clockBefore[0];
+            }
+        });
+        waitTicks(2);
+        shot("19d-keybind-toast");
 
         run("switch every setting on and off", new Runnable() {
             public void run() {
@@ -505,7 +534,8 @@ public final class SelfTest {
         // Batch 6: particles, fullbright, animations, hitboxes, own name tag
         run("turn on particles, fullbright, 1.7 animations, hitboxes and your name tag", new Runnable() {
             public void run() {
-                for (String id : new String[] {"fewer_particles", "fullbright", "old_animations", "hitboxes", "own_nametag"}) {
+                for (String id : new String[] {"fewer_particles", "fullbright", "old_animations", "hitboxes", "own_nametag",
+                        "small_totem"}) {
                     if (p.supports(id)) {
                         pc.module(id).setEnabled(true);
                     }
@@ -545,6 +575,13 @@ public final class SelfTest {
                 }
             });
         }
+        if (p.supports("small_totem") && !p.minecraftVersion().startsWith("26.3")) {
+            waitFor("small totem: the totem in your hand is drawn smaller", 200, new Cond() {
+                public boolean ok() {
+                    return Hooks.totemHits > 0;
+                }
+            });
+        }
         waitTicks(10);
         shot("24-batch6-first-person");
         if (p.supports("own_nametag")) {
@@ -574,7 +611,8 @@ public final class SelfTest {
                         + " particles=" + Hooks.particleHits + " nightvision=" + Hooks.nightVisionHits
                         + " animation=" + Hooks.animationHits + " hitbox=" + Hooks.hitboxHits
                         + " nametag=" + Hooks.nameTagHits + " scoreboard=" + Hooks.scoreboardHits
-                        + " fire=" + Hooks.fireHits + " inventory=" + Hooks.inventoryTweakHits);
+                        + " fire=" + Hooks.fireHits + " inventory=" + Hooks.inventoryTweakHits
+                        + " totem=" + Hooks.totemHits);
             }
         });
         finish();

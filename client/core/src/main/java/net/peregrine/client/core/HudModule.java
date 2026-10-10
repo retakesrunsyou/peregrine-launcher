@@ -17,6 +17,11 @@ public abstract class HudModule extends Module {
     public boolean background = true;
     public int backgroundAlpha = DEFAULT_BG_ALPHA;
     public boolean shadow = true;
+    /** RGB text: colors flow letter by letter across the item. Speed 1 = one lap every 4 s. */
+    public boolean chroma;
+    public float chromaSpeed = 1f;
+    static final float MIN_CHROMA_SPEED = 0.1f;
+    static final float MAX_CHROMA_SPEED = 4f;
     static final int DEFAULT_BG_ALPHA = (Theme.HUD_BG >>> 24) & 0xFF;
     /** New HUD items start at half size: small and tidy, bigger is a scroll away. */
     public static final float DEFAULT_SCALE = 0.5f;
@@ -49,11 +54,13 @@ public abstract class HudModule extends Module {
         background = true;
         backgroundAlpha = DEFAULT_BG_ALPHA;
         shadow = true;
+        chroma = false;
+        chromaSpeed = 1f;
     }
 
     boolean styled() {
         return scale != DEFAULT_SCALE || textColor != 0 || labelColor != 0 || !background
-                || backgroundAlpha != DEFAULT_BG_ALPHA || !shadow;
+                || backgroundAlpha != DEFAULT_BG_ALPHA || !shadow || chroma;
     }
 
     void setScaleKeepingCorner(float s) {
@@ -90,6 +97,11 @@ public abstract class HudModule extends Module {
         lastY = y;
         lastW = sw;
         lastH = sh;
+    }
+
+    /** Where it was last drawn: x, y, width, height (GUI pixels). */
+    public int[] drawnBox() {
+        return new int[] {lastX, lastY, lastW, lastH};
     }
 
     boolean contains(int mx, int my) {

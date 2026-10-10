@@ -89,6 +89,10 @@ public final class Hooks {
 
     // ---- Low fire: how far down the fire overlay moves (0 = Minecraft's)
     public static volatile float fireDrop;
+    /** Small totem: sizes of the held totem (first person) and the pop animation, 1 = normal. */
+    public static volatile float totemHeld = 1f;
+    public static volatile float totemPop = 1f;
+    public static volatile int totemHits;
 
     // ---- Hitboxes: which kinds show (players, mobs, items, XP, projectiles, other), color, look line
     public static volatile boolean[] hitboxKinds = {true, true, true, true, true, true};

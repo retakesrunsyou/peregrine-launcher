@@ -7,15 +7,18 @@ import java.util.List;
  *
  *  - drag any HUD item anywhere; it snaps to the screen's centre lines and edges
  *  - drag the corner handle, or scroll over an item, to make it bigger or smaller
- *  - right-click an item for its style: size, text and label colours,
+ *  - right-click an item for its style: size, text and label colours, RGB text,
  *    background on/off and how see-through it is, text shadow, reset or hide
+ *  - right-click empty space for Reset all and Done; Esc or Enter saves and leaves
+ *
+ * Nothing sits across the top of the screen, so every spot can be used.
  *
  * HUD items live in screen (GUI) pixels. The editor's own buttons and panel are
  * drawn at the menu's finer scale (k), so they stay small and tidy.
  */
 final class HudEditor {
 
-    private enum Drag { NONE, MOVE, RESIZE, SIZE_SLIDER, ALPHA_SLIDER }
+    private enum Drag { NONE, MOVE, RESIZE, SIZE_SLIDER, ALPHA_SLIDER, SPEED_SLIDER }
 
     /** Colour choices; 0 means "default" (white text, accent labels). */
     static final int[] COLORS = {
@@ -41,15 +44,17 @@ final class HudEditor {
     private float k = 1f;
 
     // Layout from the last frame (UI units = screen / k), for clicks.
-    private int bannerX, bannerY, bannerW, bannerH;
-    private int doneX, doneY, doneW, doneH;
-    private int resetAllX, resetAllW;
+    private int doneX, doneY, doneW, doneH;   // the Back button when not in a world
+    private boolean menuOpen;                 // right-click on empty space
+    private int menuX, menuY;
+    private static final int MENU_W = 92, MENU_ROW = 15;
+    private static final String[] MENU_ITEMS = {"Done", "Reset all items"};
     private int panelX, panelY, panelH;
     private int panelY0, panelSw;
     private float panelScale;
     private HudModule panelFor;
     private int closeX, closeY;
-    private int sizeY, textY, labelY, bgY, alphaY, shadowY, buttonsY;
+    private int sizeY, textY, labelY, chromaY, speedY, bgY, alphaY, shadowY, buttonsY;
     private int sliderX, sliderW;
 
     HudEditor(Peregrine pc) {
@@ -60,6 +65,7 @@ final class HudEditor {
         panelFor = null;
         selected = null;
         styleOpen = false;
+        menuOpen = false;
         drag = Drag.NONE;
         exit = false;
         guideX = guideY = -1;
@@ -172,9 +178,11 @@ final class HudEditor {
             d.roundRect(tx, ty, tw, 11, Theme.withAlpha(a, 0xEE));
             d.text(text, tx + 4, ty + 2, 0xFF15171C, false);
         }
-        renderBanner(d, mx, my, a, sw);
         if (styleOpen()) {
             renderPanel(d, mx, my, a, sw, sh);
+        }
+        if (menuOpen) {
+            renderMenu(d, mx, my, a);
         }
         d.popScale();
     }
@@ -207,37 +215,30 @@ final class HudEditor {
         d.popScale();
     }
 
-    private void renderBanner(Draw d, int mx, int my, int a, int screenW) {
+    /** The small menu from right-clicking empty space. */
+    private void renderMenu(Draw d, int mx, int my, int a) {
         int umx = ui(mx), umy = ui(my);
-        String hint = "Drag to move   Corner to resize   Right-click to style";
-        String reset = "Reset all";
-        String done = "Done";
-        resetAllW = d.width(reset) + 14;
-        doneW = d.width(done) + 18;
-        doneH = 14;
-        bannerH = 22;
-        bannerW = d.width(hint) + resetAllW + doneW + 30;
-        bannerX = (ui(screenW) - bannerW) / 2;
-        bannerY = 6;
-        d.shadow(bannerX, bannerY, bannerW, bannerH);
-        d.roundRect(bannerX, bannerY, bannerW, bannerH, Theme.PANEL);
-        d.roundOutline(bannerX, bannerY, bannerW, bannerH, Theme.HAIRLINE);
-        d.text(hint, bannerX + 9, bannerY + 7, Theme.MUTED, false);
-        doneX = bannerX + bannerW - 4 - doneW;
-        doneY = bannerY + 4;
-        resetAllX = doneX - 4 - resetAllW;
-        boolean rh = in(umx, umy, resetAllX, doneY, resetAllW, doneH);
-        d.roundRect(resetAllX, doneY, resetAllW, doneH, rh ? Theme.ROW_HOVER : 0x00000000);
-        d.roundOutline(resetAllX, doneY, resetAllW, doneH, rh ? Theme.MUTED : Theme.HAIRLINE);
-        d.text(reset, resetAllX + 7, doneY + 3, Theme.TEXT, false);
-        boolean dh = in(umx, umy, doneX, doneY, doneW, doneH);
-        d.roundRect(doneX, doneY, doneW, doneH, Theme.withAlpha(a, dh ? 0xFF : 0xDD));
-        d.text(done, doneX + 9, doneY + 3, 0xFF15171C, false);
+        int h = MENU_ITEMS.length * MENU_ROW + 4;
+        menuX = Math.min(menuX, ui(pc.platform().screenWidth()) - MENU_W - 2);
+        menuY = Math.min(menuY, ui(pc.platform().screenHeight()) - h - 2);
+        d.shadow(menuX, menuY, MENU_W, h);
+        d.roundRect(menuX, menuY, MENU_W, h, Theme.PANEL);
+        d.roundOutline(menuX, menuY, MENU_W, h, Theme.HAIRLINE);
+        for (int i = 0; i < MENU_ITEMS.length; i++) {
+            int y = menuY + 2 + i * MENU_ROW;
+            boolean hv = in(umx, umy, menuX + 2, y, MENU_W - 4, MENU_ROW);
+            if (hv) {
+                d.roundRect(menuX + 2, y, MENU_W - 4, MENU_ROW, Theme.withAlpha(a, 0x30));
+            }
+            d.text(MENU_ITEMS[i], menuX + 8, y + 4, hv ? Theme.TEXT : Theme.MUTED, false);
+        }
+        String esc = "Esc";
+        d.text(esc, menuX + MENU_W - 8 - d.width(esc), menuY + 6, Theme.FAINT, false);
     }
 
     private void layoutPanel(int screenW, int screenH) {
         HudModule s = selected;
-        panelH = 150 + (s.background ? 18 : 0);
+        panelH = 166 + (s.chroma ? 18 : 0) + (s.background ? 18 : 0);
         int sw = ui(screenW), sh = ui(screenH);
         // The panel stays put while the item's text changes width (like FPS going
         // from 99 to 100); it only follows when the item is moved or resized.
@@ -258,6 +259,14 @@ final class HudEditor {
         y += 24;
         labelY = y;
         y += 24;
+        chromaY = y;
+        y += 16;
+        if (s.chroma) {
+            speedY = y;
+            y += 18;
+        } else {
+            speedY = -1000;
+        }
         bgY = y;
         y += 16;
         if (s.background) {
@@ -303,6 +312,14 @@ final class HudEditor {
         swatchRow(d, "Text", textY, s.textColor, Theme.TEXT, umx, umy, a);
         swatchRow(d, "Labels", labelY, s.labelColor, a, umx, umy, a);
 
+        toggleRow(d, "RGB text", chromaY, s.chroma, a);
+        if (s.chroma) {
+            d.text("Speed", x + 8, speedY, Theme.MUTED, false);
+            String sp = String.format("%.1fx", s.chromaSpeed);
+            d.text(sp, x + w - 8 - d.width(sp), speedY, Theme.TEXT, false);
+            slider(d, speedY + 10, (s.chromaSpeed - HudModule.MIN_CHROMA_SPEED)
+                    / (HudModule.MAX_CHROMA_SPEED - HudModule.MIN_CHROMA_SPEED), a);
+        }
         toggleRow(d, "Background", bgY, s.background, a);
         if (s.background) {
             d.text("Opacity", x + 8, alphaY, Theme.MUTED, false);
@@ -393,23 +410,28 @@ final class HudEditor {
             }
             return true;
         }
+        if (menuOpen) {
+            menuOpen = false;
+            int h = MENU_ITEMS.length * MENU_ROW + 4;
+            if (button == 0 && in(umx, umy, menuX, menuY, MENU_W, h)) {
+                int i = (umy - menuY - 2) / MENU_ROW;
+                if (i == 0) {
+                    exit = true;
+                } else if (i == 1) {
+                    for (Module m : pc.modules()) {
+                        if (m instanceof HudModule) {
+                            ((HudModule) m).resetStyle();
+                        }
+                    }
+                    pc.markDirty();
+                }
+            }
+            return true;
+        }
         if (styleOpen() && in(umx, umy, panelX, panelY, PANEL_W, panelH)) {
             if (button == 0) {
                 clickPanel(umx, umy);
             }
-            return true;
-        }
-        if (button == 0 && in(umx, umy, doneX, doneY, doneW, doneH)) {
-            exit = true;
-            return true;
-        }
-        if (button == 0 && in(umx, umy, resetAllX, doneY, resetAllW, doneH)) {
-            for (Module m : pc.modules()) {
-                if (m instanceof HudModule) {
-                    ((HudModule) m).resetStyle();
-                }
-            }
-            pc.markDirty();
             return true;
         }
         if (button == 0 && onHandle(mx, my)) {
@@ -441,6 +463,10 @@ final class HudEditor {
         if (button == 0) {  // empty space: let go of the selection
             selected = null;
             styleOpen = false;
+        } else if (button == 1) {  // empty space, right-click: Done and Reset all
+            menuOpen = true;
+            menuX = umx;
+            menuY = umy;
         }
         return true;
     }
@@ -454,6 +480,16 @@ final class HudEditor {
         if (in(umx, umy, sliderX - 3, sizeY + 6, sliderW + 6, 12)) {
             drag = Drag.SIZE_SLIDER;
             sliderTo(umx);
+            return;
+        }
+        if (s.chroma && in(umx, umy, sliderX - 3, speedY + 5, sliderW + 6, 12)) {
+            drag = Drag.SPEED_SLIDER;
+            sliderTo(umx);
+            return;
+        }
+        if (in(umx, umy, panelX, chromaY - 3, PANEL_W, 14)) {
+            s.chroma = !s.chroma;
+            pc.markDirty();
             return;
         }
         if (s.background && in(umx, umy, sliderX - 3, alphaY + 5, sliderW + 6, 12)) {
@@ -513,18 +549,38 @@ final class HudEditor {
             resize(selected, HudModule.MIN_SCALE + t * (HudModule.MAX_SCALE - HudModule.MIN_SCALE));
         } else if (drag == Drag.ALPHA_SLIDER) {
             selected.backgroundAlpha = Math.round(t * 255);
+        } else if (drag == Drag.SPEED_SLIDER) {
+            float v = HudModule.MIN_CHROMA_SPEED + t * (HudModule.MAX_CHROMA_SPEED - HudModule.MIN_CHROMA_SPEED);
+            selected.chromaSpeed = Math.round(v * 10) / 10f;
         }
         pc.markDirty();
     }
 
-    /** Changes an item's size, keeping its top-left corner where it is. */
+    /**
+     * Changes an item's size without it jumping: the side nearest a screen edge stays
+     * where it is (an item in the bottom-right corner grows up and to the left), and it
+     * can't grow past the screen, so nothing gets pushed back from the border.
+     */
     private void resize(HudModule h, float scale) {
-        int x = h.lastX, y = h.lastY;
+        Platform p = pc.platform();
         float w100 = h.lastW / h.scale, h100 = h.lastH / h.scale;
-        h.setScaleKeepingCorner(scale);
+        boolean right = h.fx > 0.5f, bottom = h.fy > 0.5f;
+        int edgeX = right ? h.lastX + h.lastW : h.lastX;
+        int edgeY = bottom ? h.lastY + h.lastH : h.lastY;
+        float fit = Math.min(p.screenWidth() / w100, p.screenHeight() / h100);
+        h.setScaleKeepingCorner(Math.min(scale, fit));
+        if (h.scale * w100 > p.screenWidth() || h.scale * h100 > p.screenHeight()) {
+            h.scale = Math.max(HudModule.MIN_SCALE, (float) Math.floor(fit * 20) / 20f);
+        }
         h.lastW = (int) Math.ceil(w100 * h.scale);
         h.lastH = (int) Math.ceil(h100 * h.scale);
-        h.moveTo(x, y, pc.platform());
+        int x = right ? edgeX - h.lastW : edgeX;
+        int y = bottom ? edgeY - h.lastH : edgeY;
+        x = Math.max(0, Math.min(p.screenWidth() - h.lastW, x));
+        y = Math.max(0, Math.min(p.screenHeight() - h.lastH, y));
+        h.lastX = x;
+        h.lastY = y;
+        h.moveTo(x, y, p);
     }
 
     boolean mouseDragged(int mx, int my) {
@@ -558,14 +614,21 @@ final class HudEditor {
         if (drag == Drag.RESIZE && selected != null) {
             float wanted = Math.max(8, mx - anchorX);
             int x = anchorX, y = anchorY;
-            selected.setScaleKeepingCorner(wanted / baseW);
+            // Never past the screen edge: it stops growing there instead of being pushed back.
+            float fit = Math.min((p.screenWidth() - anchorX) / baseW, (p.screenHeight() - anchorY) / baseH);
+            selected.setScaleKeepingCorner(Math.min(wanted / baseW, fit));
+            if (selected.scale > fit) {
+                selected.scale = Math.max(HudModule.MIN_SCALE, (float) Math.floor(fit * 20) / 20f);
+            }
             selected.lastW = (int) Math.ceil(baseW * selected.scale);
             selected.lastH = (int) Math.ceil(baseH * selected.scale);
+            selected.lastX = x;
+            selected.lastY = y;
             selected.moveTo(x, y, p);
             pc.markDirty();
             return true;
         }
-        if (drag == Drag.SIZE_SLIDER || drag == Drag.ALPHA_SLIDER) {
+        if (drag == Drag.SIZE_SLIDER || drag == Drag.ALPHA_SLIDER || drag == Drag.SPEED_SLIDER) {
             sliderTo(ui(mx));
             return true;
         }
@@ -597,7 +660,8 @@ final class HudEditor {
 
     int[] centerOf(String what) {
         if (what.equals("done")) {
-            return doneW > 0 ? new int[] {screen(doneX + doneW / 2), screen(doneY + doneH / 2)} : null;
+            return doneW > 0 && !pc.platform().inWorld()
+                    ? new int[] {screen(doneX + doneW / 2), screen(doneY + doneH / 2)} : null;
         }
         if (what.equals("handle") && selected != null) {
             return new int[] {selected.lastX + selected.lastW - 1, selected.lastY + selected.lastH - 1};
