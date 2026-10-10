@@ -14,6 +14,10 @@ on:
         description: 'Optional: only save lines matching this regex (with 3 lines of context), pushed to the inspect branch'
         required: false
         default: ''
+      context:
+        description: 'Lines of context after each match'
+        required: false
+        default: '3'
 
 permissions:
   contents: read
@@ -61,7 +65,7 @@ jobs:
           (cd src && find . -name '*.java' | sort) > out/$mc/all-classes.txt
           if [ -n "${{ github.event.inputs.grep }}" ]; then
             mkdir -p lines/$mc
-            grep -n -E -A3 "${{ github.event.inputs.grep }}" out/$mc/*.java > lines/$mc/matches.txt || true
+            grep -n -E -A${{ github.event.inputs.context || 3 }} "${{ github.event.inputs.grep }}" out/$mc/*.java > lines/$mc/matches.txt || true
           fi
           ls out/$mc
       - uses: actions/upload-artifact@v4
