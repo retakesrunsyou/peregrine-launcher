@@ -18,7 +18,7 @@ public abstract class OldAnimationsMixin {
     @Shadow
     protected abstract void applyItemArmAttackTransform(PoseStack poseStack, HumanoidArm arm, float swing);
 
-    @Inject(method = "applyEatTransform", at = @At("TAIL"))
+    @Inject(method = "applyEatTransform(Lcom/mojang/blaze3d/vertex/PoseStack;FLnet/minecraft/world/entity/HumanoidArm;Lnet/minecraft/world/item/ItemStack;Lnet/minecraft/world/entity/player/Player;)V", at = @At("TAIL"))  // 26.2 (26.3 changed it)
     private void peregrine$swingWhileUsing(PoseStack poseStack, float partial, HumanoidArm arm, ItemStack stack, Player player,
                                            CallbackInfo ci) {
         if (Hooks.oldSwing) {
