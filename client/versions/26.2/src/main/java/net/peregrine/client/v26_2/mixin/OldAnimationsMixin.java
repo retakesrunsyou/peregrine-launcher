@@ -22,7 +22,7 @@ public abstract class OldAnimationsMixin {
     private void peregrine$swingWhileUsing(PoseStack poseStack, float partial, HumanoidArm arm, ItemStack stack, Player player,
                                            CallbackInfo ci) {
         if (Hooks.oldSwing) {
-            float swing = player.getAttackAnim(partial);
+            float swing = net.peregrine.client.v26_2.Compat.attackAnim(player, partial);
             if (swing > 0) {
                 this.applyItemArmAttackTransform(poseStack, arm, swing);
             }

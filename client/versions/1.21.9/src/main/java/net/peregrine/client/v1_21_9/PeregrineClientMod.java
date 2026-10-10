@@ -47,7 +47,7 @@ public final class PeregrineClientMod implements ClientModInitializer {
 
         HudRenderCallback.EVENT.register((graphics, tickCounter) -> {
             Minecraft mc = Minecraft.getInstance();
-            if (mc.options.hideGui || mc.getDebugOverlay().showDebugScreen()) {
+            if (mc.options.hideGui || Compat.f3Open(mc)) {
                 return;
             }
             Peregrine.get().renderHud(new GuiDraw(graphics));

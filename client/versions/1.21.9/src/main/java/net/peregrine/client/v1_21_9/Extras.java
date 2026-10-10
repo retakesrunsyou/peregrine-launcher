@@ -19,7 +19,7 @@ public final class Extras {
             return false;
         }
         Minecraft mc = Minecraft.getInstance();
-        if (mc.getDebugOverlay().showDebugScreen()) {
+        if (Compat.f3Open(mc)) {
             return false;  // keep F3's direction crosshair
         }
         boolean spectator = mc.gameMode != null && mc.gameMode.getPlayerMode() == GameType.SPECTATOR;

@@ -1,15 +1,15 @@
-package net.peregrine.client.v1_21_9.mixin;
+package net.peregrine.client.v1_21_2.mixin;
 
 import net.minecraft.world.entity.Entity;
 import net.peregrine.client.core.Hooks;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import net.minecraft.client.renderer.entity.EntityRenderer;
-import net.peregrine.client.v1_21_9.Extras;
+import net.peregrine.client.v1_21_2.Extras;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-/** Hitboxes: only the kinds of things chosen in the menu get one. */
+/** Hitboxes on 1.21.5 (render states): only the kinds of things chosen in the menu get one. */
 @Mixin(EntityRenderer.class)
 public abstract class HitboxFilterMixin {
 

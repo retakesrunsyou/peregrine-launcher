@@ -14,6 +14,10 @@ sourceSets {
 	main {
 		java {
 			srcDir file('../../core/src/main/java')
+			// Small differences inside this adapter's range: src/mc-<version>/java when
+			// it exists for the version being built, otherwise src/mc-default/java.
+			def exact = file("src/mc-${project.minecraft_version}/java")
+			srcDir(exact.exists() ? exact : file('src/mc-default/java'))
 		}
 	}
 }

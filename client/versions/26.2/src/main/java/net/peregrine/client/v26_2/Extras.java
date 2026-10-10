@@ -34,12 +34,12 @@ public final class Extras {
         if (e instanceof net.minecraft.world.entity.player.Player) {
             return 0;
         }
-        net.minecraft.world.entity.EntityType<?> type = e.getType();
-        if (type == net.minecraft.world.entity.EntityType.EXPERIENCE_ORB
-                || type == net.minecraft.world.entity.EntityType.EXPERIENCE_BOTTLE) {
+        // (26.2 moved the entity type constants, so go by their ids)
+        String id = String.valueOf(net.minecraft.core.registries.BuiltInRegistries.ENTITY_TYPE.getKey(e.getType()));
+        if (id.equals("minecraft:experience_orb") || id.equals("minecraft:experience_bottle")) {
             return 3;
         }
-        if (type == net.minecraft.world.entity.EntityType.ITEM) {
+        if (id.equals("minecraft:item")) {
             return 2;
         }
         if (e instanceof net.minecraft.world.entity.projectile.Projectile) {

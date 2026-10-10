@@ -8,6 +8,7 @@
 		"DiamondBedrockMixin",
 		"FreelookCameraMixin",
 		"FreelookTurnMixin",
+		"HitboxFilterMixin",
 		"HitboxMixin",
 		"InventoryTweaksMixin",
 		"ItemPhysicsMixin",
