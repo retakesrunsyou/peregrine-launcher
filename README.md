@@ -47,7 +47,7 @@ The play test can repeat this on any version, and with each mod left out in turn
 - **Your own name tag** in third person, shown as `(Peregrine logo) | YourName`
 - Resize the server's **scoreboard** and the **chat** (size only)
 - **Inventory tweaks**: hold Shift and drag over items to move them all; scroll over an item to move one at a time
-- Your client settings are shared by every instance and version
+- Your client settings, and Minecraft's own (FOV, controls, sound, chat...), follow you to every instance and version
 - A Peregrine main menu in place of Minecraft's title screen
 - Works on every Minecraft version from 1.21 to 26.3, added to Fabric instances automatically (turn it off in Settings)
 

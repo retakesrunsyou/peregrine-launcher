@@ -356,5 +356,21 @@ b1.enable_resource_pack("Faithful.zip")
 o = dict(l.split(":", 1) for l in (b1.game_dir / "options.txt").read_text().splitlines())
 check("an added resource pack is switched on", o["resourcePacks"] == '["vanilla","file/Faithful.zip"]' and o["fov"] == "0.7")
 
+# Game settings follow the player: change FOV in one instance, the other picks it up.
+import time as _time
+_time.sleep(0.05)
+o_a = a1.game_dir / "options.txt"
+o_a.write_text("version:4790\nfov:1.0\nchatScale:0.6\nresourcePacks:[\"vanilla\"]\nkey_key.whisper:key.keyboard.v\n")
+b1.update(perf_settings=0)
+a1.update(perf_settings=4)
+check("settings changed in another instance are brought over", b1._sync_game_settings())
+o = dict(l.split(":", 1) for l in (b1.game_dir / "options.txt").read_text().splitlines())
+check("...FOV and chat size included", o["fov"] == "1.0" and o["chatScale"] == "0.6")
+check("...but each instance keeps its own resource packs and game version",
+      o["resourcePacks"] == '["vanilla","file/Faithful.zip"]' and "version" not in o)
+check("...and keys only the other instance has come along too", o["key_key.whisper"] == "key.keyboard.v")
+check("...and the fast settings aren't applied over them again", b1.data["perf_settings"] == 4)
+check("nothing newer elsewhere: nothing changes", not b1._sync_game_settings())
+
 print("\nALL LAUNCHER TESTS PASSED" if not failures else f"\n{failures} FAILED")
 sys.exit(1 if failures else 0)

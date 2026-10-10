@@ -675,6 +675,9 @@ class SettingsPage(QWidget):
         gamesec.row("Window size", self._window_sizes(cfg),
                     "Fit my screen fills your monitor but leaves the taskbar and other apps usable.")
         gamesec.row("Start in fullscreen", self._check(cfg, "fullscreen"))
+        gamesec.row("Same game settings everywhere", self._check(cfg, "share_game_settings"),
+                    "FOV, controls, sound, chat and video settings follow you to every instance "
+                    "and version. Resource packs stay with each instance.")
         gamesec.row("Use GameMode", self._check(cfg, "use_gamemode"),
                     "Boosts performance while playing, if Feral GameMode is installed.")
         self.body.addWidget(gamesec)

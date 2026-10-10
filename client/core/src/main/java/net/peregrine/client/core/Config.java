@@ -47,47 +47,55 @@ final class Config {
                 if (m == null || !e.getValue().isJsonObject()) {
                     continue;
                 }
-                JsonObject o = e.getValue().getAsJsonObject();
-                if (o.has("x") && m instanceof HudModule) {
-                    ((HudModule) m).fx = o.get("x").getAsFloat();
-                    ((HudModule) m).fy = o.get("y").getAsFloat();
-                }
-                if (m instanceof HudModule) {
-                    HudModule h = (HudModule) m;
-                    if (o.has("scale")) {
-                        h.setScaleKeepingCorner(o.get("scale").getAsFloat());
-                    }
-                    if (o.has("text")) {
-                        h.textColor = (int) Long.parseLong(o.get("text").getAsString(), 16);
-                    }
-                    if (o.has("label")) {
-                        h.labelColor = (int) Long.parseLong(o.get("label").getAsString(), 16);
-                    }
-                    if (o.has("background")) {
-                        h.background = o.get("background").getAsBoolean();
-                    }
-                    if (o.has("backgroundAlpha")) {
-                        h.backgroundAlpha = Math.max(0, Math.min(255, o.get("backgroundAlpha").getAsInt()));
-                    }
-                    if (o.has("shadow")) {
-                        h.shadow = o.get("shadow").getAsBoolean();
-                    }
-                }
-                if (o.has("enabled") && (current || m instanceof MainMenu)) {
-                    m.setEnabledQuietly(o.get("enabled").getAsBoolean());
-                }
-                if (o.has("settings") && o.get("settings").isJsonObject()) {
-                    JsonObject so = o.getAsJsonObject("settings");
-                    for (net.peregrine.client.core.settings.Setting s : m.settings()) {
-                        if (so.has(s.id) && so.get(s.id).isJsonPrimitive()) {
-                            s.load(so.get(s.id).getAsString());
-                        }
-                    }
+                try {
+                    loadModule(m, e.getValue().getAsJsonObject(), current);
+                } catch (Exception bad) {
+                    // One odd value only resets that one feature, never everything else.
+                    System.err.println("[Peregrine] Couldn't read the settings of " + e.getKey() + ": " + bad);
                 }
             }
         } catch (Exception e) {
             // A broken file shouldn't stop the game; start from defaults instead.
             System.err.println("[Peregrine] Couldn't read " + file + ", using defaults: " + e);
+        }
+    }
+
+    private static void loadModule(Module m, JsonObject o, boolean current) {
+        if (o.has("x") && m instanceof HudModule) {
+            ((HudModule) m).fx = o.get("x").getAsFloat();
+            ((HudModule) m).fy = o.get("y").getAsFloat();
+        }
+        if (m instanceof HudModule) {
+            HudModule h = (HudModule) m;
+            if (o.has("scale")) {
+                h.setScaleKeepingCorner(o.get("scale").getAsFloat());
+            }
+            if (o.has("text")) {
+                h.textColor = (int) Long.parseLong(o.get("text").getAsString(), 16);
+            }
+            if (o.has("label")) {
+                h.labelColor = (int) Long.parseLong(o.get("label").getAsString(), 16);
+            }
+            if (o.has("background")) {
+                h.background = o.get("background").getAsBoolean();
+            }
+            if (o.has("backgroundAlpha")) {
+                h.backgroundAlpha = Math.max(0, Math.min(255, o.get("backgroundAlpha").getAsInt()));
+            }
+            if (o.has("shadow")) {
+                h.shadow = o.get("shadow").getAsBoolean();
+            }
+        }
+        if (o.has("enabled") && (current || m instanceof MainMenu)) {
+            m.setEnabledQuietly(o.get("enabled").getAsBoolean());
+        }
+        if (o.has("settings") && o.get("settings").isJsonObject()) {
+            JsonObject so = o.getAsJsonObject("settings");
+            for (net.peregrine.client.core.settings.Setting s : m.settings()) {
+                if (so.has(s.id) && so.get(s.id).isJsonPrimitive()) {
+                    s.load(so.get(s.id).getAsString());
+                }
+            }
         }
     }
 

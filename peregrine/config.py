@@ -35,7 +35,8 @@ DEFAULTS = {
     "fast_start": True,       # Java class snapshot for quicker game startup
     # Extras
     "discord": True,          # show what you're playing on Discord
-    "ingame_menu": True,      # install Peregrine Client (Right Shift menu) in Fabric instances
+    "ingame_menu": True,
+    "share_game_settings": True,  # FOV, keys, sound... follow you to every instance      # install Peregrine Client (Right Shift menu) in Fabric instances
 }
 
 

@@ -41,6 +41,16 @@ def _slug(name: str) -> str:
     return candidate
 
 
+def _read_options(path: Path) -> dict:
+    """options.txt as {key: value}, in file order."""
+    out = {}
+    for line in path.read_text(errors="replace").splitlines():
+        if ":" in line:
+            k, v = line.split(":", 1)
+            out[k] = v
+    return out
+
+
 class Instance:
     def __init__(self, folder: Path):
         self.folder = folder
@@ -225,14 +235,59 @@ class Instance:
         pending = sorted(set(other.data.get("user_mods") or {}) | set(other.data.get("pending_mods") or []))
         self.update(pending_mods=pending, perf_settings=other.data.get("perf_settings", 0))
 
+    # Minecraft settings that belong to one instance only; everything else (FOV, keys,
+    # sensitivity, sound, chat, video...) follows the player from instance to instance.
+    OWN_OPTIONS = {"version", "resourcePacks", "incompatibleResourcePacks"}
+
+    def _sync_game_settings(self) -> bool:
+        """Bring over the Minecraft settings the player changed most recently in any
+        other instance (newest options.txt wins). Returns True if anything was copied."""
+        if not config.load().get("share_game_settings", True):
+            return False
+        mine = self.game_dir / "options.txt"
+        mine_time = mine.stat().st_mtime if mine.is_file() else 0
+        newest, newest_time, source = None, mine_time, None
+        for other in all_instances():
+            if other.folder == self.folder:
+                continue
+            opts = other.game_dir / "options.txt"
+            try:
+                t = opts.stat().st_mtime
+            except OSError:
+                continue
+            if t > newest_time:
+                newest, newest_time, source = opts, t, other
+        if newest is None:
+            return False
+        theirs = _read_options(newest)
+        ours = _read_options(mine) if mine.is_file() else {}
+        changed = False
+        for key, value in theirs.items():
+            if key not in self.OWN_OPTIONS and ours.get(key) != value:
+                ours[key] = value
+                changed = True
+        if changed:
+            self.game_dir.mkdir(parents=True, exist_ok=True)
+            tmp = mine.with_suffix(".tmp")
+            tmp.write_text("".join(f"{k}:{v}\n" for k, v in ours.items()))
+            tmp.replace(mine)
+        # Those settings already went through the fast settings: don't apply them again.
+        if source.data.get("perf_settings", 0) > self.data.get("perf_settings", 0):
+            self.update(perf_settings=source.data["perf_settings"])
+        return changed
+
     def _share_client_settings(self) -> None:
         """Peregrine Client's settings now live in one file for all instances. The first
-        time, start it from this instance's own copy, so nobody loses their HUD layout."""
+        time, start it from the newest copy any instance has, so nobody loses their HUD layout."""
         shared = paths.CLIENT_SETTINGS
-        own = self.game_dir / "config" / "peregrine-client.json"
-        if not shared.exists() and own.is_file():
+        if shared.exists():
+            return
+        # The copy from whichever instance was set up last, not just the one being opened.
+        copies = [i.game_dir / "config" / "peregrine-client.json" for i in all_instances()]
+        copies = [c for c in copies if c.is_file()]
+        if copies:
             shared.parent.mkdir(parents=True, exist_ok=True)
-            shutil.copy2(own, shared)
+            shutil.copy2(max(copies, key=lambda c: c.stat().st_mtime), shared)
 
     def _migrate_performance(self) -> None:
         """Instances from before performance mode: adopt the FPS mods they already have."""
@@ -294,6 +349,10 @@ class Instance:
         cfg = config.load()
         if self.data.get("memory_mb"):
             cfg["max_memory_mb"] = self.data["memory_mb"]
+        try:
+            self._sync_game_settings()  # before the fast settings, so the player's own choices count
+        except (OSError, ValueError) as e:
+            print(f"[peregrine] game settings not brought over: {e}")
         self._prepare_performance(progress)
         self._share_client_settings()
         try:
