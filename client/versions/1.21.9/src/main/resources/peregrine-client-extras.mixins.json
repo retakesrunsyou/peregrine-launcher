@@ -13,6 +13,7 @@
 		"HitboxStateMixin",
 		"InventoryTweaksMixin",
 		"ItemPhysicsMixin",
+		"KeybindMixin",
 		"LowFireMixin",
 		"NightVisionMixin",
 		"NightVisionScaleMixin",

@@ -27,7 +27,7 @@ public final class Menu {
 
     private static final int TITLE_H = 26;
     private static final int FOOTER_H = 18;
-    private static final int SIDE_W = 82;
+    private static final int SIDE_W = 94;
     private static final int CARD_H = 50;
     private static final int GAP = 5;
     private static final int TAB_H = 18;
@@ -481,9 +481,9 @@ public final class Menu {
         d.rect(listX, py + ph - FOOTER_H - 1, listW, 1, Theme.HAIRLINE);
         String hint = searching ? mods.size() + (mods.size() == 1 ? " result" : " results")
                 : "Click a card to switch it  \u00b7  Options for settings & keybind";
-        d.text(d.trim(hint, listW - 60), listX + 4, fy, Theme.FAINT, false);
         String counts = count(null, true) + " / " + count(null, false) + " on";
         int cw = d.width(counts) + 10;
+        d.text(d.trim(hint, px + pw - 9 - cw - 8 - (listX + 4)), listX + 4, fy, Theme.FAINT, false);
         d.roundRect(px + pw - 9 - cw, fy - 3, cw, 13, Theme.withAlpha(a, 0x22));
         d.text(counts, px + pw - 4 - cw, fy, Theme.withAlpha(a, 0xFF), false);
     }

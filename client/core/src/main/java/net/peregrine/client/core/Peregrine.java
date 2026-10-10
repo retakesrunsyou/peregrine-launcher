@@ -235,8 +235,42 @@ public final class Peregrine {
     private boolean toastOn;
     private long toastAt;
 
-    /** Called every tick and every frame; acts once per key press. */
+    private boolean keyEvents;  // the adapter reports key presses as they happen
+
+    /**
+     * A key was pressed while playing (no screen open). Adapters call this from the
+     * game's own keyboard handler, so even a very quick tap at low FPS counts.
+     */
+    public void onKey(int key) {
+        keyEvents = true;
+        if (!platform.inWorld() || key < 0) {
+            return;
+        }
+        for (Module m : modules) {
+            if (m.key == key) {
+                keysHeld.add(m);
+                toggleByKey(m);
+            }
+        }
+    }
+
+    private void toggleByKey(Module m) {
+        if (!platform.supports(m.id)) {
+            return;
+        }
+        m.setEnabled(!m.enabled());
+        markDirty();
+        toast = m.name;
+        toastOn = m.enabled();
+        toastAt = System.currentTimeMillis();
+        SelfTest.count("keybind:" + m.id);
+    }
+
+    /** Called every tick and every frame; acts once per key press (when the adapter has no key events). */
     void pollKeys() {
+        if (keyEvents) {
+            return;
+        }
         if (!platform.inWorld()) {
             keysHeld.clear();
             return;
@@ -247,14 +281,7 @@ public final class Peregrine {
             }
             boolean down = platform.keyDown(m.key);
             if (down && keysHeld.add(m)) {
-                if (platform.supports(m.id)) {
-                    m.setEnabled(!m.enabled());
-                    markDirty();
-                    toast = m.name;
-                    toastOn = m.enabled();
-                    toastAt = System.currentTimeMillis();
-                    SelfTest.count("keybind:" + m.id);
-                }
+                toggleByKey(m);
             } else if (!down) {
                 keysHeld.remove(m);
             }
@@ -276,10 +303,11 @@ public final class Peregrine {
         float t = Math.max(0f, Math.min(in, out));
         Draw f = t < 1f ? new FadeDraw(d, t) : d;
         String state = toastOn ? "On" : "Off";
-        int w = d.width(toast) + d.width(state) + 22;
+        int w = d.width(toast) + d.width(state) + 30;
         int h = 15;
         int x = (platform.screenWidth() - w) / 2;
-        int y = 6 - Math.round((1f - in) * 4);
+        // Above the hotbar and the action bar, clear of the HUD items that usually sit at the top.
+        int y = platform.screenHeight() - 88 + Math.round((1f - in) * 4);
         f.roundRect(x, y, w, h, Theme.withAlpha(Theme.PANEL, 0xE6));
         f.roundOutline(x, y, w, h, Theme.HAIRLINE);
         f.roundRect(x + 6, y + 5, 5, 5, toastOn ? accent : Theme.FAINT);

@@ -384,7 +384,7 @@ public final class SelfTest {
         ask("key k");
         waitFor("pressing K binds it", 60, new Cond() {
             public boolean ok() {
-                return pc.module("clock").key == 75 && menu.binding() == null && menu.search().isEmpty();
+                return pc.module("clock").key == 75 && menu.binding() == null && menu.page() == pc.module("clock");
             }
         });
         clickOn("Customize opens the editor with the style panel", "customize", new Cond() {

@@ -27,6 +27,7 @@ os.environ["XDG_CONFIG_HOME"] = str(OUT / "home" / "config")
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
+_t_import = time.perf_counter()
 from PySide6.QtCore import QEvent  # noqa: E402
 from PySide6.QtWidgets import QApplication  # noqa: E402
 
@@ -36,6 +37,7 @@ from peregrine.ui.dialogs import InstanceSettingsDialog, NewInstanceDialog  # no
 from peregrine.ui.theme import Theme  # noqa: E402
 
 problems, lines = [], []
+_t_imported = time.perf_counter()
 
 
 def write_summary():
@@ -80,9 +82,22 @@ auth.add_account(auth.offline_account("Tester"))
 
 app = QApplication(["peregrine"])
 Theme.set(cfg["theme"], cfg["accent"])
+_t_win = time.perf_counter()
 win = winmod.MainWindow()
 win.resize(1100, 720)
 win.show()
+app.processEvents()
+note("INFO", f"startup: imports {(_t_imported - _t_import) * 1000:.0f} ms, window built and shown in {(time.perf_counter() - _t_win) * 1000:.0f} ms")
+import subprocess as _sp  # noqa: E402
+_imp = _sp.run([sys.executable, "-X", "importtime", "-c", "import peregrine.ui.window"], capture_output=True, text=True,
+               cwd=str(Path(__file__).resolve().parent.parent))
+_rows = []
+for _l in _imp.stderr.splitlines():
+    _parts = _l.split("|")
+    if len(_parts) == 3 and _parts[1].strip().isdigit():
+        _rows.append((int(_parts[1]), _parts[2].rstrip()))
+for _us, _name in sorted(_rows, reverse=True)[:12]:
+    note("INFO", f"import {_us / 1000:7.1f} ms {_name}")
 
 
 def pump(seconds, until=None):
