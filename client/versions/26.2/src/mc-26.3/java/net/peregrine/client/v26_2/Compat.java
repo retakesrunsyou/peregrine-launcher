@@ -13,6 +13,6 @@ public final class Compat {
 
     /** Swings the main hand (anti-AFK). */
     public static void swing(net.minecraft.client.player.LocalPlayer player) {
-        player.swing(net.minecraft.world.InteractionHand.MAIN_HAND, player.getMainHandItem().getSwingAnimation(), false);
+        player.swing(net.minecraft.world.InteractionHand.MAIN_HAND, net.minecraft.world.item.component.SwingAnimation.DEFAULT, false);
     }
 }

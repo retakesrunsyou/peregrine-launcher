@@ -499,7 +499,7 @@ final class GamePlatform implements Platform {
     public void afkLook(float yaw, float pitch) {
         if (mc().player != null) {
             mc().player.setYRot(mc().player.getYRot() + yaw);
-            mc().player.setXRot(Math.max(-60f, Math.min(60f, mc().player.getXRot() + pitch)));
+            mc().player.setXRot(Math.max(-90f, Math.min(90f, mc().player.getXRot() + pitch)));
         }
     }
 
