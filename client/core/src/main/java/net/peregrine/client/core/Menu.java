@@ -27,7 +27,7 @@ public final class Menu {
 
     private static final int TITLE_H = 26;
     private static final int FOOTER_H = 18;
-    private static final int SIDE_W = 94;
+    private static final int SIDE_W = 106;
     private static final int CARD_H = 50;
     private static final int GAP = 5;
     private static final int TAB_H = 18;
@@ -374,9 +374,9 @@ public final class Menu {
                 d.roundRect(px + 4, y, SIDE_W - 8, TAB_H, Theme.ROW_HOVER);
             }
             String label = TABS[i] == null ? "All" : TABS[i].label;
-            d.roundRect(px + 11, y + 7, 4, 4, on ? a : hover ? Theme.MUTED : Theme.FAINT);
-            d.text(label, px + 19, y + 5, on ? Theme.TEXT : hover ? Theme.TEXT : Theme.MUTED, false);
             String n = String.valueOf(count(TABS[i], true));
+            d.roundRect(px + 11, y + 7, 4, 4, on ? a : hover ? Theme.MUTED : Theme.FAINT);
+            d.text(d.trim(label, SIDE_W - 34 - d.width(n)), px + 19, y + 5, on ? Theme.TEXT : hover ? Theme.TEXT : Theme.MUTED, false);
             d.text(n, px + SIDE_W - 9 - d.width(n), y + 5, on ? Theme.withAlpha(a, 0xFF) : Theme.FAINT, false);
         }
         boolean editHover = in(mx, my, editX, editY, editW, editH);

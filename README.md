@@ -38,12 +38,18 @@ The play test can repeat this on any version, and with each mod left out in turn
 (Actions → Play test → "benchmark each performance mod").
 
 **In-game menu (Peregrine Client)**
-- Press **Right Shift** in game for a see-through menu: search features and switch them on or off
+- Press **Right Shift** in game for a see-through menu of feature cards: search, switch them on or off, open their options
+- **A keybind for every feature**: set it on the feature's options page, then press it in game to switch it on or off
 - FPS, coordinates, keystrokes, CPS, armor status and potion timers, placed anywhere you drag them
 - Zoom, toggle sprint and sneak, fullbright, compass, biome, memory, clear weather and 40 more
 - **Particles**: Normal, Semi, Strong or Hide for each kind (potions, splash potions and XP bottles, lava, explosions, hits, ...)
 - **Hitboxes** without F3+B: pick which things show them (XP orbs and items off by default), their color, and whether the look line shows
 - **Hit color** for mobs and for crit sparks, **no hurt camera shake**, **low fire**, **1.7 animations**
+- **Small totem**: a smaller totem in your hand, and a smaller one flying at you when it pops
+- **Edit HUD** like Lunar: drag items (they snap to the screen and to each other), resize from the corner or with the
+  scroll wheel without them jumping at the screen edge, right-click for colors and **RGB text** (a rainbow that flows
+  letter by letter, at the speed you pick). Esc or Enter saves; right-click empty space for Reset all
+- One-line items (FPS, CPS, Ping...) can read `FPS 120`, `120`, `FPS: 120` or `[FPS: 120]`; Coordinates can be stacked or on one line, with each part switchable
 - **Your own name tag** in third person, shown as `(Peregrine logo) | YourName`
 - Resize the server's **scoreboard** and the **chat** (size only)
 - **Inventory tweaks**: hold Shift and drag over items to move them all; scroll over an item to move one at a time

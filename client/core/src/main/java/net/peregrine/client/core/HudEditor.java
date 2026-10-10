@@ -607,6 +607,21 @@ final class HudEditor {
             } else if (Math.abs(y + h - sh) <= SNAP) {
                 y = sh - h;
             }
+            // Line up with the other HUD items: their edges and centres.
+            if (guideX < 0) {
+                int[] snapped = snapTo(x, w, true);
+                if (snapped != null) {
+                    x = snapped[0];
+                    guideX = snapped[1];
+                }
+            }
+            if (guideY < 0) {
+                int[] snapped = snapTo(y, h, false);
+                if (snapped != null) {
+                    y = snapped[0];
+                    guideY = snapped[1];
+                }
+            }
             selected.moveTo(x, y, p);
             pc.markDirty();
             return true;
@@ -633,6 +648,38 @@ final class HudEditor {
             return true;
         }
         return false;
+    }
+
+    /**
+     * Snaps a position (x or y) so the dragged item's start, middle or end lines up
+     * with another item's. Returns {new position, guide line} or null.
+     */
+    private int[] snapTo(int pos, int size, boolean horizontal) {
+        int best = SNAP + 1;
+        int[] out = null;
+        for (Module m : pc.modules()) {
+            if (!(m instanceof HudModule) || m == selected || !m.enabled()) {
+                continue;
+            }
+            HudModule o = (HudModule) m;
+            if (o.lastX < 0) {
+                continue;
+            }
+            int start = horizontal ? o.lastX : o.lastY;
+            int len = horizontal ? o.lastW : o.lastH;
+            int[] lines = {start, start + len / 2, start + len};
+            for (int line : lines) {
+                int[] mine = {pos, pos + size / 2, pos + size};
+                for (int k = 0; k < 3; k++) {
+                    int dist = Math.abs(mine[k] - line);
+                    if (dist < best) {
+                        best = dist;
+                        out = new int[] {pos + (line - mine[k]), line};
+                    }
+                }
+            }
+        }
+        return out;
     }
 
     boolean mouseReleased() {

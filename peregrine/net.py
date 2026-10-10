@@ -7,18 +7,32 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Callable, Optional
 
-import requests
-
 from . import USER_AGENT
 
-session = requests.Session()
-session.headers["User-Agent"] = USER_AGENT
+_session = None
+
+
+def _get_session():
+    """The shared HTTP session, made on first use: loading the HTTP library takes a
+    noticeable moment, and the launcher window shouldn't wait for it to open."""
+    global _session
+    if _session is None:
+        import requests
+        _session = requests.Session()
+        _session.headers["User-Agent"] = USER_AGENT
+    return _session
+
+
+def __getattr__(name):
+    if name == "session":  # net.session, as the rest of the launcher uses it
+        return _get_session()
+    raise AttributeError(name)
 
 Progress = Callable[[int, int, str], None]  # (done, total, message)
 
 
 def get_json(url: str, **kwargs):
-    r = session.get(url, timeout=30, **kwargs)
+    r = _get_session().get(url, timeout=30, **kwargs)
     r.raise_for_status()
     return r.json()
 
@@ -80,7 +94,7 @@ def fetch(d: Download, retries: int = 3) -> None:
     last_err = None
     for _ in range(retries):
         try:
-            with session.get(d.url, stream=True, timeout=60) as r:
+            with _get_session().get(d.url, stream=True, timeout=60) as r:
                 r.raise_for_status()
                 with open(tmp, "wb") as f:
                     for chunk in r.iter_content(1 << 16):
