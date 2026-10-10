@@ -122,7 +122,7 @@ win.go(0)
 pump(0.5)
 win.sky.set_paused(False)
 # Catch the bird as it crosses the sidebar's divider (it should fly over it, not behind).
-win.sky.bird = (_t.monotonic() + 0.05, True, 330.0, 10.0)  # reaches x≈200 at the shot
+win.sky.bird = (_t.monotonic() + 0.05, True, 330.0, 10.0, 44, 0.0, 2.5, 12.0)  # reaches x≈200 at the shot
 win.sky.next_meteor = _t.monotonic() + 1.5
 pump(2.2)
 shot(win, "sky-bird")

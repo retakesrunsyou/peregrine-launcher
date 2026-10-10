@@ -19,7 +19,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Mixin(EntityRenderDispatcher.class)
 public abstract class HitboxMixin {
 
-    @Inject(method = "renderHitbox", at = @At("HEAD"), cancellable = true)
+    @Inject(method = "renderHitbox(Lcom/mojang/blaze3d/vertex/PoseStack;Lcom/mojang/blaze3d/vertex/VertexConsumer;Lnet/minecraft/world/entity/Entity;FFFF)V", at = @At("HEAD"), cancellable = true)
     private static void peregrine$filter(PoseStack poseStack, VertexConsumer buffer, Entity entity, float partial,
                                          float r, float g, float b, CallbackInfo ci) {
         if (Hooks.hitboxHits < 1000) {
@@ -30,22 +30,22 @@ public abstract class HitboxMixin {
         }
     }
 
-    @ModifyVariable(method = "renderHitbox", at = @At("HEAD"), argsOnly = true, ordinal = 1)
+    @ModifyVariable(method = "renderHitbox(Lcom/mojang/blaze3d/vertex/PoseStack;Lcom/mojang/blaze3d/vertex/VertexConsumer;Lnet/minecraft/world/entity/Entity;FFFF)V", at = @At("HEAD"), argsOnly = true, ordinal = 1)
     private static float peregrine$red(float r) {
         return Hooks.hitboxColor != 0 ? ((Hooks.hitboxColor >> 16) & 0xFF) / 255f : r;
     }
 
-    @ModifyVariable(method = "renderHitbox", at = @At("HEAD"), argsOnly = true, ordinal = 2)
+    @ModifyVariable(method = "renderHitbox(Lcom/mojang/blaze3d/vertex/PoseStack;Lcom/mojang/blaze3d/vertex/VertexConsumer;Lnet/minecraft/world/entity/Entity;FFFF)V", at = @At("HEAD"), argsOnly = true, ordinal = 2)
     private static float peregrine$green(float g) {
         return Hooks.hitboxColor != 0 ? ((Hooks.hitboxColor >> 8) & 0xFF) / 255f : g;
     }
 
-    @ModifyVariable(method = "renderHitbox", at = @At("HEAD"), argsOnly = true, ordinal = 3)
+    @ModifyVariable(method = "renderHitbox(Lcom/mojang/blaze3d/vertex/PoseStack;Lcom/mojang/blaze3d/vertex/VertexConsumer;Lnet/minecraft/world/entity/Entity;FFFF)V", at = @At("HEAD"), argsOnly = true, ordinal = 3)
     private static float peregrine$blue(float b) {
         return Hooks.hitboxColor != 0 ? (Hooks.hitboxColor & 0xFF) / 255f : b;
     }
 
-    @WrapWithCondition(method = "renderHitbox", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/ShapeRenderer;renderVector(Lcom/mojang/blaze3d/vertex/PoseStack;Lcom/mojang/blaze3d/vertex/VertexConsumer;Lorg/joml/Vector3f;Lnet/minecraft/world/phys/Vec3;I)V"))
+    @WrapWithCondition(method = "renderHitbox(Lcom/mojang/blaze3d/vertex/PoseStack;Lcom/mojang/blaze3d/vertex/VertexConsumer;Lnet/minecraft/world/entity/Entity;FFFF)V", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/ShapeRenderer;renderVector(Lcom/mojang/blaze3d/vertex/PoseStack;Lcom/mojang/blaze3d/vertex/VertexConsumer;Lorg/joml/Vector3f;Lnet/minecraft/world/phys/Vec3;I)V"))
     private static boolean peregrine$lookLine(PoseStack poseStack, VertexConsumer buffer, Vector3f from, Vec3 dir, int color) {
         return Hooks.hitboxLookLine;
     }

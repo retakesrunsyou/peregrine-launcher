@@ -131,7 +131,7 @@ class Sky(QWidget):
         self.cache_key = None
         self.clouds = []
         self.moon_light = 1.0      # 1 = clear, 0 = fully behind a cloud (eased)
-        self.bird = None           # (born, left_to_right, y, duration) while one is flying
+        self.bird = None           # (born, left_to_right, y, duration, size, climb, waves, sway) while flying
         self.bird_pix = None
         self.bird_key = None
         self.next_bird = time.monotonic() + 6
@@ -506,7 +506,8 @@ class Sky(QWidget):
                          rng.randint(30, 52), rng.uniform(-0.18, 0.18) * h, rng.uniform(1.5, 4), rng.uniform(8, 22))
         if self.bird is None:
             return
-        born, ltr, base_y, duration, size, climb, waves, sway = self.bird
+        # (size, climb, waves, sway default to a plain, level flight)
+        born, ltr, base_y, duration, size, climb, waves, sway = (tuple(self.bird) + (40, 0.0, 2.5, 12.0))[:8]
         age = (now - born) / duration
         if age >= 1:
             self.bird = None

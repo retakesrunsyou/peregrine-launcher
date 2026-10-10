@@ -511,6 +511,9 @@ public final class SelfTest {
                     }
                 }
                 setBool("hitboxes", "items", true);
+                if (p.supports("stable_fps")) {
+                    pc.module("stable_fps").setEnabled(false);  // it may have turned particles down to minimal
+                }
                 p.testScene();  // lava sparks, a dropped item and a sword in hand
             }
         });

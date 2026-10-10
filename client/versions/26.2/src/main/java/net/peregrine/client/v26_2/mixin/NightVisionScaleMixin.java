@@ -13,7 +13,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 @Mixin(GameRenderer.class)
 public abstract class NightVisionScaleMixin {
 
-    @Inject(method = "getNightVisionScale", at = @At("HEAD"), cancellable = true)
+    @Inject(method = {"getNightVisionScale", "nightVisionScale"}, at = @At("HEAD"), cancellable = true)
     private static void peregrine$full(LivingEntity entity, float partial, CallbackInfoReturnable<Float> cir) {
         if (Hooks.nightVision && entity instanceof LocalPlayer) {
             if (Hooks.nightVisionHits < 1000) {
