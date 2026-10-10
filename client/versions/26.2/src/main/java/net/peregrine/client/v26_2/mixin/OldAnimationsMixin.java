@@ -39,4 +39,25 @@ public abstract class OldAnimationsMixin {
             poseStack.translate(side * 0.04F, -0.06F, -0.05F);
         }
     }
+
+    // 26.3: the eat transform no longer gets the player, so remember the arm's swing
+    // from submitArmWithItem (its third float: partial ticks, x rotation, attack).
+
+    @org.spongepowered.asm.mixin.Unique
+    private float peregrine$attack;
+
+    @Inject(method = "submitArmWithItem", at = @At("HEAD"))
+    private void peregrine$rememberSwing(CallbackInfo ci,
+            @com.llamalad7.mixinextras.sugar.Local(argsOnly = true, ordinal = 2) float attack) {
+        peregrine$attack = attack;
+    }
+
+    @Inject(method = "applyEatTransform(Lcom/mojang/blaze3d/vertex/PoseStack;FLnet/minecraft/world/entity/HumanoidArm;FI)V",
+            at = @At("TAIL"))
+    private void peregrine$swingWhileUsing26_3(PoseStack poseStack, float partial, HumanoidArm arm, float remaining,
+                                               int duration, CallbackInfo ci) {
+        if (Hooks.oldSwing && peregrine$attack > 0) {
+            this.applyItemArmAttackTransform(poseStack, arm, peregrine$attack);
+        }
+    }
 }

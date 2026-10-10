@@ -13,7 +13,8 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 /** Small totem: the totem in your own hands is drawn smaller (first person only). */
-@Mixin(targets = {"net.minecraft.client.renderer.ItemInHandRenderer"})
+@Mixin(targets = {"net.minecraft.client.renderer.ItemInHandRenderer",
+        "net.minecraft.client.renderer.FirstPersonHandsAndItemsRenderer"})
 public abstract class TotemHeldMixin {
 
     @Unique
@@ -35,6 +36,33 @@ public abstract class TotemHeldMixin {
 
     @Inject(method = "renderItem", at = @At("RETURN"))
     private void peregrine$restore(CallbackInfo ci, @Local(argsOnly = true) PoseStack pose) {
+        if (peregrine$shrunk > 0) {
+            peregrine$shrunk--;
+            pose.popPose();
+        }
+    }
+
+    // 26.3: hands are drawn by FirstPersonHandsAndItemsRenderer, which submits the
+    // item's render state; shrink the pose just around that.
+
+    @Inject(method = "submitArmWithItem", at = @At(value = "INVOKE",
+            target = "Lnet/minecraft/client/renderer/item/ItemStackRenderState;submit"))
+    private void peregrine$small26_3(CallbackInfo ci, @Local(argsOnly = true) ItemStack stack,
+                                     @Local(argsOnly = true) PoseStack pose) {
+        float s = Hooks.totemHeld;
+        if (s < 1f && stack.is(Items.TOTEM_OF_UNDYING)) {
+            if (Hooks.totemHits < 1000) {
+                Hooks.totemHits++;
+            }
+            pose.pushPose();
+            pose.scale(s, s, s);
+            peregrine$shrunk++;
+        }
+    }
+
+    @Inject(method = "submitArmWithItem", at = @At(value = "INVOKE",
+            target = "Lnet/minecraft/client/renderer/item/ItemStackRenderState;submit", shift = At.Shift.AFTER))
+    private void peregrine$restore26_3(CallbackInfo ci, @Local(argsOnly = true) PoseStack pose) {
         if (peregrine$shrunk > 0) {
             peregrine$shrunk--;
             pose.popPose();

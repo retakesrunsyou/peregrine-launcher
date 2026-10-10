@@ -575,7 +575,7 @@ public final class SelfTest {
                 }
             });
         }
-        if (p.supports("small_totem") && !p.minecraftVersion().startsWith("26.3")) {
+        if (p.supports("small_totem")) {
             waitFor("small totem: the totem in your hand is drawn smaller", 200, new Cond() {
                 public boolean ok() {
                     return Hooks.totemHits > 0;
