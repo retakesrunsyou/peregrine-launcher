@@ -38,7 +38,8 @@ The play test can repeat this on any version, and with each mod left out in turn
 (Actions → Play test → "benchmark each performance mod").
 
 **In-game menu (Peregrine Client)**
-- Press **Right Shift** in game for a see-through menu of feature cards: search, switch them on or off, open their options
+- Press **Right Shift** in game for the Peregrine menu: every mod as a tile with its icon and switch, a filter
+  list, search, a Settings tab (accent color and more) and a Keybinds tab to set every key in one place
 - **A keybind for every feature**: set it on the feature's options page, then press it in game to switch it on or off
 - FPS, coordinates, keystrokes, CPS, armor status and potion timers, placed anywhere you drag them
 - Zoom, toggle sprint and sneak, fullbright, compass, biome, memory, clear weather and 40 more
