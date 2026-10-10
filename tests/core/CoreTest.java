@@ -73,13 +73,13 @@ public class CoreTest {
     public static void main(String[] a) throws Exception {
         cfg = Files.createTempDirectory("pc").resolve("config/peregrine-client.json");
         Peregrine pc = Peregrine.init(new P()); D d = new D(); Menu m = pc.menu();
-        check(pc.modules().size()==61, "61 modules registered");
+        check(pc.modules().size()==62, "62 modules registered");
         for (String id : new String[]{"health","nether_coords","session","totems","arrows","durability_alert",
                 "reach","combo","target","block_info","block_count","players","rotation","stopwatch","xp","chunk","light",
                 "anti_leak","crosshair","freelook","hit_color","item_physics"}) check(pc.module(id)!=null, id+" exists");
         // Defaults: only FPS, coordinates and armor (plus the title screen) start on, every HUD item at 50%
         for (net.peregrine.client.core.Module mod : pc.modules()) {
-            boolean want = Arrays.asList("fps","coords","armor","main_menu","stable_fps").contains(mod.id);
+            boolean want = Arrays.asList("fps","coords","armor","main_menu","stable_fps","clean_menus").contains(mod.id);
             check(mod.enabled()==want, mod.id + (want ? " on" : " off") + " by default");
             if (mod instanceof HudModule) check(((HudModule)mod).scale==0.5f, mod.id + " starts at 50%");
         }
@@ -398,6 +398,14 @@ public class CoreTest {
         pc10.module("small_totem").setEnabled(true); pc10.tick();
         check(Math.abs(Hooks.totemHeld - 0.55f) < 1e-6 && Math.abs(Hooks.totemPop - 0.4f) < 1e-6, "small totem: 55% held, 40% pop");
         pc10.module("small_totem").setEnabled(false); check(Hooks.totemHeld == 1f && Hooks.totemPop == 1f, "small totem off: normal size");
+        check(Hooks.cleanMenus, "packs are kept out of menus by default");
+        check(Hooks.keepOutOfPack("file/Faithful.zip", "minecraft", "textures/gui/sprites/widget/button.png"), "a pack's buttons are skipped");
+        check(Hooks.keepOutOfPack("file/PvP", "minecraft", "font/default.json") && Hooks.keepOutOfPack("file/PvP", "minecraft", "textures/gui/title/minecraft.png"), "...and its fonts and title logo");
+        check(!Hooks.keepOutOfPack("file/PvP", "minecraft", "textures/block/stone.png") && !Hooks.keepOutOfPack("file/PvP", "minecraft", "textures/gui/sprites/hud/heart/full.png"), "blocks and the in-game HUD still change");
+        check(!Hooks.keepOutOfPack("server", "minecraft", "textures/gui/sprites/widget/button.png") && !Hooks.keepOutOfPack("vanilla", "minecraft", "font/default.json"), "server packs and Minecraft itself are untouched");
+        pc10.module("clean_menus").setEnabled(false);
+        check(!Hooks.keepOutOfPack("file/Faithful.zip", "minecraft", "textures/gui/sprites/widget/button.png"), "switched off: packs change menus again");
+        pc10.module("clean_menus").setEnabled(true);
         pc10.shutdown(); String json10 = new String(Files.readAllBytes(cfg));
         check(json10.contains("\"key\": 51"), "keybinds are saved");
         playing = false; fpsNow = 144;

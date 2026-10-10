@@ -19,6 +19,7 @@
 		"OverlayTextureAccessor",
 		"OwnNameLogoMixin",
 		"OwnNameShowMixin",
+		"PackFilterMixin",
 		"ParticlesMixin",
 		"ScoreboardMixin",
 		"TotemHeldMixin",

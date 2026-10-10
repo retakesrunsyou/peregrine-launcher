@@ -198,6 +198,10 @@ public interface Platform {
     default void reloadChunks() {
     }
 
+    /** Reloads resource packs (like F3+T), after a change to what they may replace. */
+    default void reloadResources() {
+    }
+
     /** Is this key (a GLFW key code) held right now, while playing with no screen open? */
     default boolean keyDown(int key) {
         return false;

@@ -156,6 +156,7 @@ public final class Peregrine {
         modules.add(new ChatSize());
         modules.add(new LowFire());
         modules.add(new SmallTotem());
+        modules.add(new net.peregrine.client.core.modules.CleanMenus());
         modules.add(new InventoryTweaks());
         modules.add(new OldAnimations());
         this.menu = new Menu(this);
@@ -165,6 +166,7 @@ public final class Peregrine {
     public static Peregrine init(Platform platform) {
         instance = new Peregrine(platform);
         Config.load(instance);
+        ((net.peregrine.client.core.modules.CleanMenus) instance.module("clean_menus")).applyQuietly();
         return instance;
     }
 

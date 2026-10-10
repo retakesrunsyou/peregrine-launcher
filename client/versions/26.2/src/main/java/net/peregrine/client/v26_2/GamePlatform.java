@@ -423,6 +423,13 @@ final class GamePlatform implements Platform {
     }
 
     @Override
+    public void reloadResources() {
+        if (mc() != null) {
+            mc().reloadResourcePacks();
+        }
+    }
+
+    @Override
     public boolean keyDown(int key) {
         return false;  // 26.2+: keybinds come from KeybindMixin as keys are pressed
     }

@@ -148,7 +148,28 @@ except Exception as e:
 (inst.game_dir / "options.txt").write_text(
     "onboardAccessibility:false\nrenderDistance:4\nsimulationDistance:5\ntutorialStep:none\n"
     "skipMultiplayerWarning:true\njoinedFirstServer:true\nnarrator:0\nsoundCategory_master:0.0\n"
-    "pauseOnLostFocus:false\n")
+    "pauseOnLostFocus:false\nresourcePacks:[\"vanilla\",\"file/PeregrineTest\"]\n")
+
+# A tiny resource pack with menu files (a splash text and a button), to check that
+# "Keep packs out of menus" leaves them out.
+def _test_pack():
+    import struct
+    import zlib
+    pack = inst.game_dir / "resourcepacks" / "PeregrineTest"
+    (pack / "assets/minecraft/texts").mkdir(parents=True, exist_ok=True)
+    (pack / "assets/minecraft/textures/gui/sprites/widget").mkdir(parents=True, exist_ok=True)
+    (pack / "pack.mcmeta").write_text('{"pack": {"pack_format": 34, "supported_formats": [0, 999], '
+                                      '"min_format": 0, "max_format": 999, "description": "Peregrine test"}}')
+    (pack / "assets/minecraft/texts/splashes.txt").write_text("Peregrine test pack splash\n")
+
+    def chunk(kind, data):
+        return struct.pack(">I", len(data)) + kind + data + struct.pack(">I", zlib.crc32(kind + data) & 0xFFFFFFFF)
+    png = (b"\x89PNG\r\n\x1a\n" + chunk(b"IHDR", struct.pack(">IIBBBBB", 1, 1, 8, 6, 0, 0, 0))
+           + chunk(b"IDAT", zlib.compress(b"\x00\xff\x00\xff\xff")) + chunk(b"IEND", b""))
+    (pack / "assets/minecraft/textures/gui/sprites/widget/button.png").write_bytes(png)
+
+
+_test_pack()
 
 # ---------------------------------------------------------------- play
 

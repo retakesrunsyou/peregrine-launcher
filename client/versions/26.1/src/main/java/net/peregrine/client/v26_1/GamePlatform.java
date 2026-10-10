@@ -423,6 +423,13 @@ final class GamePlatform implements Platform {
     }
 
     @Override
+    public void reloadResources() {
+        if (mc() != null) {
+            mc().reloadResourcePacks();
+        }
+    }
+
+    @Override
     public boolean keyDown(int key) {
         if (key < 0 || Screens.current() != null) {
             return false;

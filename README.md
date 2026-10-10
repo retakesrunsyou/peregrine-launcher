@@ -46,6 +46,8 @@ The play test can repeat this on any version, and with each mod left out in turn
 - **Hitboxes** without F3+B: pick which things show them (XP orbs and items off by default), their color, and whether the look line shows
 - **Hit color** for mobs and for crit sparks, **no hurt camera shake**, **low fire**, **1.7 animations**
 - **Small totem**: a smaller totem in your hand, and a smaller one flying at you when it pops
+- **Keep packs out of menus** (on by default): resource packs you add change blocks, items, mobs and the HUD while
+  you play, but not the title screen, buttons, menu backgrounds, fonts or splash texts
 - **Edit HUD** like Lunar: drag items (they snap to the screen and to each other), resize from the corner or with the
   scroll wheel without them jumping at the screen edge, right-click for colors and **RGB text** (a rainbow that flows
   letter by letter, at the speed you pick). Esc or Enter saves; right-click empty space for Reset all

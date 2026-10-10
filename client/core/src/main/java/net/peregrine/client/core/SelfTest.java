@@ -575,6 +575,13 @@ public final class SelfTest {
                 }
             });
         }
+        if (p.supports("clean_menus")) {
+            waitFor("resource packs leave the menus alone (test pack's button and splash skipped)", 100, new Cond() {
+                public boolean ok() {
+                    return Hooks.packFiltered > 0;
+                }
+            });
+        }
         if (p.supports("small_totem")) {
             waitFor("small totem: the totem in your hand is drawn smaller", 200, new Cond() {
                 public boolean ok() {
@@ -612,7 +619,7 @@ public final class SelfTest {
                         + " animation=" + Hooks.animationHits + " hitbox=" + Hooks.hitboxHits
                         + " nametag=" + Hooks.nameTagHits + " scoreboard=" + Hooks.scoreboardHits
                         + " fire=" + Hooks.fireHits + " inventory=" + Hooks.inventoryTweakHits
-                        + " totem=" + Hooks.totemHits);
+                        + " totem=" + Hooks.totemHits + " packs=" + Hooks.packFiltered);
             }
         });
         finish();

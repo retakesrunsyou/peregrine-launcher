@@ -89,6 +89,43 @@ public final class Hooks {
 
     // ---- Low fire: how far down the fire overlay moves (0 = Minecraft's)
     public static volatile float fireDrop;
+
+    /**
+     * Clean menus: resource packs you add change the game itself (blocks, items, mobs,
+     * the HUD while playing) but not the menus: title screen, buttons, menu
+     * backgrounds, fonts and splash texts stay Minecraft's own.
+     */
+    public static volatile boolean cleanMenus = true;
+    public static volatile int packFiltered;
+    private static final String[] MENU_ONLY = {
+        "textures/gui/title/", "textures/gui/sprites/widget/", "textures/gui/sprites/icon/",
+        "textures/gui/sprites/server_list/", "textures/gui/sprites/world_list/", "textures/gui/sprites/popup/",
+        "textures/gui/sprites/toast/", "textures/gui/sprites/notification/", "textures/gui/sprites/transferable_list/",
+        "textures/gui/sprites/pending_invite/", "textures/gui/presets/", "textures/gui/menu_",
+        "textures/gui/inworld_menu_", "textures/gui/header_separator", "textures/gui/footer_separator",
+        "textures/gui/inworld_header_separator", "textures/gui/inworld_footer_separator",
+        "textures/gui/tab_header_background", "textures/gui/options_background", "textures/gui/light_dirt_background",
+        "font/", "textures/font/", "texts/",
+    };
+
+    /** Should this file be skipped in this pack? Only packs the player added ("file/...") are touched. */
+    public static boolean keepOutOfPack(String packId, String namespace, String path) {
+        if (!cleanMenus || packId == null || !packId.startsWith("file/")) {
+            return false;
+        }
+        if (!namespace.equals("minecraft") && !namespace.equals("realms")) {
+            return false;
+        }
+        for (String prefix : MENU_ONLY) {
+            if (path.startsWith(prefix)) {
+                if (packFiltered < 100000) {
+                    packFiltered++;
+                }
+                return true;
+            }
+        }
+        return false;
+    }
     /** Small totem: sizes of the held totem (first person) and the pop animation, 1 = normal. */
     public static volatile float totemHeld = 1f;
     public static volatile float totemPop = 1f;
