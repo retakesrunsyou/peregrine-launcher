@@ -502,11 +502,76 @@ public final class SelfTest {
                 return !Hooks.freelook && p.cameraMode() == 0;
             }
         });
+        // Batch 6: particles, fullbright, animations, hitboxes, own name tag
+        run("turn on particles, fullbright, 1.7 animations, hitboxes and your name tag", new Runnable() {
+            public void run() {
+                for (String id : new String[] {"fewer_particles", "fullbright", "old_animations", "hitboxes", "own_nametag"}) {
+                    if (p.supports(id)) {
+                        pc.module(id).setEnabled(true);
+                    }
+                }
+                setBool("hitboxes", "items", true);
+                p.testScene();  // lava sparks, a dropped item and a sword in hand
+            }
+        });
+        if (p.supports("fewer_particles")) {
+            waitFor("particles: lava sparks are thinned out", 200, new Cond() {
+                public boolean ok() {
+                    return Hooks.particleHits > 0;
+                }
+            });
+        }
+        if (p.supports("fullbright")) {
+            waitFor("fullbright lights up dark places", 200, new Cond() {
+                public boolean ok() {
+                    return Hooks.nightVisionHits > 0;
+                }
+            });
+        }
+        if (p.supports("old_animations")) {
+            waitFor("1.7 animations: held item moves", 200, new Cond() {
+                public boolean ok() {
+                    return Hooks.animationHits > 0;
+                }
+            });
+        }
+        if (p.supports("hitboxes")) {
+            waitFor("hitboxes draw without F3+B", 200, new Cond() {
+                public boolean ok() {
+                    return Hooks.hitboxHits > 0;
+                }
+            });
+        }
+        waitTicks(10);
+        shot("24-batch6-first-person");
+        if (p.supports("own_nametag")) {
+            run("third person", new Runnable() {
+                public void run() {
+                    p.setCameraMode(2);  // facing the player, so the name tag is in view
+                }
+            });
+            waitFor("your own name tag shows in third person", 200, new Cond() {
+                public boolean ok() {
+                    return Hooks.nameTagHits > 0;
+                }
+            });
+            waitTicks(10);
+            shot("25-own-name-tag");
+            run("first person", new Runnable() {
+                public void run() {
+                    p.setCameraMode(0);
+                }
+            });
+        }
         run("report hook counts", new Runnable() {
             public void run() {
                 log("INFO", "hooks: seed=" + Hooks.seedHits + " offset=" + Hooks.offsetHits + " model=" + Hooks.modelHits
                         + " bedrock=" + Hooks.bedrockSwaps + " items=" + Hooks.itemPhysicsHits
-                        + " crosshair=" + Hooks.crosshairDraws + " camera=" + Hooks.cameraHits);
+                        + " crosshair=" + Hooks.crosshairDraws + " camera=" + Hooks.cameraHits
+                        + " particles=" + Hooks.particleHits + " nightvision=" + Hooks.nightVisionHits
+                        + " animation=" + Hooks.animationHits + " hitbox=" + Hooks.hitboxHits
+                        + " nametag=" + Hooks.nameTagHits + " scoreboard=" + Hooks.scoreboardHits
+                        + " fire=" + Hooks.fireHits + " inventory=" + Hooks.inventoryTweakHits);
             }
         });
         finish();
@@ -546,6 +611,17 @@ public final class SelfTest {
                 return true;
             }
         });
+    }
+
+    private static void setBool(String module, String setting, boolean v) {
+        if (!p.supports(module)) {
+            return;
+        }
+        for (net.peregrine.client.core.settings.Setting s : pc.module(module).settings()) {
+            if (s.id.equals(setting) && s instanceof net.peregrine.client.core.settings.BoolSetting) {
+                ((net.peregrine.client.core.settings.BoolSetting) s).value = v;
+            }
+        }
     }
 
     private static void run(String label, final Runnable r) {

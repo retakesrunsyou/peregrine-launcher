@@ -7,6 +7,14 @@ import java.util.Deque;
 import java.util.List;
 
 import net.peregrine.client.core.modules.ArmorHud;
+import net.peregrine.client.core.modules.ParticleControl;
+import net.peregrine.client.core.modules.Hitboxes;
+import net.peregrine.client.core.modules.OwnNameTag;
+import net.peregrine.client.core.modules.ScoreboardSize;
+import net.peregrine.client.core.modules.ChatSize;
+import net.peregrine.client.core.modules.LowFire;
+import net.peregrine.client.core.modules.InventoryTweaks;
+import net.peregrine.client.core.modules.OldAnimations;
 import net.peregrine.client.core.modules.StableFps;
 import net.peregrine.client.core.modules.AntiLeak;
 import net.peregrine.client.core.modules.Crosshair;
@@ -99,15 +107,15 @@ public final class Peregrine {
         modules.add(new OptionModule("static_fov", "Static FOV",
                 "Sprinting and speed effects don't stretch your view", Module.Category.VISUALS, Platform.Option.STATIC_FOV));
         modules.add(new OptionModule("steady_camera", "Steady camera",
-                "No view bobbing or damage tilt", Module.Category.VISUALS, Platform.Option.STEADY_CAMERA));
+                "No view bobbing as you walk", Module.Category.VISUALS, Platform.Option.STEADY_CAMERA));
         modules.add(new OptionModule("no_menu_blur", "No menu blur",
                 "Menus don't blur the game behind them", Module.Category.VISUALS, Platform.Option.NO_MENU_BLUR));
-        modules.add(new OptionModule("fewer_particles", "Fewer particles",
-                "Minimal particles for more FPS in busy fights", Module.Category.PERFORMANCE, Platform.Option.FEWER_PARTICLES));
+        modules.add(new ParticleControl());
         modules.add(new OptionModule("chunk_borders", "Chunk borders",
                 "Show chunk boundary lines", Module.Category.VISUALS, Platform.Option.CHUNK_BORDERS));
-        modules.add(new OptionModule("hitboxes", "Hitboxes",
-                "Show entity hitboxes without the debug screen", Module.Category.VISUALS, Platform.Option.HITBOXES));
+        modules.add(new Hitboxes());
+        modules.add(new OptionModule("no_hurt_cam", "No hurt cam",
+                "The screen doesn't shake when you take damage", Module.Category.VISUALS, Platform.Option.NO_HURT_CAM));
         // Batch 3
         modules.add(new HealthHud());
         modules.add(new NetherCoordsHud());
@@ -141,6 +149,13 @@ public final class Peregrine {
         modules.add(new Freelook());
         modules.add(new HitColor());
         modules.add(new ItemPhysics());
+        // Batch 6
+        modules.add(new OwnNameTag());
+        modules.add(new ScoreboardSize());
+        modules.add(new ChatSize());
+        modules.add(new LowFire());
+        modules.add(new InventoryTweaks());
+        modules.add(new OldAnimations());
         this.menu = new Menu(this);
         this.titleMenu = new TitleMenu(this);
     }

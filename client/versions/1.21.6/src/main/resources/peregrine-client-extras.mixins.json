@@ -8,8 +8,19 @@
 		"DiamondBedrockMixin",
 		"FreelookCameraMixin",
 		"FreelookTurnMixin",
+		"HitboxFilterMixin",
+		"HitboxStateMixin",
+		"InventoryTweaksMixin",
 		"ItemPhysicsMixin",
-		"OverlayTextureAccessor"
+		"LowFireMixin",
+		"NightVisionMixin",
+		"NightVisionScaleMixin",
+		"OldAnimationsMixin",
+		"OverlayTextureAccessor",
+		"OwnNameLogoMixin",
+		"OwnNameShowMixin",
+		"ParticlesMixin",
+		"ScoreboardMixin"
 	],
 	"injectors": {
 		"defaultRequire": 0

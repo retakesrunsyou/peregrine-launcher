@@ -97,7 +97,7 @@ public interface Platform {
     List<String> resourcePacks();
 
     /** Built-in Minecraft settings that modules can switch. */
-    enum Option { TOGGLE_SNEAK, STATIC_FOV, STEADY_CAMERA, NO_MENU_BLUR, FEWER_PARTICLES, CHUNK_BORDERS, HITBOXES }
+    enum Option { TOGGLE_SNEAK, STATIC_FOV, STEADY_CAMERA, NO_MENU_BLUR, FEWER_PARTICLES, CHUNK_BORDERS, HITBOXES, NO_HURT_CAM }
 
     /** Turns an option on, or back to Minecraft's default when off. */
     void setOption(Option option, boolean on);
@@ -235,6 +235,25 @@ public interface Platform {
     }
 
     default void setParticleLevel(int level) {
+    }
+
+    // ---- batch 6
+
+    /** Every block in the inventory (all block items), or 0. */
+    default int blockItemCount() {
+        return 0;
+    }
+
+    /**
+     * Minecraft's chat size settings, each 0-1 as in its Chat Settings screen:
+     * "scale" (text size), "width", "height" (while chat is open), "unfocused" (height while closed).
+     * Returns -1 if unknown.
+     */
+    default double chatOption(String key) {
+        return -1;
+    }
+
+    default void setChatOption(String key, double value) {
     }
 
     /** Self-test only: puts bedrock and a dropped item in front of the player, on this client only. */

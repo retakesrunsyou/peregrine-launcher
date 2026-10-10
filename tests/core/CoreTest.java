@@ -35,7 +35,10 @@ public class CoreTest {
         public int renderDistance(){return render;} public void setRenderDistance(int r){render=r;}
         public double entityDistance(){return entity;} public void setEntityDistance(double e){entity=e;}
         public int particleLevel(){return particles;} public void setParticleLevel(int l){particles=l;}
+        public int blockItemCount(){return 211;}
+        public double chatOption(String k){return chat.getOrDefault(k, 1.0);} public void setChatOption(String k, double v){chat.put(k, v);}
     }
+    static java.util.Map<String, Double> chat = new java.util.HashMap<>();
     static int reloads, camera, hitColor=-1, fpsNow=144, render=12, particles=0; static double entity=1.0; static boolean altDown;
     static boolean target; static int hurt; static String dim = "minecraft:overworld";
     static java.util.Set<Platform.Option> optionsOn=new java.util.HashSet<>();
@@ -57,7 +60,7 @@ public class CoreTest {
     public static void main(String[] a) throws Exception {
         cfg = Files.createTempDirectory("pc").resolve("config/peregrine-client.json");
         Peregrine pc = Peregrine.init(new P()); D d = new D(); Menu m = pc.menu();
-        check(pc.modules().size()==53, "53 modules registered");
+        check(pc.modules().size()==60, "60 modules registered");
         for (String id : new String[]{"health","nether_coords","session","totems","arrows","durability_alert",
                 "reach","combo","target","block_info","block_count","players","rotation","stopwatch","xp","chunk","light",
                 "anti_leak","crosshair","freelook","hit_color","item_physics"}) check(pc.module(id)!=null, id+" exists");
@@ -100,7 +103,7 @@ public class CoreTest {
         for (net.peregrine.client.core.settings.Setting st : pc.module("zoom").settings()) if (st.id.equals("smooth")) ((net.peregrine.client.core.settings.BoolSetting)st).value=false;
         check(pc.zoomDivisor()==1.0, "no zoom without key"); zoomKey=true; check(pc.zoomDivisor()==4.0, "zoom key gives 4x"); zoomKey=false;
         // fullbright
-        pc.module("fullbright").setEnabled(true); pc.tick(); check(gamma==16.0, "fullbright raises gamma");
+        pc.module("fullbright").setEnabled(true); pc.tick(); check(gamma==30.0, "fullbright raises gamma");
         pc.module("fullbright").setEnabled(false); check(gamma==0.5, "and restores it");
         gamma=0.7; pc.shutdown(); check(gamma==0.7, "shutdown doesn't touch gamma when fullbright never ran");
         // HUD editor drag
@@ -230,7 +233,7 @@ public class CoreTest {
         check(texts.stream().anyMatch(q->q.startsWith("2 hits@")), "combo counts hits");
         check(texts.stream().anyMatch(q->q.startsWith("Zombie  7.0 hp  2.9m@")), "target name, health, distance");
         check(texts.stream().anyMatch(q->q.startsWith("Oak Planks@")), "block info");
-        check(texts.stream().anyMatch(q->q.startsWith("128@")), "block counter");
+        check(texts.stream().anyMatch(q->q.startsWith("211@")), "block counter");
         check(texts.stream().anyMatch(q->q.startsWith("23@")), "players online");
         check(texts.stream().anyMatch(q->q.startsWith("180.0 / 12.5@")), "rotation");
         check(texts.stream().anyMatch(q->q.startsWith("30  (25%)@")), "experience");
@@ -298,6 +301,34 @@ public class CoreTest {
         render = 6; particles = 2; entity = 0.6;  // what Minecraft wrote to options.txt
         Peregrine pc9 = Peregrine.init(new P()); fpsNow = 144; pc9.tick();
         check(render == 12 && particles == 0 && entity == 1.0, "next start puts the player's own settings back");
+        // ---- batch 6
+        Peregrine pc10 = Peregrine.init(new P());
+        pc10.module("fewer_particles").setEnabled(true); pc10.tick();
+        int kept = 0; for (int i = 0; i < 10000; i++) if (Hooks.keepParticle("minecraft:entity_effect")) kept++;
+        check(kept > 2800 && kept < 4200, "Semi keeps about a third of potion swirls (" + kept + ")");
+        check(Hooks.keepParticle("minecraft:crit"), "hits stay Normal by default");
+        check(Hooks.particleKind("minecraft:dripping_lava") == 2 && Hooks.particleKind("minecraft:instant_effect") == 1, "particle kinds");
+        pc10.module("fewer_particles").setEnabled(false);
+        kept = 0; for (int i = 0; i < 1000; i++) if (Hooks.keepParticle("minecraft:entity_effect")) kept++;
+        check(kept == 1000, "off: every particle shows");
+        chat.clear(); pc10.module("chat_size").setEnabled(true); pc10.tick();
+        check(Math.abs(chat.get("scale") - 0.8) < 1e-6 && Math.abs(chat.get("width") - 1.0) < 1e-6, "chat size applied (80%, 320 px)");
+        pc10.module("chat_size").setEnabled(false);
+        check(chat.get("scale") == 1.0, "chat size put back when switched off");
+        pc10.module("scoreboard").setEnabled(true); pc10.tick();
+        check(Hooks.scoreboardScale == 0.75f, "scoreboard at 75%");
+        pc10.module("scoreboard").setEnabled(false); check(Hooks.scoreboardScale == 1f, "scoreboard back to normal");
+        pc10.module("own_nametag").setEnabled(true); pc10.tick();
+        check(Hooks.ownNameTag && Hooks.nameLogo, "own name tag with logo");
+        pc10.module("own_nametag").setEnabled(false); check(!Hooks.ownNameTag, "own name tag off");
+        pc10.module("block_count").setEnabled(true); texts.clear(); pc10.renderHud(d);
+        check(texts.stream().anyMatch(q -> q.startsWith("211@")), "block counter counts every block you have");
+        pc10.module("hitboxes").setEnabled(true); pc10.tick();
+        check(!Hooks.showHitbox(3) && Hooks.showHitbox(0) && !Hooks.hitboxLookLine, "hitboxes: no XP, players yes, no look line by default");
+        pc10.module("hitboxes").setEnabled(false); check(Hooks.showHitbox(3) && Hooks.hitboxLookLine, "hitboxes off: back to Minecraft's");
+        pc10.module("hit_color").setEnabled(true); pc10.tick();
+        check(Hooks.critColor == (0xFF000000 | 0x9B3BFF), "crit sparks follow the hit color");
+        pc10.module("hit_color").setEnabled(false); check(Hooks.critColor == 0, "crit sparks back to Minecraft's");
         playing = false; fpsNow = 144;
         System.out.println("\nALL CORE TESTS PASSED");
     }

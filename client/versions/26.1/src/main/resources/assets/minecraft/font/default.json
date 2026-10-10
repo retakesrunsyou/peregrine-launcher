@@ -1,0 +1,13 @@
+{
+  "providers": [
+    {
+      "type": "bitmap",
+      "file": "peregrine-client:font/logo.png",
+      "ascent": 7,
+      "height": 8,
+      "chars": [
+        "\ue100"
+      ]
+    }
+  ]
+}

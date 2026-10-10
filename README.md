@@ -40,7 +40,14 @@ The play test can repeat this on any version, and with each mod left out in turn
 **In-game menu (Peregrine Client)**
 - Press **Right Shift** in game for a see-through menu: search features and switch them on or off
 - FPS, coordinates, keystrokes, CPS, armor status and potion timers, placed anywhere you drag them
-- Zoom, toggle sprint and sneak, fullbright, compass, biome, memory, clear weather and 20 more
+- Zoom, toggle sprint and sneak, fullbright, compass, biome, memory, clear weather and 40 more
+- **Particles**: Normal, Semi, Strong or Hide for each kind (potions, splash potions and XP bottles, lava, explosions, hits, ...)
+- **Hitboxes** without F3+B: pick which things show them (XP orbs and items off by default), their color, and whether the look line shows
+- **Hit color** for mobs and for crit sparks, **no hurt camera shake**, **low fire**, **1.7 animations**
+- **Your own name tag** in third person, shown as `(Peregrine logo) | YourName`
+- Resize the server's **scoreboard** and the **chat** (size only)
+- **Inventory tweaks**: hold Shift and drag over items to move them all; scroll over an item to move one at a time
+- Your client settings are shared by every instance and version
 - A Peregrine main menu in place of Minecraft's title screen
 - Works on every Minecraft version from 1.21 to 26.3, added to Fabric instances automatically (turn it off in Settings)
 
@@ -48,10 +55,13 @@ The play test can repeat this on any version, and with each mod left out in turn
 - Separate **instances**, each with its own version, mods, worlds, color and memory
 - **Modpacks**: browse and install Fabric modpacks from Modrinth in one click
 - **Add mods** from Modrinth right inside each instance, with required libraries handled for you
+- **Mods** and **Resource packs** pages: browse Modrinth by category (optimization, utility, PvP, ...) and add to any instance
+- Change an instance's version and your mods come along; new instances can bring over settings, packs and mods from another
 - Turn mods, resource packs and shaders on or off
 - **Microsoft login** with multiple accounts and your skin's face in the header
 - **Customizable look**: Dusk, Midnight or Light theme, and any accent color
 - Shows what you're playing on **Discord**
+- **Fit my screen** fills your screen but leaves the taskbar usable
 - Opens instantly, works offline for anything already downloaded, and updates itself
 
 You need your own copy of Minecraft: Java Edition. Sign in with the Microsoft

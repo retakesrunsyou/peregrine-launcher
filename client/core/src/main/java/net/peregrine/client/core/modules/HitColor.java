@@ -13,10 +13,13 @@ public final class HitColor extends Module {
 
     private final ChoiceSetting color = add(new ChoiceSetting("color", "Color", 6, NAMES));
     private final SliderSetting strength = add(new SliderSetting("strength", "Strength", 10f, 100f, 5f, 70f, "%.0f%%"));
+    private final ChoiceSetting crit = add(new ChoiceSetting("crit", "Crit sparks", 1,
+            "Minecraft's", "Same as hit color", "Red", "Gold", "Green", "Cyan", "Purple", "White"));
+    static final int[] CRIT_RGB = {0, 0, 0xFF3030, 0xFFC020, 0x40FF60, 0x30E0FF, 0xA050FF, 0xFFFFFF};
     private int applied = -1;
 
     public HitColor() {
-        super("hit_color", "Hit color", "Change the red flash when mobs and players get hit", Category.VISUALS, false);
+        super("hit_color", "Hit color", "Change the red flash when mobs and players get hit, and the crit sparks", Category.VISUALS, false);
     }
 
     /** The overlay color as ARGB (alpha = how strongly it tints). */
@@ -27,6 +30,8 @@ public final class HitColor extends Module {
 
     @Override
     public void tick(Platform p) {
+        net.peregrine.client.core.Hooks.critColor = crit.index == 0 ? 0
+                : (crit.index == 1 ? RGB[color.index] : CRIT_RGB[crit.index]) | 0xFF000000;
         int want = argb();
         if (want != applied) {
             applied = want;
@@ -36,6 +41,7 @@ public final class HitColor extends Module {
 
     @Override
     protected void onDisable() {
+        net.peregrine.client.core.Hooks.critColor = 0;
         applied = -1;
         platform().setHitColor(0);
     }

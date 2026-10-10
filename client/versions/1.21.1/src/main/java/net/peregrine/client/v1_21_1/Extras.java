@@ -28,4 +28,40 @@ public final class Extras {
         }
         return true;
     }
+
+    /** Hitbox kinds, as in Hooks.showHitbox. */
+    public static int hitboxKind(net.minecraft.world.entity.Entity e) {
+        if (e instanceof net.minecraft.world.entity.player.Player) {
+            return 0;
+        }
+        net.minecraft.world.entity.EntityType<?> type = e.getType();
+        if (type == net.minecraft.world.entity.EntityType.EXPERIENCE_ORB
+                || type == net.minecraft.world.entity.EntityType.EXPERIENCE_BOTTLE) {
+            return 3;
+        }
+        if (type == net.minecraft.world.entity.EntityType.ITEM) {
+            return 2;
+        }
+        if (e instanceof net.minecraft.world.entity.projectile.Projectile) {
+            return 4;
+        }
+        if (e instanceof net.minecraft.world.entity.LivingEntity) {
+            return 1;
+        }
+        return 5;
+    }
+
+    /** "(logo) | name" for your own name tag. */
+    public static net.minecraft.network.chat.Component withLogo(net.minecraft.network.chat.Component name) {
+        if (!Hooks.ownNameTag || !Hooks.nameLogo) {
+            return name;
+        }
+        if (Hooks.nameTagHits < 1000) {
+            Hooks.nameTagHits++;
+        }
+        return net.minecraft.network.chat.Component.literal(Hooks.LOGO)
+                .append(net.minecraft.network.chat.Component.literal(" | ")
+                        .withStyle(net.minecraft.ChatFormatting.DARK_GRAY))
+                .append(name);
+    }
 }

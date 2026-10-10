@@ -347,6 +347,49 @@ final class GamePlatform implements Platform {
         option.set(all[Math.max(0, Math.min(all.length - 1, level))]);
     }
 
+    // ---- batch 6
+
+    @Override
+    public int blockItemCount() {
+        if (mc().player == null) {
+            return 0;
+        }
+        var inv = player().getInventory();
+        int n = 0;
+        for (int i = 0; i < inv.getContainerSize(); i++) {
+            ItemStack stack = inv.getItem(i);
+            if (!stack.isEmpty() && stack.getItem() instanceof net.minecraft.world.item.BlockItem) {
+                n += stack.getCount();
+            }
+        }
+        return n;
+    }
+
+    private net.minecraft.client.OptionInstance<Double> chat(String key) {
+        var o = mc().options;
+        switch (key) {
+            case "scale": return o.chatScale();
+            case "width": return o.chatWidth();
+            case "height": return o.chatHeightFocused();
+            case "unfocused": return o.chatHeightUnfocused();
+            default: return null;
+        }
+    }
+
+    @Override
+    public double chatOption(String key) {
+        var option = chat(key);
+        return option == null ? -1 : option.get();
+    }
+
+    @Override
+    public void setChatOption(String key, double value) {
+        var option = chat(key);
+        if (option != null) {
+            option.set(Math.max(0.0, Math.min(1.0, value)));
+        }
+    }
+
     // ---- batch 5: render hooks
 
     @Override
@@ -373,6 +416,12 @@ final class GamePlatform implements Platform {
                     mc().level, px + fx * 3.5 - fz * 0.8, py + 0.5, pz + fz * 3.5 + fx * 0.8,
                     new ItemStack(net.minecraft.world.item.Items.DIAMOND_SWORD));
             mc().level.addEntity(item);
+            for (int i = 0; i < 40; i++) {  // lava sparks, for the particle test
+                mc().level.addParticle(net.minecraft.core.particles.ParticleTypes.LAVA,
+                        px + fx * 3, py + 1, pz + fz * 3, 0, 0, 0);
+            }
+            mc().player.setItemInHand(net.minecraft.world.InteractionHand.MAIN_HAND,
+                    new ItemStack(net.minecraft.world.item.Items.DIAMOND_SWORD));  // for the animation test
         } catch (Throwable t) {
             System.err.println("[Peregrine] test scene: " + t);
         }
@@ -563,6 +612,8 @@ final class GamePlatform implements Platform {
             case STATIC_FOV: o.fovEffectScale().set(on ? 0.0 : 1.0); break;
             case STEADY_CAMERA:
                 o.bobView().set(!on);
+                break;
+            case NO_HURT_CAM:
                 o.damageTiltStrength().set(on ? 0.0 : 1.0);
                 break;
             case NO_MENU_BLUR: o.menuBackgroundBlurriness().set(on ? 0 : 5); break;

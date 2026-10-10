@@ -6,7 +6,9 @@ import net.peregrine.client.core.Platform;
 public final class Fullbright extends Module {
 
     private final net.peregrine.client.core.settings.SliderSetting bright = add(
-            new net.peregrine.client.core.settings.SliderSetting("brightness", "Brightness", 100f, 1600f, 50f, 1600f, "%.0f%%"));
+            new net.peregrine.client.core.settings.SliderSetting("brightness", "Brightness", 100f, 3000f, 50f, 3000f, "%.0f%%"));
+    private final net.peregrine.client.core.settings.BoolSetting dark = add(
+            new net.peregrine.client.core.settings.BoolSetting("dark", "Light up pitch-black places too", true));
     private Double saved;
 
     public Fullbright() {
@@ -20,6 +22,7 @@ public final class Fullbright extends Module {
 
     @Override
     public void tick(Platform p) {
+        net.peregrine.client.core.Hooks.nightVision = dark.value;
         if (Math.abs(p.gamma() - bright.value / 100.0) > 1e-6) {
             if (saved == null) {
                 saved = p.gamma();
@@ -30,6 +33,7 @@ public final class Fullbright extends Module {
 
     @Override
     protected void onDisable() {
+        net.peregrine.client.core.Hooks.nightVision = false;
         restore(platform());
     }
 
