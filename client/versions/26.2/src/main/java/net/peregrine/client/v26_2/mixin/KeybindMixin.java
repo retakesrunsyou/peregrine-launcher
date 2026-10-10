@@ -15,8 +15,8 @@ public abstract class KeybindMixin {
     @Inject(method = "keyPress(JILnet/minecraft/client/input/KeyEvent;)V", at = @At("HEAD"))
     private void peregrine$key(long window, int action, KeyEvent event, CallbackInfo ci) {
         Peregrine pc = Peregrine.get();
-        if (pc != null && action == org.lwjgl.glfw.GLFW.GLFW_PRESS && net.peregrine.client.v26_2.Screens.current() == null) {
-            pc.onKey(event.key());
+        if (pc != null && action == 1 /* pressed */ && net.peregrine.client.v26_2.Screens.current() == null) {
+            pc.onKey(net.peregrine.client.v26_2.Screens.glfwKey(event.key()));
         }
     }
 }

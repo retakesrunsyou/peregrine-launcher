@@ -100,7 +100,7 @@ final class PeregrineScreen extends Screen {
         if (key == InputConstants.KEY_BACKSPACE) {
             return Menu.KEY_BACKSPACE;
         }
-        return -1;
+        return Screens.glfwKey(key);  // any other key (for keybinds), in GLFW's numbering
     }
 
     @Override

@@ -424,11 +424,7 @@ final class GamePlatform implements Platform {
 
     @Override
     public boolean keyDown(int key) {
-        if (key < 0 || Screens.current() != null) {
-            return false;
-        }
-        long window = org.lwjgl.glfw.GLFW.glfwGetCurrentContext();  // the game's window, on the render thread
-        return window != 0 && org.lwjgl.glfw.GLFW.glfwGetKey(window, key) == org.lwjgl.glfw.GLFW.GLFW_PRESS;
+        return false;  // 26.2+: keybinds come from KeybindMixin as keys are pressed
     }
 
     @Override
