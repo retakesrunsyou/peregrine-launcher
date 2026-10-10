@@ -1,0 +1,12 @@
+INFO phase title on Minecraft 1.21.7
+PASS Peregrine main menu shows instead of Minecraft's
+PASS Singleplayer button opens world list
+PASS Multiplayer button opens server list
+PASS Options button opens options
+PASS Back to the main menu
+PASS clicking Peregrine on the main menu opens the menu
+PASS menu draws on the main menu
+PASS Edit HUD button works on the main menu
+PASS Back button leaves the editor
+INFO counts {titleclick@212,185/0=1, click@95,205/0=1, editor=175, click@213,132/0=1, title=317, menu=240}
+PASS finished with 0 failure(s)

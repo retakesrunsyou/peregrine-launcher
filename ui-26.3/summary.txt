@@ -1,0 +1,31 @@
+INFO startup: imports 263 ms, window built and shown in 361 ms
+INFO import   147.8 ms  peregrine.ui.window
+INFO import    74.3 ms    PySide6.QtCore
+INFO import    64.2 ms      PySide6
+INFO import    56.4 ms        shiboken6
+INFO import    45.5 ms          shiboken6.Shiboken
+INFO import    40.1 ms            shibokensupport.signature.loader
+INFO import    14.6 ms    peregrine.auth
+INFO import    13.9 ms              shibokensupport.signature.lib.pyi_generator
+INFO import    11.7 ms    peregrine.ui.dialogs
+INFO import    10.7 ms              shibokensupport.signature.layout
+INFO import    10.4 ms    PySide6.QtWidgets
+INFO import     8.4 ms                shibokensupport.signature.parser
+PASS every page opens in every theme
+PASS animated background: 6.6 ms per full frame, 8 full frames a second = about 5% of one CPU core while you look at it, nothing while playing
+PASS the background stops when paused
+PASS Settings has the window size menu
+INFO window sizes offered: Fit my screen   ·   2560 × 1400 | 2560 × 1440   ·   16:9   ·   QHD | 2560 × 1080   ·   21:9   ·   Ultrawide | 1920 × 1200   ·   16:10 | 1920 × 1080   ·   16:9   ·   Full HD | 1680 × 1050   ·   16:10 | 1600 × 900   ·   16:9   ·   HD+ | 1440 × 900   ·   16:10 | 1366 × 768   ·   16:9 | 1280 × 800   ·   16:10 | 1280 × 720   ·   16:9   ·   HD | Minecraft's default   ·   854 × 480
+PASS picking a size saves it (got size 2560x1440)
+PASS New instance dialog loads Minecraft and Fabric versions
+PASS Minecraft 26.3 is in the version list
+PASS Fabric stays selected after the lists load (got fabric)
+PASS instance created: fabric 26.3, performance mode True
+PASS Play: game started and closed again within 15 minutes
+PASS status after the game: 'Minecraft closed'
+INFO in game: phase smoke on Minecraft 26.3
+PASS in game: Peregrine main menu shows
+PASS in game: Peregrine menu opens
+PASS in game: menu draws
+INFO in game: counts {title=22, menu=9}
+PASS in game: finished with 0 failure(s)

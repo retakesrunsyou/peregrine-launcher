@@ -1,0 +1,52 @@
+INFO phase world on Minecraft 1.21.7
+PASS joins the world
+INFO benchmark: 44 fps average, 34 lowest, render distance 8, over 20 s
+PASS HUD draws in game
+PASS Stable FPS eases off settings when FPS is low
+PASS mouse clicks are counted (CPS)
+PASS holding C zooms in
+PASS Right Shift opens the menu
+PASS typing and Backspace work in the search box
+PASS clicking a card switches it
+PASS Edit HUD opens the editor
+PASS dragging moves a HUD item
+PASS right-click opens the style panel
+PASS picking a colour recolours the text
+PASS dragging the corner makes it bigger
+PASS Esc saves and closes the editor
+PASS the gear opens a settings page
+PASS clicking an option changes it
+PASS the keybind button waits for a key
+PASS pressing K binds it
+PASS Customize opens the editor with the style panel
+PASS Esc goes back to the settings page
+PASS Esc goes back to the list
+PASS the Settings tab opens
+PASS the Keybinds tab opens
+PASS back to the Mods tab
+PASS Esc closes the menu
+PASS pressing K in game switches the Clock
+PASS clear_weather hook runs
+PASS clean_edges hook runs
+PASS anti base leak: every block uses one rotation
+PASS anti base leak: block model hook runs (diamond bedrock)
+PASS bedrock is drawn as diamond blocks
+PASS item physics lays the dropped item down
+PASS custom crosshair draws
+PASS holding Alt starts freelook in third person
+PASS letting go of Alt goes back to first person
+PASS particles: lava sparks are thinned out
+PASS fullbright lights up dark places
+PASS 1.7 animations: held item moves
+PASS hitboxes draw without F3+B
+PASS resource packs leave the menus alone (test pack's button and splash skipped)
+PASS small totem: the totem in your hand is drawn smaller
+PASS your own name tag shows in third person
+PASS fog is pushed away
+PASS block outline in the chosen color
+PASS ores you can see get an outline
+PASS the sky stops moving
+PASS swing speed changes the swing
+INFO hooks: seed=1000 offset=1000 model=1000 bedrock=56 items=476 crosshair=4296 camera=96 particles=1000 nightvision=1000 animation=614 hitbox=1000 nametag=178 scoreboard=0 fire=0 inventory=0 totem=307 packs=85 fog=1000 outline=1000 ores=613 sky=1000 swing=22 sound=0
+INFO counts {on:clear_weather=766775, keybind:clock=1, editor=669, click@95,205/0=1, click@159,102/0=1, click@222,121/0=1, zoom-hook=8636, click@183,106/0=1, zoom-active=322, click@229,51/0=1, menu=1057, click@331,89/0=1, mouse=1, click@93,51/0=1, click@245,134/0=1, hud=4477, click@153,90/1=1, on:clean_edges=4477, click@95,51/0=1, click@159,85/0=1, click@162,51/0=1, click@183,100/0=1}
+PASS finished with 0 failure(s)

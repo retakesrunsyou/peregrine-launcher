@@ -1,0 +1,125 @@
+INFO Mojang runtime unavailable: RuntimeError("Couldn't get Mojang's Java list: 404 Client Error: The specified blob does not exist. for url: https://launchermeta.mojang.com/v1/products/java-runtime/2ec0cc96c44e5a76b9c8b8c39a2e7a66a4d0f3aa/all.json")
+PASS launcher prepared Fabric 1.21.9 in 9s with /home/runner/work/peregrine-launcher/peregrine-launcher/out/1.21.9/home/data/peregrine/runtimes/temurin-21/jdk-21.0.12.1+1-jre/bin/java (Java 21)
+PASS Peregrine Client installed (fabric-api-0.134.1+1.21.9.jar, peregrine-client-1.21.9.jar)
+PASS Fabric API installed
+PASS Java 21 meets the required 21
+PASS made a test world with the Minecraft server
+PASS game window is titled 'Peregrine Client 1.0.1 - Minecraft 1.21.9'
+INFO title: phase title on Minecraft 1.21.9
+PASS title: Peregrine main menu shows instead of Minecraft's
+PASS title: Singleplayer button opens world list
+PASS title: Multiplayer button opens server list
+PASS title: Options button opens options
+PASS title: Back to the main menu
+PASS title: clicking Peregrine on the main menu opens the menu
+PASS title: menu draws on the main menu
+PASS title: Edit HUD button works on the main menu
+PASS title: Back button leaves the editor
+INFO title: counts {titleclick@212,185/0=1, click@95,205/0=1, editor=178, click@213,132/0=1, title=313, menu=233}
+PASS title: finished with 0 failure(s)
+INFO world: phase world on Minecraft 1.21.9
+PASS world: joins the world
+INFO world: benchmark: 21 fps average, 15 lowest, render distance 8, over 20 s
+PASS world: HUD draws in game
+PASS world: Stable FPS eases off settings when FPS is low
+PASS world: mouse clicks are counted (CPS)
+PASS world: holding C zooms in
+PASS world: Right Shift opens the menu
+PASS world: typing and Backspace work in the search box
+PASS world: clicking a card switches it
+PASS world: Edit HUD opens the editor
+PASS world: dragging moves a HUD item
+PASS world: right-click opens the style panel
+PASS world: picking a colour recolours the text
+PASS world: dragging the corner makes it bigger
+PASS world: Esc saves and closes the editor
+PASS world: the gear opens a settings page
+PASS world: clicking an option changes it
+PASS world: the keybind button waits for a key
+PASS world: pressing K binds it
+PASS world: Customize opens the editor with the style panel
+PASS world: Esc goes back to the settings page
+PASS world: Esc goes back to the list
+PASS world: the Settings tab opens
+PASS world: the Keybinds tab opens
+PASS world: back to the Mods tab
+PASS world: Esc closes the menu
+PASS world: pressing K in game switches the Clock
+PASS world: clear_weather hook runs
+PASS world: clean_edges hook runs
+PASS world: anti base leak: every block uses one rotation
+PASS world: anti base leak: block model hook runs (diamond bedrock)
+PASS world: bedrock is drawn as diamond blocks
+PASS world: item physics lays the dropped item down
+PASS world: custom crosshair draws
+PASS world: holding Alt starts freelook in third person
+PASS world: letting go of Alt goes back to first person
+PASS world: particles: lava sparks are thinned out
+PASS world: fullbright lights up dark places
+PASS world: 1.7 animations: held item moves
+PASS world: hitboxes draw without F3+B
+PASS world: resource packs leave the menus alone (test pack's button and splash skipped)
+PASS world: small totem: the totem in your hand is drawn smaller
+PASS world: your own name tag shows in third person
+PASS world: fog is pushed away
+PASS world: block outline in the chosen color
+PASS world: ores you can see get an outline
+PASS world: the sky stops moving
+PASS world: swing speed changes the swing
+INFO world: hooks: seed=1000 offset=1000 model=1000 bedrock=12 items=298 crosshair=168 camera=44 particles=513 nightvision=261 animation=242 hitbox=219 nametag=31 scoreboard=0 fire=0 inventory=0 totem=121 packs=95 fog=79 outline=79 ores=79 sky=1000 swing=37 sound=0
+INFO world: counts {on:clear_weather=537189, keybind:clock=1, click@95,205/0=1, editor=313, click@159,102/0=1, click@83,47/0=1, zoom-hook=4037, click@73,44/1=1, click@183,106/0=1, click@10,4/0=1, zoom-active=119, click@229,51/0=1, menu=490, mouse=1, click@245,134/0=1, hud=2075, on:clean_edges=2075, click@95,51/0=1, click@159,85/0=1, click@162,51/0=1, click@341,89/0=1, click@122,82/0=1}
+PASS world: finished with 0 failure(s)
+PASS performance mods installed: sodium-fabric-0.7.3+mc1.21.10.jar, lithium-fabric-0.19.2+mc1.21.9.jar, ferritecore-8.1.0-fabric.jar, entityculling-fabric-1.9.3-mc1.21.10.jar, ImmediatelyFast-Fabric-1.13.6+1.21.10.jar, cloth-config-20.0.149-fabric.jar, moreculling-fabric-1.21.9-1.5.0-beta.2.jar, BadOptimizations-2.3.3-1.21.9-21.10.jar, ScalableLux-0.1.6+fabric.c25518a-all.jar, Clumps-fabric-1.21.9-27.0.0.2.jar, dynamic-fps-3.11.6+minecraft-1.21.9-fabric.jar
+PASS fast settings written (15 changed)
+INFO fps-mods: phase world on Minecraft 1.21.9
+PASS fps-mods: joins the world
+INFO fps-mods: benchmark: 32 fps average, 30 lowest, render distance 8, over 20 s
+PASS fps-mods: HUD draws in game
+PASS fps-mods: Stable FPS eases off settings when FPS is low
+PASS fps-mods: mouse clicks are counted (CPS)
+PASS fps-mods: holding C zooms in
+PASS fps-mods: Right Shift opens the menu
+PASS fps-mods: typing and Backspace work in the search box
+PASS fps-mods: clicking a card switches it
+PASS fps-mods: Edit HUD opens the editor
+PASS fps-mods: dragging moves a HUD item
+PASS fps-mods: right-click opens the style panel
+PASS fps-mods: picking a colour recolours the text
+PASS fps-mods: dragging the corner makes it bigger
+PASS fps-mods: Esc saves and closes the editor
+PASS fps-mods: the gear opens a settings page
+PASS fps-mods: clicking an option changes it
+PASS fps-mods: the keybind button waits for a key
+PASS fps-mods: pressing K binds it
+PASS fps-mods: Customize opens the editor with the style panel
+PASS fps-mods: Esc goes back to the settings page
+PASS fps-mods: Esc goes back to the list
+PASS fps-mods: the Settings tab opens
+PASS fps-mods: the Keybinds tab opens
+PASS fps-mods: back to the Mods tab
+PASS fps-mods: Esc closes the menu
+PASS fps-mods: pressing K in game switches the Clock
+PASS fps-mods: clear_weather hook runs
+PASS fps-mods: clean_edges hook runs
+PASS fps-mods: anti base leak: every block uses one rotation
+PASS fps-mods: anti base leak: block model hook runs (diamond bedrock)
+PASS fps-mods: bedrock is drawn as diamond blocks
+PASS fps-mods: item physics lays the dropped item down
+PASS fps-mods: custom crosshair draws
+PASS fps-mods: holding Alt starts freelook in third person
+PASS fps-mods: letting go of Alt goes back to first person
+PASS fps-mods: particles: lava sparks are thinned out
+PASS fps-mods: fullbright lights up dark places
+PASS fps-mods: 1.7 animations: held item moves
+PASS fps-mods: hitboxes draw without F3+B
+PASS fps-mods: resource packs leave the menus alone (test pack's button and splash skipped)
+PASS fps-mods: small totem: the totem in your hand is drawn smaller
+PASS fps-mods: your own name tag shows in third person
+PASS fps-mods: fog is pushed away
+PASS fps-mods: block outline in the chosen color
+PASS fps-mods: ores you can see get an outline
+PASS fps-mods: the sky stops moving
+PASS fps-mods: swing speed changes the swing
+INFO fps-mods: hooks: seed=1000 offset=1000 model=1000 bedrock=23 items=334 crosshair=2978 camera=60 particles=1000 nightvision=1000 animation=372 hitbox=1000 nametag=97 scoreboard=0 fire=0 inventory=0 totem=186 packs=95 fog=1000 outline=364 ores=1000 sky=1000 swing=22 sound=0
+INFO fps-mods: counts {on:clear_weather=497048, keybind:clock=1, editor=486, click@95,205/0=1, click@159,102/0=1, click@222,121/0=1, zoom-hook=5990, click@183,106/0=1, zoom-active=170, click@229,51/0=1, menu=770, click@331,89/0=1, mouse=1, click@93,51/0=1, click@245,134/0=1, hud=3077, click@153,90/1=1, on:clean_edges=3077, click@95,51/0=1, click@159,85/0=1, click@162,51/0=1, click@183,100/0=1}
+PASS fps-mods: finished with 0 failure(s)

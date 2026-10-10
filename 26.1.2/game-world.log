@@ -1,0 +1,809 @@
+  <log4j:Event logger="FabricLoader/GameProvider" timestamp="1791649479776" level="INFO" thread="main">
+    <log4j:Message><![CDATA[Loading Minecraft 26.1.2 with Fabric Loader 0.19.5]]></log4j:Message>
+  </log4j:Event>
+  <log4j:Event logger="FabricLoader/Mappings" timestamp="1791649479778" level="INFO" thread="main">
+    <log4j:Message><![CDATA[Mappings not present!]]></log4j:Message>
+  </log4j:Event>
+  <log4j:Event logger="FabricLoader" timestamp="1791649479895" level="INFO" thread="main">
+    <log4j:Message><![CDATA[Loading 49 mods:
+	- fabric-api 0.155.3+26.1.2
+	   |-- fabric-api-base 2.0.3+ece063234c
+	   |-- fabric-api-lookup-api-v1 2.0.12+d5a053b64c
+	   |-- fabric-biome-api-v1 18.0.5+2fa62b4e4c
+	   |-- fabric-block-api-v1 3.0.2+ec56b6014c
+	   |-- fabric-block-getter-api-v2 2.0.6+ec56b6014c
+	   |-- fabric-command-api-v2 3.0.5+e2bdee784c
+	   |-- fabric-content-registries-v0 11.3.1+af8a297c4c
+	   |-- fabric-convention-tags-v2 4.6.2+4f11f7994c
+	   |-- fabric-crash-report-info-v1 1.0.3+9f78a5a84c
+	   |-- fabric-creative-tab-api-v1 5.0.12+a981f2874c
+	   |-- fabric-data-attachment-api-v1 2.2.10+44a0bd1d4c
+	   |-- fabric-data-generation-api-v1 24.3.4+cda368334c
+	   |-- fabric-debug-api-v1 1.0.1+c792624d4c
+	   |-- fabric-dimensions-v1 5.1.7+ad343a8d4c
+	   |-- fabric-entity-events-v1 5.0.2+e2bdee784c
+	   |-- fabric-events-interaction-v0 5.2.3+07b380be4c
+	   |-- fabric-game-rule-api-v1 4.0.5+d871b99e4c
+	   |-- fabric-item-api-v1 14.3.0+6d1aaa724c
+	   |-- fabric-key-mapping-api-v1 2.0.4+e2bdee784c
+	   |-- fabric-lifecycle-events-v1 4.1.1+df84eb3d4c
+	   |-- fabric-loot-api-v3 3.0.12+00a1fba64c
+	   |-- fabric-menu-api-v1 2.0.15+d871b99e4c
+	   |-- fabric-message-api-v1 7.0.5+dae8ce3e4c
+	   |-- fabric-model-loading-api-v1 8.0.11+c80601bb4c
+	   |-- fabric-networking-api-v1 6.3.2+a217cccf4c
+	   |-- fabric-object-builder-api-v1 23.1.1+abb459f14c
+	   |-- fabric-particles-v1 5.0.16+b61fef434c
+	   |-- fabric-permission-api-v1 1.0.3+5730ecca4c
+	   |-- fabric-recipe-api-v1 9.0.17+be4b75ae4c
+	   |-- fabric-registry-sync-v0 7.1.1+2fa62b4e4c
+	   |-- fabric-renderer-api-v1 13.0.8+c80601bb4c
+	   |-- fabric-renderer-indigo 8.1.5+1403e82c4c
+	   |-- fabric-rendering-fluids-v1 6.0.1+d871b99e4c
+	   |-- fabric-rendering-v1 23.3.1+e9207d814c
+	   |-- fabric-resource-conditions-api-v1 6.1.0+83dd0ba34c
+	   |-- fabric-resource-loader-v0 3.3.17+4fc5413f4c
+	   |-- fabric-resource-loader-v1 2.0.10+7c44c7324c
+	   |-- fabric-screen-api-v1 5.1.0+981dd9b24c
+	   |-- fabric-serialization-api-v1 2.0.3+11a26f314c
+	   |-- fabric-sound-api-v1 2.0.4+11a26f314c
+	   |-- fabric-tag-api-v1 2.1.1+371cf5db4c
+	   |-- fabric-transfer-api-v1 8.0.6+357ea7334c
+	   \-- fabric-transitive-access-wideners-v1 8.1.3+3ff549fb4c
+	- fabricloader 0.19.5
+	   \-- mixinextras 0.5.5
+	- java 25
+	- minecraft 26.1.2
+	- peregrine-client 1.0.1]]></log4j:Message>
+  </log4j:Event>
+  <log4j:Event logger="FabricLoader/Mixin" timestamp="1791649479953" level="INFO" thread="main">
+    <log4j:Message><![CDATA[SpongePowered MIXIN Subsystem Version=0.8.7 Source=file:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.1.2/home/data/peregrine/libraries/net/fabricmc/sponge-mixin/0.17.4+mixin.0.8.7/sponge-mixin-0.17.4+mixin.0.8.7.jar Service=Knot/Fabric Env=CLIENT]]></log4j:Message>
+  </log4j:Event>
+  <log4j:Event logger="FabricLoader/MixinExtras|Service" timestamp="1791649480740" level="INFO" thread="main">
+    <log4j:Message><![CDATA[Initializing MixinExtras via com.llamalad7.mixinextras.service.MixinExtrasServiceImpl(version=0.5.5).]]></log4j:Message>
+  </log4j:Event>
+  <log4j:Event logger="com.mojang.datafixers.DataFixerBuilder" timestamp="1791649481448" level="INFO" thread="Datafixer Bootstrap">
+    <log4j:Message><![CDATA[291 Datafixer optimizations took 314 milliseconds]]></log4j:Message>
+  </log4j:Event>
+  <log4j:Event logger="com.mojang.authlib.yggdrasil.YggdrasilAuthenticationService" timestamp="1791649484936" level="INFO" thread="Render thread">
+    <log4j:Message><![CDATA[Environment: Environment[sessionHost=https://sessionserver.mojang.com, servicesHost=https://api.minecraftservices.com, profilesHost=https://api.mojang.com, name=PROD]]]></log4j:Message>
+  </log4j:Event>
+  <log4j:Event logger="net.minecraft.client.Minecraft" timestamp="1791649484956" level="INFO" thread="Render thread">
+    <log4j:Message><![CDATA[Setting user: Tester]]></log4j:Message>
+  </log4j:Event>
+  <log4j:Event logger="net.fabricmc.fabric.impl.client.indigo.Indigo" timestamp="1791649485146" level="INFO" thread="Render thread">
+    <log4j:Message><![CDATA[[Indigo] Registering Indigo renderer!]]></log4j:Message>
+  </log4j:Event>
+  <log4j:Event logger="net.minecraft.client.Minecraft" timestamp="1791649485336" level="INFO" thread="Render thread">
+    <log4j:Message><![CDATA[Backend library: LWJGL version 3.4.1-snapshot]]></log4j:Message>
+  </log4j:Event>
+  <log4j:Event logger="net.minecraft.client.Minecraft" timestamp="1791649485336" level="ERROR" thread="Download-2">
+    <log4j:Message><![CDATA[Failed to fetch user properties]]></log4j:Message>
+    <log4j:Throwable><![CDATA[com.mojang.authlib.exceptions.InvalidCredentialsException: Status: 401
+	at knot//com.mojang.authlib.exceptions.MinecraftClientHttpException.toAuthenticationException(MinecraftClientHttpException.java:59)
+	at knot//com.mojang.authlib.yggdrasil.YggdrasilUserApiService.fetchProperties(YggdrasilUserApiService.java:150)
+	at knot//net.minecraft.client.Minecraft.lambda$new$1(Minecraft.java:459)
+	at java.base/java.util.concurrent.CompletableFuture$AsyncSupply.run(Unknown Source)
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(Unknown Source)
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(Unknown Source)
+	at java.base/java.lang.Thread.run(Unknown Source)
+Caused by: MinecraftClientHttpException[type=HTTP_ERROR, status=401, response=ErrorResponse[path=/player/attributes, error=null, errorMessage=null, details=null]]
+	at knot//com.mojang.authlib.minecraft.client.MinecraftClient.readInputStream(MinecraftClient.java:103)
+	at knot//com.mojang.authlib.minecraft.client.MinecraftClient.get(MinecraftClient.java:56)
+	at knot//com.mojang.authlib.yggdrasil.YggdrasilUserApiService.fetchProperties(YggdrasilUserApiService.java:121)
+	... 5 more
+]]></log4j:Throwable>
+  </log4j:Event>
+ATTENTION: default value of option mesa_glthread overridden by environment.
+  <log4j:Event logger="net.minecraft.client.Minecraft" timestamp="1791649485834" level="INFO" thread="Render thread">
+    <log4j:Message><![CDATA[Using optional rendering extensions: GL_ARB_buffer_storage, GL_KHR_debug, GL_ARB_vertex_attrib_binding, GL_ARB_direct_state_access, GL_EXT_texture_filter_anisotropic]]></log4j:Message>
+  </log4j:Event>
+  <log4j:Event logger="com.mojang.text2speech.Narrator" timestamp="1791649486217" level="ERROR" thread="Render thread">
+    <log4j:Message><![CDATA[Error while loading the narrator]]></log4j:Message>
+    <log4j:Throwable><![CDATA[com.mojang.text2speech.Narrator$InitializeException: Failed to load library flite
+	at knot//com.mojang.text2speech.NarratorLinux$FliteLibrary.loadNative(NarratorLinux.java:81)
+	at knot//com.mojang.text2speech.NarratorLinux.<init>(NarratorLinux.java:18)
+	at knot//com.mojang.text2speech.Narrator.getNarrator(Narrator.java:41)
+	at knot//net.minecraft.client.GameNarrator.<init>(GameNarrator.java:20)
+	at knot//net.minecraft.client.Minecraft.<init>(Minecraft.java:726)
+	at knot//net.minecraft.client.main.Main.main(Main.java:232)
+	at net.fabricmc.loader.impl.game.minecraft.MinecraftGameProvider.launch(MinecraftGameProvider.java:517)
+	at net.fabricmc.loader.impl.launch.knot.Knot.launch(Knot.java:72)
+	at net.fabricmc.loader.impl.launch.knot.KnotClient.main(KnotClient.java:23)
+Caused by: java.lang.UnsatisfiedLinkError: Unable to load library 'flite':
+libflite.so: cannot open shared object file: No such file or directory
+libflite.so: cannot open shared object file: No such file or directory
+Native library (linux-x86-64/libflite.so) not found in resource path (/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.1.2/home/data/peregrine/libraries/org/ow2/asm/asm/9.10.1/asm-9.10.1.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.1.2/home/data/peregrine/libraries/org/ow2/asm/asm-analysis/9.10.1/asm-analysis-9.10.1.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.1.2/home/data/peregrine/libraries/org/ow2/asm/asm-commons/9.10.1/asm-commons-9.10.1.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.1.2/home/data/peregrine/libraries/org/ow2/asm/asm-tree/9.10.1/asm-tree-9.10.1.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.1.2/home/data/peregrine/libraries/org/ow2/asm/asm-util/9.10.1/asm-util-9.10.1.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.1.2/home/data/peregrine/libraries/net/fabricmc/sponge-mixin/0.17.4+mixin.0.8.7/sponge-mixin-0.17.4+mixin.0.8.7.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.1.2/home/data/peregrine/libraries/net/fabricmc/fabric-loader/0.19.5/fabric-loader-0.19.5.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.1.2/home/data/peregrine/libraries/at/yawk/lz4/lz4-java/1.10.1/lz4-java-1.10.1.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.1.2/home/data/peregrine/libraries/com/azure/azure-json/1.4.0/azure-json-1.4.0.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.1.2/home/data/peregrine/libraries/com/github/oshi/oshi-core/6.9.0/oshi-core-6.9.0.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.1.2/home/data/peregrine/libraries/com/google/code/gson/gson/2.13.2/gson-2.13.2.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.1.2/home/data/peregrine/libraries/com/google/guava/failureaccess/1.0.3/failureaccess-1.0.3.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.1.2/home/data/peregrine/libraries/com/google/guava/guava/33.5.0-jre/guava-33.5.0-jre.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.1.2/home/data/peregrine/libraries/com/ibm/icu/icu4j/77.1/icu4j-77.1.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.1.2/home/data/peregrine/libraries/com/microsoft/azure/msal4j/1.23.1/msal4j-1.23.1.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.1.2/home/data/peregrine/libraries/com/mojang/authlib/7.0.63/authlib-7.0.63.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.1.2/home/data/peregrine/libraries/com/mojang/blocklist/1.0.10/blocklist-1.0.10.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.1.2/home/data/peregrine/libraries/com/mojang/brigadier/1.3.10/brigadier-1.3.10.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.1.2/home/data/peregrine/libraries/com/mojang/datafixerupper/9.0.19/datafixerupper-9.0.19.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.1.2/home/data/peregrine/libraries/com/mojang/jtracy/1.0.37/jtracy-1.0.37.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.1.2/home/data/peregrine/libraries/com/mojang/jtracy/1.0.37/jtracy-1.0.37-natives-linux.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.1.2/home/data/peregrine/libraries/com/mojang/logging/1.6.11/logging-1.6.11.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.1.2/home/data/peregrine/libraries/com/mojang/patchy/2.2.10/patchy-2.2.10.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.1.2/home/data/peregrine/libraries/com/mojang/text2speech/1.18.11/text2speech-1.18.11.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.1.2/home/data/peregrine/libraries/commons-codec/commons-codec/1.19.0/commons-codec-1.19.0.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.1.2/home/data/peregrine/libraries/commons-io/commons-io/2.20.0/commons-io-2.20.0.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.1.2/home/data/peregrine/libraries/io/netty/netty-buffer/4.2.7.Final/netty-buffer-4.2.7.Final.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.1.2/home/data/peregrine/libraries/io/netty/netty-codec-base/4.2.7.Final/netty-codec-base-4.2.7.Final.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.1.2/home/data/peregrine/libraries/io/netty/netty-codec-compression/4.2.7.Final/netty-codec-compression-4.2.7.Final.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.1.2/home/data/peregrine/libraries/io/netty/netty-codec-http/4.2.7.Final/netty-codec-http-4.2.7.Final.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.1.2/home/data/peregrine/libraries/io/netty/netty-common/4.2.7.Final/netty-common-4.2.7.Final.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.1.2/home/data/peregrine/libraries/io/netty/netty-handler/4.2.7.Final/netty-handler-4.2.7.Final.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.1.2/home/data/peregrine/libraries/io/netty/netty-resolver/4.2.7.Final/netty-resolver-4.2.7.Final.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.1.2/home/data/peregrine/libraries/io/netty/netty-transport-classes-epoll/4.2.7.Final/netty-transport-classes-epoll-4.2.7.Final.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.1.2/home/data/peregrine/libraries/io/netty/netty-transport-classes-kqueue/4.2.7.Final/netty-transport-classes-kqueue-4.2.7.Final.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.1.2/home/data/peregrine/libraries/io/netty/netty-transport-native-epoll/4.2.7.Final/netty-transport-native-epoll-4.2.7.Final-linux-aarch_64.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.1.2/home/data/peregrine/libraries/io/netty/netty-transport-native-epoll/4.2.7.Final/netty-transport-native-epoll-4.2.7.Final-linux-x86_64.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.1.2/home/data/peregrine/libraries/io/netty/netty-transport-native-unix-common/4.2.7.Final/netty-transport-native-unix-common-4.2.7.Final.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.1.2/home/data/peregrine/libraries/io/netty/netty-transport/4.2.7.Final/netty-transport-4.2.7.Final.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.1.2/home/data/peregrine/libraries/it/unimi/dsi/fastutil/8.5.18/fastutil-8.5.18.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.1.2/home/data/peregrine/libraries/net/java/dev/jna/jna-platform/5.17.0/jna-platform-5.17.0.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.1.2/home/data/peregrine/libraries/net/java/dev/jna/jna/5.17.0/jna-5.17.0.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.1.2/home/data/peregrine/libraries/net/sf/jopt-simple/jopt-simple/5.0.4/jopt-simple-5.0.4.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.1.2/home/data/peregrine/libraries/org/apache/commons/commons-compress/1.28.0/commons-compress-1.28.0.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.1.2/home/data/peregrine/libraries/org/apache/commons/commons-lang3/3.19.0/commons-lang3-3.19.0.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.1.2/home/data/peregrine/libraries/org/apache/logging/log4j/log4j-api/2.25.2/log4j-api-2.25.2.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.1.2/home/data/peregrine/libraries/org/apache/logging/log4j/log4j-core/2.25.2/log4j-core-2.25.2.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.1.2/home/data/peregrine/libraries/org/apache/logging/log4j/log4j-slf4j2-impl/2.25.2/log4j-slf4j2-impl-2.25.2.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.1.2/home/data/peregrine/libraries/org/jcraft/jorbis/0.0.17/jorbis-0.0.17.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.1.2/home/data/peregrine/libraries/org/joml/joml/1.10.8/joml-1.10.8.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.1.2/home/data/peregrine/libraries/org/jspecify/jspecify/1.0.0/jspecify-1.0.0.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.1.2/home/data/peregrine/libraries/org/lwjgl/lwjgl-freetype/3.4.1/lwjgl-freetype-3.4.1.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.1.2/home/data/peregrine/libraries/org/lwjgl/lwjgl-freetype/3.4.1/lwjgl-freetype-3.4.1-natives-linux.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.1.2/home/data/peregrine/libraries/org/lwjgl/lwjgl-glfw/3.4.1/lwjgl-glfw-3.4.1.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.1.2/home/data/peregrine/libraries/org/lwjgl/lwjgl-glfw/3.4.1/lwjgl-glfw-3.4.1-natives-linux.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.1.2/home/data/peregrine/libraries/org/lwjgl/lwjgl-jemalloc/3.4.1/lwjgl-jemalloc-3.4.1.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.1.2/home/data/peregrine/libraries/org/lwjgl/lwjgl-jemalloc/3.4.1/lwjgl-jemalloc-3.4.1-natives-linux.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.1.2/home/data/peregrine/libraries/org/lwjgl/lwjgl-openal/3.4.1/lwjgl-openal-3.4.1.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.1.2/home/data/peregrine/libraries/org/lwjgl/lwjgl-openal/3.4.1/lwjgl-openal-3.4.1-natives-linux.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.1.2/home/data/peregrine/libraries/org/lwjgl/lwjgl-opengl/3.4.1/lwjgl-opengl-3.4.1.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.1.2/home/data/peregrine/libraries/org/lwjgl/lwjgl-opengl/3.4.1/lwjgl-opengl-3.4.1-natives-linux.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.1.2/home/data/peregrine/libraries/org/lwjgl/lwjgl-stb/3.4.1/lwjgl-stb-3.4.1.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.1.2/home/data/peregrine/libraries/org/lwjgl/lwjgl-stb/3.4.1/lwjgl-stb-3.4.1-natives-linux.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.1.2/home/data/peregrine/libraries/org/lwjgl/lwjgl-tinyfd/3.4.1/lwjgl-tinyfd-3.4.1.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.1.2/home/data/peregrine/libraries/org/lwjgl/lwjgl-tinyfd/3.4.1/lwjgl-tinyfd-3.4.1-natives-linux.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.1.2/home/data/peregrine/libraries/org/lwjgl/lwjgl/3.4.1/lwjgl-3.4.1.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.1.2/home/data/peregrine/libraries/org/lwjgl/lwjgl/3.4.1/lwjgl-3.4.1-natives-linux.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.1.2/home/data/peregrine/libraries/org/slf4j/slf4j-api/2.0.17/slf4j-api-2.0.17.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.1.2/home/data/peregrine/versions/26.1.2/26.1.2.jar)
+	at knot//com.sun.jna.NativeLibrary.loadLibrary(NativeLibrary.java:325)
+	at knot//com.sun.jna.NativeLibrary.getInstance(NativeLibrary.java:481)
+	at knot//com.sun.jna.NativeLibrary.getInstance(NativeLibrary.java:423)
+	at knot//com.mojang.text2speech.NarratorLinux$FliteLibrary.loadNative(NarratorLinux.java:79)
+	... 8 more
+	Suppressed: java.lang.UnsatisfiedLinkError: libflite.so: cannot open shared object file: No such file or directory
+		at knot//com.sun.jna.Native.open(Native Method)
+		at knot//com.sun.jna.NativeLibrary.loadLibrary(NativeLibrary.java:213)
+		... 11 more
+	Suppressed: java.lang.UnsatisfiedLinkError: libflite.so: cannot open shared object file: No such file or directory
+		at knot//com.sun.jna.Native.open(Native Method)
+		at knot//com.sun.jna.NativeLibrary.loadLibrary(NativeLibrary.java:226)
+		... 11 more
+	Suppressed: java.io.IOException: Native library (linux-x86-64/libflite.so) not found in resource path (/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.1.2/home/data/peregrine/libraries/org/ow2/asm/asm/9.10.1/asm-9.10.1.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.1.2/home/data/peregrine/libraries/org/ow2/asm/asm-analysis/9.10.1/asm-analysis-9.10.1.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.1.2/home/data/peregrine/libraries/org/ow2/asm/asm-commons/9.10.1/asm-commons-9.10.1.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.1.2/home/data/peregrine/libraries/org/ow2/asm/asm-tree/9.10.1/asm-tree-9.10.1.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.1.2/home/data/peregrine/libraries/org/ow2/asm/asm-util/9.10.1/asm-util-9.10.1.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.1.2/home/data/peregrine/libraries/net/fabricmc/sponge-mixin/0.17.4+mixin.0.8.7/sponge-mixin-0.17.4+mixin.0.8.7.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.1.2/home/data/peregrine/libraries/net/fabricmc/fabric-loader/0.19.5/fabric-loader-0.19.5.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.1.2/home/data/peregrine/libraries/at/yawk/lz4/lz4-java/1.10.1/lz4-java-1.10.1.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.1.2/home/data/peregrine/libraries/com/azure/azure-json/1.4.0/azure-json-1.4.0.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.1.2/home/data/peregrine/libraries/com/github/oshi/oshi-core/6.9.0/oshi-core-6.9.0.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.1.2/home/data/peregrine/libraries/com/google/code/gson/gson/2.13.2/gson-2.13.2.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.1.2/home/data/peregrine/libraries/com/google/guava/failureaccess/1.0.3/failureaccess-1.0.3.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.1.2/home/data/peregrine/libraries/com/google/guava/guava/33.5.0-jre/guava-33.5.0-jre.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.1.2/home/data/peregrine/libraries/com/ibm/icu/icu4j/77.1/icu4j-77.1.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.1.2/home/data/peregrine/libraries/com/microsoft/azure/msal4j/1.23.1/msal4j-1.23.1.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.1.2/home/data/peregrine/libraries/com/mojang/authlib/7.0.63/authlib-7.0.63.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.1.2/home/data/peregrine/libraries/com/mojang/blocklist/1.0.10/blocklist-1.0.10.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.1.2/home/data/peregrine/libraries/com/mojang/brigadier/1.3.10/brigadier-1.3.10.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.1.2/home/data/peregrine/libraries/com/mojang/datafixerupper/9.0.19/datafixerupper-9.0.19.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.1.2/home/data/peregrine/libraries/com/mojang/jtracy/1.0.37/jtracy-1.0.37.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.1.2/home/data/peregrine/libraries/com/mojang/jtracy/1.0.37/jtracy-1.0.37-natives-linux.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.1.2/home/data/peregrine/libraries/com/mojang/logging/1.6.11/logging-1.6.11.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.1.2/home/data/peregrine/libraries/com/mojang/patchy/2.2.10/patchy-2.2.10.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.1.2/home/data/peregrine/libraries/com/mojang/text2speech/1.18.11/text2speech-1.18.11.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.1.2/home/data/peregrine/libraries/commons-codec/commons-codec/1.19.0/commons-codec-1.19.0.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.1.2/home/data/peregrine/libraries/commons-io/commons-io/2.20.0/commons-io-2.20.0.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.1.2/home/data/peregrine/libraries/io/netty/netty-buffer/4.2.7.Final/netty-buffer-4.2.7.Final.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.1.2/home/data/peregrine/libraries/io/netty/netty-codec-base/4.2.7.Final/netty-codec-base-4.2.7.Final.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.1.2/home/data/peregrine/libraries/io/netty/netty-codec-compression/4.2.7.Final/netty-codec-compression-4.2.7.Final.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.1.2/home/data/peregrine/libraries/io/netty/netty-codec-http/4.2.7.Final/netty-codec-http-4.2.7.Final.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.1.2/home/data/peregrine/libraries/io/netty/netty-common/4.2.7.Final/netty-common-4.2.7.Final.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.1.2/home/data/peregrine/libraries/io/netty/netty-handler/4.2.7.Final/netty-handler-4.2.7.Final.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.1.2/home/data/peregrine/libraries/io/netty/netty-resolver/4.2.7.Final/netty-resolver-4.2.7.Final.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.1.2/home/data/peregrine/libraries/io/netty/netty-transport-classes-epoll/4.2.7.Final/netty-transport-classes-epoll-4.2.7.Final.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.1.2/home/data/peregrine/libraries/io/netty/netty-transport-classes-kqueue/4.2.7.Final/netty-transport-classes-kqueue-4.2.7.Final.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.1.2/home/data/peregrine/libraries/io/netty/netty-transport-native-epoll/4.2.7.Final/netty-transport-native-epoll-4.2.7.Final-linux-aarch_64.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.1.2/home/data/peregrine/libraries/io/netty/netty-transport-native-epoll/4.2.7.Final/netty-transport-native-epoll-4.2.7.Final-linux-x86_64.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.1.2/home/data/peregrine/libraries/io/netty/netty-transport-native-unix-common/4.2.7.Final/netty-transport-native-unix-common-4.2.7.Final.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.1.2/home/data/peregrine/libraries/io/netty/netty-transport/4.2.7.Final/netty-transport-4.2.7.Final.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.1.2/home/data/peregrine/libraries/it/unimi/dsi/fastutil/8.5.18/fastutil-8.5.18.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.1.2/home/data/peregrine/libraries/net/java/dev/jna/jna-platform/5.17.0/jna-platform-5.17.0.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.1.2/home/data/peregrine/libraries/net/java/dev/jna/jna/5.17.0/jna-5.17.0.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.1.2/home/data/peregrine/libraries/net/sf/jopt-simple/jopt-simple/5.0.4/jopt-simple-5.0.4.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.1.2/home/data/peregrine/libraries/org/apache/commons/commons-compress/1.28.0/commons-compress-1.28.0.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.1.2/home/data/peregrine/libraries/org/apache/commons/commons-lang3/3.19.0/commons-lang3-3.19.0.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.1.2/home/data/peregrine/libraries/org/apache/logging/log4j/log4j-api/2.25.2/log4j-api-2.25.2.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.1.2/home/data/peregrine/libraries/org/apache/logging/log4j/log4j-core/2.25.2/log4j-core-2.25.2.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.1.2/home/data/peregrine/libraries/org/apache/logging/log4j/log4j-slf4j2-impl/2.25.2/log4j-slf4j2-impl-2.25.2.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.1.2/home/data/peregrine/libraries/org/jcraft/jorbis/0.0.17/jorbis-0.0.17.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.1.2/home/data/peregrine/libraries/org/joml/joml/1.10.8/joml-1.10.8.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.1.2/home/data/peregrine/libraries/org/jspecify/jspecify/1.0.0/jspecify-1.0.0.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.1.2/home/data/peregrine/libraries/org/lwjgl/lwjgl-freetype/3.4.1/lwjgl-freetype-3.4.1.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.1.2/home/data/peregrine/libraries/org/lwjgl/lwjgl-freetype/3.4.1/lwjgl-freetype-3.4.1-natives-linux.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.1.2/home/data/peregrine/libraries/org/lwjgl/lwjgl-glfw/3.4.1/lwjgl-glfw-3.4.1.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.1.2/home/data/peregrine/libraries/org/lwjgl/lwjgl-glfw/3.4.1/lwjgl-glfw-3.4.1-natives-linux.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.1.2/home/data/peregrine/libraries/org/lwjgl/lwjgl-jemalloc/3.4.1/lwjgl-jemalloc-3.4.1.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.1.2/home/data/peregrine/libraries/org/lwjgl/lwjgl-jemalloc/3.4.1/lwjgl-jemalloc-3.4.1-natives-linux.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.1.2/home/data/peregrine/libraries/org/lwjgl/lwjgl-openal/3.4.1/lwjgl-openal-3.4.1.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.1.2/home/data/peregrine/libraries/org/lwjgl/lwjgl-openal/3.4.1/lwjgl-openal-3.4.1-natives-linux.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.1.2/home/data/peregrine/libraries/org/lwjgl/lwjgl-opengl/3.4.1/lwjgl-opengl-3.4.1.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.1.2/home/data/peregrine/libraries/org/lwjgl/lwjgl-opengl/3.4.1/lwjgl-opengl-3.4.1-natives-linux.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.1.2/home/data/peregrine/libraries/org/lwjgl/lwjgl-stb/3.4.1/lwjgl-stb-3.4.1.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.1.2/home/data/peregrine/libraries/org/lwjgl/lwjgl-stb/3.4.1/lwjgl-stb-3.4.1-natives-linux.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.1.2/home/data/peregrine/libraries/org/lwjgl/lwjgl-tinyfd/3.4.1/lwjgl-tinyfd-3.4.1.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.1.2/home/data/peregrine/libraries/org/lwjgl/lwjgl-tinyfd/3.4.1/lwjgl-tinyfd-3.4.1-natives-linux.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.1.2/home/data/peregrine/libraries/org/lwjgl/lwjgl/3.4.1/lwjgl-3.4.1.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.1.2/home/data/peregrine/libraries/org/lwjgl/lwjgl/3.4.1/lwjgl-3.4.1-natives-linux.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.1.2/home/data/peregrine/libraries/org/slf4j/slf4j-api/2.0.17/slf4j-api-2.0.17.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.1.2/home/data/peregrine/versions/26.1.2/26.1.2.jar)
+		at knot//com.sun.jna.Native.extractFromResourcePath(Native.java:1141)
+		at knot//com.sun.jna.NativeLibrary.loadLibrary(NativeLibrary.java:297)
+		... 11 more
+]]></log4j:Throwable>
+  </log4j:Event>
+  <log4j:Event logger="com.mojang.realmsclient.client.RealmsClient" timestamp="1791649486264" level="INFO" thread="Download-1">
+    <log4j:Message><![CDATA[Could not authorize you against Realms server: java.lang.RuntimeException: Failed to parse into SignedJWT: 0]]></log4j:Message>
+  </log4j:Event>
+  <log4j:Event logger="com.mojang.realmsclient.client.RealmsClient" timestamp="1791649486264" level="ERROR" thread="Download-1">
+    <log4j:Message><![CDATA[Failed to fetch Realms feature flags]]></log4j:Message>
+    <log4j:Throwable><![CDATA[com.mojang.realmsclient.exception.RealmsServiceException: Realms authentication error with message 'java.lang.RuntimeException: Failed to parse into SignedJWT: 0'
+	at knot//com.mojang.realmsclient.client.RealmsClient.execute(RealmsClient.java:526)
+	at knot//com.mojang.realmsclient.client.RealmsClient.fetchFeatureFlags(RealmsClient.java:186)
+	at java.base/java.util.concurrent.CompletableFuture$AsyncSupply.run(Unknown Source)
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(Unknown Source)
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(Unknown Source)
+	at java.base/java.lang.Thread.run(Unknown Source)
+]]></log4j:Throwable>
+  </log4j:Event>
+  <log4j:Event logger="net.minecraft.server.packs.resources.ReloadableResourceManager" timestamp="1791649486270" level="INFO" thread="Render thread">
+    <log4j:Message><![CDATA[Reloading ResourceManager: vanilla, fabric-api, fabric-api-base, fabric-api-lookup-api-v1, fabric-biome-api-v1, fabric-block-api-v1, fabric-block-getter-api-v2, fabric-command-api-v2, fabric-content-registries-v0, fabric-convention-tags-v2, fabric-crash-report-info-v1, fabric-creative-tab-api-v1, fabric-data-attachment-api-v1, fabric-data-generation-api-v1, fabric-debug-api-v1, fabric-dimensions-v1, fabric-entity-events-v1, fabric-events-interaction-v0, fabric-game-rule-api-v1, fabric-item-api-v1, fabric-key-mapping-api-v1, fabric-lifecycle-events-v1, fabric-loot-api-v3, fabric-menu-api-v1, fabric-message-api-v1, fabric-model-loading-api-v1, fabric-networking-api-v1, fabric-object-builder-api-v1, fabric-particles-v1, fabric-permission-api-v1, fabric-recipe-api-v1, fabric-registry-sync-v0, fabric-renderer-api-v1, fabric-renderer-indigo, fabric-rendering-fluids-v1, fabric-rendering-v1, fabric-resource-conditions-api-v1, fabric-resource-loader-v0, fabric-resource-loader-v1, fabric-screen-api-v1, fabric-serialization-api-v1, fabric-sound-api-v1, fabric-tag-api-v1, fabric-transfer-api-v1, fabric-transitive-access-wideners-v1, fabricloader, peregrine-client, file/PeregrineTest]]></log4j:Message>
+  </log4j:Event>
+  <log4j:Event logger="net.minecraft.server.LoggedPrintStream" timestamp="1791649486327" level="INFO" thread="Render thread">
+    <log4j:Message><![CDATA[[STDOUT]: [Peregrine self-test] INFO phase world on Minecraft 26.1.2]]></log4j:Message>
+  </log4j:Event>
+  <log4j:Event logger="net.minecraft.client.gui.font.providers.UnihexProvider" timestamp="1791649486757" level="INFO" thread="Worker-Main-2">
+    <log4j:Message><![CDATA[Found unifont_all_no_pua-17.0.01.hex, loading]]></log4j:Message>
+  </log4j:Event>
+  <log4j:Event logger="net.minecraft.client.gui.font.providers.UnihexProvider" timestamp="1791649486785" level="INFO" thread="Worker-Main-1">
+    <log4j:Message><![CDATA[Found unifont_pua-17.0.01.hex, loading]]></log4j:Message>
+  </log4j:Event>
+  <log4j:Event logger="net.minecraft.client.gui.font.providers.UnihexProvider" timestamp="1791649487027" level="INFO" thread="Worker-Main-2">
+    <log4j:Message><![CDATA[Found unifont_jp_patch-17.0.01.hex, loading]]></log4j:Message>
+  </log4j:Event>
+ALSA lib confmisc.c:855:(parse_card) cannot find card '0'
+ALSA lib conf.c:5208:(_snd_config_evaluate) function snd_func_card_inum returned error: No such file or directory
+ALSA lib confmisc.c:422:(snd_func_concat) error evaluating strings
+ALSA lib conf.c:5208:(_snd_config_evaluate) function snd_func_concat returned error: No such file or directory
+ALSA lib confmisc.c:1342:(snd_func_refer) error evaluating name
+ALSA lib conf.c:5208:(_snd_config_evaluate) function snd_func_refer returned error: No such file or directory
+ALSA lib conf.c:5731:(snd_config_expand) Evaluate error: No such file or directory
+ALSA lib pcm.c:2721:(snd_pcm_open_noupdate) Unknown PCM default
+ALSA lib confmisc.c:855:(parse_card) cannot find card '0'
+ALSA lib conf.c:5208:(_snd_config_evaluate) function snd_func_card_inum returned error: No such file or directory
+ALSA lib confmisc.c:422:(snd_func_concat) error evaluating strings
+ALSA lib conf.c:5208:(_snd_config_evaluate) function snd_func_concat returned error: No such file or directory
+ALSA lib confmisc.c:1342:(snd_func_refer) error evaluating name
+ALSA lib conf.c:5208:(_snd_config_evaluate) function snd_func_refer returned error: No such file or directory
+ALSA lib conf.c:5731:(snd_config_expand) Evaluate error: No such file or directory
+ALSA lib pcm.c:2721:(snd_pcm_open_noupdate) Unknown PCM default
+  <log4j:Event logger="net.minecraft.client.sounds.SoundEngine" timestamp="1791649488207" level="ERROR" thread="Render thread">
+    <log4j:Message><![CDATA[Error starting SoundSystem. Turning off sounds & music]]></log4j:Message>
+    <log4j:Throwable><![CDATA[java.lang.IllegalStateException: Failed to open OpenAL device
+	at knot//com.mojang.blaze3d.audio.Library.openDeviceOrFallback(Library.java:275)
+	at knot//com.mojang.blaze3d.audio.Library.init(Library.java:150)
+	at knot//net.minecraft.client.sounds.SoundEngine.loadLibrary(SoundEngine.java:120)
+	at knot//net.minecraft.client.sounds.SoundEngine.reload(SoundEngine.java:109)
+	at knot//net.minecraft.client.sounds.SoundManager.apply(SoundManager.java:122)
+	at knot//net.minecraft.client.sounds.SoundManager.apply(SoundManager.java:41)
+	at knot//net.minecraft.server.packs.resources.SimplePreparableReloadListener.lambda$reload$1(SimplePreparableReloadListener.java:15)
+	at java.base/java.util.concurrent.CompletableFuture$UniAccept.tryFire(Unknown Source)
+	at java.base/java.util.concurrent.CompletableFuture$Completion.run(Unknown Source)
+	at knot//net.minecraft.server.packs.resources.SimpleReloadInstance.lambda$prepareTasks$3(SimpleReloadInstance.java:59)
+	at knot//net.minecraft.util.thread.BlockableEventLoop.doRunTask(BlockableEventLoop.java:173)
+	at knot//net.minecraft.util.thread.ReentrantBlockableEventLoop.doRunTask(ReentrantBlockableEventLoop.java:23)
+	at knot//net.minecraft.util.thread.BlockableEventLoop.pollTask(BlockableEventLoop.java:147)
+	at knot//net.minecraft.util.thread.BlockableEventLoop.runAllTasks(BlockableEventLoop.java:127)
+	at knot//net.minecraft.client.Minecraft.runTick(Minecraft.java:1345)
+	at knot//net.minecraft.client.Minecraft.run(Minecraft.java:991)
+	at knot//net.minecraft.client.main.Main.main(Main.java:248)
+	at net.fabricmc.loader.impl.game.minecraft.MinecraftGameProvider.launch(MinecraftGameProvider.java:517)
+	at net.fabricmc.loader.impl.launch.knot.Knot.launch(Knot.java:72)
+	at net.fabricmc.loader.impl.launch.knot.KnotClient.main(KnotClient.java:23)
+]]></log4j:Throwable>
+  </log4j:Event>
+  <log4j:Event logger="net.minecraft.client.renderer.texture.TextureAtlas" timestamp="1791649488208" level="INFO" thread="Render thread">
+    <log4j:Message><![CDATA[Created: 512x256x0 minecraft:textures/atlas/particles.png-atlas]]></log4j:Message>
+  </log4j:Event>
+  <log4j:Event logger="net.minecraft.client.renderer.texture.TextureAtlas" timestamp="1791649488228" level="INFO" thread="Render thread">
+    <log4j:Message><![CDATA[Created: 128x128x0 minecraft:textures/atlas/decorated_pot.png-atlas]]></log4j:Message>
+  </log4j:Event>
+  <log4j:Event logger="net.minecraft.client.renderer.texture.TextureAtlas" timestamp="1791649488230" level="INFO" thread="Render thread">
+    <log4j:Message><![CDATA[Created: 2048x1024x0 minecraft:textures/atlas/armor_trims.png-atlas]]></log4j:Message>
+  </log4j:Event>
+  <log4j:Event logger="net.minecraft.client.renderer.texture.TextureAtlas" timestamp="1791649488251" level="INFO" thread="Render thread">
+    <log4j:Message><![CDATA[Created: 512x256x0 minecraft:textures/atlas/paintings.png-atlas]]></log4j:Message>
+  </log4j:Event>
+  <log4j:Event logger="net.minecraft.client.renderer.texture.TextureAtlas" timestamp="1791649488253" level="INFO" thread="Render thread">
+    <log4j:Message><![CDATA[Created: 1024x512x0 minecraft:textures/atlas/shield_patterns.png-atlas]]></log4j:Message>
+  </log4j:Event>
+  <log4j:Event logger="net.minecraft.client.renderer.texture.TextureAtlas" timestamp="1791649488257" level="INFO" thread="Render thread">
+    <log4j:Message><![CDATA[Created: 2048x2048x4 minecraft:textures/atlas/blocks.png-atlas]]></log4j:Message>
+  </log4j:Event>
+  <log4j:Event logger="net.minecraft.client.renderer.texture.TextureAtlas" timestamp="1791649488345" level="INFO" thread="Render thread">
+    <log4j:Message><![CDATA[Created: 512x512x0 minecraft:textures/atlas/chest.png-atlas]]></log4j:Message>
+  </log4j:Event>
+  <log4j:Event logger="net.minecraft.client.renderer.texture.TextureAtlas" timestamp="1791649488346" level="INFO" thread="Render thread">
+    <log4j:Message><![CDATA[Created: 256x128x0 minecraft:textures/atlas/celestials.png-atlas]]></log4j:Message>
+  </log4j:Event>
+  <log4j:Event logger="net.minecraft.client.renderer.texture.TextureAtlas" timestamp="1791649488346" level="INFO" thread="Render thread">
+    <log4j:Message><![CDATA[Created: 1024x512x0 minecraft:textures/atlas/banner_patterns.png-atlas]]></log4j:Message>
+  </log4j:Event>
+  <log4j:Event logger="net.minecraft.client.renderer.texture.TextureAtlas" timestamp="1791649488347" level="INFO" thread="Render thread">
+    <log4j:Message><![CDATA[Created: 512x512x0 minecraft:textures/atlas/beds.png-atlas]]></log4j:Message>
+  </log4j:Event>
+  <log4j:Event logger="net.minecraft.client.renderer.texture.TextureAtlas" timestamp="1791649488348" level="INFO" thread="Render thread">
+    <log4j:Message><![CDATA[Created: 1024x512x0 minecraft:textures/atlas/items.png-atlas]]></log4j:Message>
+  </log4j:Event>
+  <log4j:Event logger="net.minecraft.client.renderer.texture.TextureAtlas" timestamp="1791649488358" level="INFO" thread="Render thread">
+    <log4j:Message><![CDATA[Created: 1024x1024x0 minecraft:textures/atlas/gui.png-atlas]]></log4j:Message>
+  </log4j:Event>
+  <log4j:Event logger="net.minecraft.client.renderer.texture.TextureAtlas" timestamp="1791649488366" level="INFO" thread="Render thread">
+    <log4j:Message><![CDATA[Created: 128x64x0 minecraft:textures/atlas/map_decorations.png-atlas]]></log4j:Message>
+  </log4j:Event>
+  <log4j:Event logger="net.minecraft.client.renderer.texture.TextureAtlas" timestamp="1791649488367" level="INFO" thread="Render thread">
+    <log4j:Message><![CDATA[Created: 512x256x0 minecraft:textures/atlas/signs.png-atlas]]></log4j:Message>
+  </log4j:Event>
+  <log4j:Event logger="net.minecraft.client.renderer.texture.TextureAtlas" timestamp="1791649488367" level="INFO" thread="Render thread">
+    <log4j:Message><![CDATA[Created: 512x512x0 minecraft:textures/atlas/shulker_boxes.png-atlas]]></log4j:Message>
+  </log4j:Event>
+  <log4j:Event logger="net.minecraft.server.MinecraftServer" timestamp="1791649488708" level="INFO" thread="Render thread">
+    <log4j:Message><![CDATA[Found new data pack fabric-convention-tags-v2, loading it automatically]]></log4j:Message>
+  </log4j:Event>
+  <log4j:Event logger="net.minecraft.world.item.crafting.RecipeManager" timestamp="1791649489750" level="INFO" thread="Render thread">
+    <log4j:Message><![CDATA[Loaded 1515 recipes]]></log4j:Message>
+  </log4j:Event>
+  <log4j:Event logger="net.minecraft.advancements.AdvancementTree" timestamp="1791649489762" level="INFO" thread="Render thread">
+    <log4j:Message><![CDATA[Loaded 1617 advancements]]></log4j:Message>
+  </log4j:Event>
+  <log4j:Event logger="net.fabricmc.fabric.impl.biome.modification.BiomeModificationImpl" timestamp="1791649489954" level="INFO" thread="Render thread">
+    <log4j:Message><![CDATA[Applied 0 biome modifications to 0 of 65 new biomes in 1.197 ms]]></log4j:Message>
+  </log4j:Event>
+  <log4j:Event logger="net.minecraft.client.server.IntegratedServer" timestamp="1791649489973" level="INFO" thread="Server thread">
+    <log4j:Message><![CDATA[Starting integrated minecraft server version 26.1.2]]></log4j:Message>
+  </log4j:Event>
+  <log4j:Event logger="net.minecraft.server.MinecraftServer" timestamp="1791649489974" level="INFO" thread="Server thread">
+    <log4j:Message><![CDATA[Generating keypair]]></log4j:Message>
+  </log4j:Event>
+  <log4j:Event logger="net.minecraft.server.level.progress.LoggingLevelLoadListener" timestamp="1791649490415" level="INFO" thread="Server thread">
+    <log4j:Message><![CDATA[Loading 0 persistent chunks...]]></log4j:Message>
+  </log4j:Event>
+  <log4j:Event logger="net.minecraft.server.level.progress.LoggingLevelLoadListener" timestamp="1791649490416" level="INFO" thread="Server thread">
+    <log4j:Message><![CDATA[Preparing spawn area: 16%]]></log4j:Message>
+  </log4j:Event>
+  <log4j:Event logger="net.minecraft.server.MinecraftServer" timestamp="1791649490429" level="INFO" thread="Server thread">
+    <log4j:Message><![CDATA[Saving chunks for level 'ServerLevel[world]'/minecraft:overworld]]></log4j:Message>
+  </log4j:Event>
+  <log4j:Event logger="net.minecraft.server.MinecraftServer" timestamp="1791649490477" level="INFO" thread="Server thread">
+    <log4j:Message><![CDATA[Saving chunks for level 'ServerLevel[world]'/minecraft:the_end]]></log4j:Message>
+  </log4j:Event>
+  <log4j:Event logger="net.minecraft.server.MinecraftServer" timestamp="1791649490486" level="INFO" thread="Server thread">
+    <log4j:Message><![CDATA[Saving chunks for level 'ServerLevel[world]'/minecraft:the_nether]]></log4j:Message>
+  </log4j:Event>
+  <log4j:Event logger="net.minecraft.server.MinecraftServer" timestamp="1791649490517" level="INFO" thread="Server thread">
+    <log4j:Message><![CDATA[ThreadedAnvilChunkStorage (world): All chunks are saved]]></log4j:Message>
+  </log4j:Event>
+  <log4j:Event logger="net.minecraft.server.MinecraftServer" timestamp="1791649490517" level="INFO" thread="Server thread">
+    <log4j:Message><![CDATA[ThreadedAnvilChunkStorage (DIM1): All chunks are saved]]></log4j:Message>
+  </log4j:Event>
+  <log4j:Event logger="net.minecraft.server.MinecraftServer" timestamp="1791649490518" level="INFO" thread="Server thread">
+    <log4j:Message><![CDATA[ThreadedAnvilChunkStorage (DIM-1): All chunks are saved]]></log4j:Message>
+  </log4j:Event>
+  <log4j:Event logger="net.minecraft.server.MinecraftServer" timestamp="1791649490518" level="INFO" thread="Server thread">
+    <log4j:Message><![CDATA[ThreadedAnvilChunkStorage: All dimensions are saved]]></log4j:Message>
+  </log4j:Event>
+  <log4j:Event logger="net.minecraft.server.level.progress.LoggingLevelLoadListener" timestamp="1791649494417" level="INFO" thread="Server thread">
+    <log4j:Message><![CDATA[Loading 48 chunks for player spawn...]]></log4j:Message>
+  </log4j:Event>
+  <log4j:Event logger="net.minecraft.server.level.progress.LoggingLevelLoadListener" timestamp="1791649494420" level="INFO" thread="Server thread">
+    <log4j:Message><![CDATA[Preparing spawn area: 16%]]></log4j:Message>
+  </log4j:Event>
+  <log4j:Event logger="net.minecraft.server.level.progress.LoggingLevelLoadListener" timestamp="1791649494428" level="INFO" thread="Server thread">
+    <log4j:Message><![CDATA[Preparing spawn area: 16%]]></log4j:Message>
+  </log4j:Event>
+  <log4j:Event logger="net.minecraft.server.level.progress.LoggingLevelLoadListener" timestamp="1791649494472" level="INFO" thread="Server thread">
+    <log4j:Message><![CDATA[Preparing spawn area: 16%]]></log4j:Message>
+  </log4j:Event>
+  <log4j:Event logger="net.minecraft.server.level.progress.LoggingLevelLoadListener" timestamp="1791649494519" level="INFO" thread="Server thread">
+    <log4j:Message><![CDATA[Preparing spawn area: 16%]]></log4j:Message>
+  </log4j:Event>
+  <log4j:Event logger="net.minecraft.server.level.progress.LoggingLevelLoadListener" timestamp="1791649494571" level="INFO" thread="Server thread">
+    <log4j:Message><![CDATA[Preparing spawn area: 16%]]></log4j:Message>
+  </log4j:Event>
+  <log4j:Event logger="net.minecraft.server.level.progress.LoggingLevelLoadListener" timestamp="1791649494619" level="INFO" thread="Server thread">
+    <log4j:Message><![CDATA[Preparing spawn area: 18%]]></log4j:Message>
+  </log4j:Event>
+  <log4j:Event logger="net.minecraft.server.level.progress.LoggingLevelLoadListener" timestamp="1791649494671" level="INFO" thread="Server thread">
+    <log4j:Message><![CDATA[Preparing spawn area: 18%]]></log4j:Message>
+  </log4j:Event>
+  <log4j:Event logger="net.minecraft.server.level.progress.LoggingLevelLoadListener" timestamp="1791649494723" level="INFO" thread="Server thread">
+    <log4j:Message><![CDATA[Preparing spawn area: 18%]]></log4j:Message>
+  </log4j:Event>
+  <log4j:Event logger="net.minecraft.server.level.progress.LoggingLevelLoadListener" timestamp="1791649494922" level="INFO" thread="Server thread">
+    <log4j:Message><![CDATA[Preparing spawn area: 18%]]></log4j:Message>
+  </log4j:Event>
+  <log4j:Event logger="net.minecraft.server.level.progress.LoggingLevelLoadListener" timestamp="1791649495423" level="INFO" thread="Server thread">
+    <log4j:Message><![CDATA[Preparing spawn area: 18%]]></log4j:Message>
+  </log4j:Event>
+  <log4j:Event logger="net.minecraft.server.level.progress.LoggingLevelLoadListener" timestamp="1791649495920" level="INFO" thread="Server thread">
+    <log4j:Message><![CDATA[Preparing spawn area: 18%]]></log4j:Message>
+  </log4j:Event>
+  <log4j:Event logger="net.minecraft.server.level.progress.LoggingLevelLoadListener" timestamp="1791649496419" level="INFO" thread="Server thread">
+    <log4j:Message><![CDATA[Preparing spawn area: 30%]]></log4j:Message>
+  </log4j:Event>
+  <log4j:Event logger="net.minecraft.server.level.progress.LoggingLevelLoadListener" timestamp="1791649496920" level="INFO" thread="Server thread">
+    <log4j:Message><![CDATA[Preparing spawn area: 30%]]></log4j:Message>
+  </log4j:Event>
+  <log4j:Event logger="net.minecraft.server.level.progress.LoggingLevelLoadListener" timestamp="1791649497419" level="INFO" thread="Server thread">
+    <log4j:Message><![CDATA[Preparing spawn area: 30%]]></log4j:Message>
+  </log4j:Event>
+  <log4j:Event logger="net.minecraft.server.level.progress.LoggingLevelLoadListener" timestamp="1791649497919" level="INFO" thread="Server thread">
+    <log4j:Message><![CDATA[Preparing spawn area: 58%]]></log4j:Message>
+  </log4j:Event>
+  <log4j:Event logger="net.minecraft.server.level.progress.LoggingLevelLoadListener" timestamp="1791649498419" level="INFO" thread="Server thread">
+    <log4j:Message><![CDATA[Preparing spawn area: 58%]]></log4j:Message>
+  </log4j:Event>
+  <log4j:Event logger="net.minecraft.server.level.progress.LoggingLevelLoadListener" timestamp="1791649498919" level="INFO" thread="Server thread">
+    <log4j:Message><![CDATA[Preparing spawn area: 72%]]></log4j:Message>
+  </log4j:Event>
+  <log4j:Event logger="net.minecraft.server.level.progress.LoggingLevelLoadListener" timestamp="1791649499019" level="INFO" thread="Server thread">
+    <log4j:Message><![CDATA[Time elapsed: 8610 ms]]></log4j:Message>
+  </log4j:Event>
+  <log4j:Event logger="net.minecraft.server.players.PlayerList" timestamp="1791649499221" level="INFO" thread="Server thread">
+    <log4j:Message><![CDATA[Tester[local:E:0978e777] logged in with entity id 17 at (-23.5, 74.0, -83.5)]]></log4j:Message>
+  </log4j:Event>
+  <log4j:Event logger="net.minecraft.server.MinecraftServer" timestamp="1791649499249" level="INFO" thread="Server thread">
+    <log4j:Message><![CDATA[Tester joined the game]]></log4j:Message>
+  </log4j:Event>
+  <log4j:Event logger="net.minecraft.client.server.IntegratedServer" timestamp="1791649499384" level="INFO" thread="Server thread">
+    <log4j:Message><![CDATA[Changing view distance to 4, from 10]]></log4j:Message>
+  </log4j:Event>
+  <log4j:Event logger="net.minecraft.client.server.IntegratedServer" timestamp="1791649499391" level="INFO" thread="Server thread">
+    <log4j:Message><![CDATA[Changing simulation distance to 5, from 0]]></log4j:Message>
+  </log4j:Event>
+  <log4j:Event logger="net.minecraft.advancements.AdvancementTree" timestamp="1791649499466" level="INFO" thread="Render thread">
+    <log4j:Message><![CDATA[Loaded 2 advancements]]></log4j:Message>
+  </log4j:Event>
+  <log4j:Event logger="net.minecraft.client.renderer.DynamicUniformStorage" timestamp="1791649499854" level="INFO" thread="Render thread">
+    <log4j:Message><![CDATA[Resizing Dynamic Transforms UBO, capacity limit of 2 reached during a single frame. New capacity will be 4.]]></log4j:Message>
+  </log4j:Event>
+  <log4j:Event logger="net.minecraft.client.renderer.DynamicUniformStorage" timestamp="1791649500213" level="INFO" thread="Render thread">
+    <log4j:Message><![CDATA[Resizing Dynamic Transforms UBO, capacity limit of 4 reached during a single frame. New capacity will be 8.]]></log4j:Message>
+  </log4j:Event>
+  <log4j:Event logger="net.minecraft.client.renderer.DynamicUniformStorage" timestamp="1791649501352" level="INFO" thread="Render thread">
+    <log4j:Message><![CDATA[Resizing Chunk Sections UBO, capacity limit of 2 reached during a single frame. New capacity will be 8.]]></log4j:Message>
+  </log4j:Event>
+  <log4j:Event logger="net.minecraft.server.LoggedPrintStream" timestamp="1791649501609" level="INFO" thread="Render thread">
+    <log4j:Message><![CDATA[[STDOUT]: [Peregrine self-test] PASS joins the world]]></log4j:Message>
+  </log4j:Event>
+  <log4j:Event logger="net.minecraft.client.server.IntegratedServer" timestamp="1791649501631" level="INFO" thread="Server thread">
+    <log4j:Message><![CDATA[Changing view distance to 8, from 4]]></log4j:Message>
+  </log4j:Event>
+  <log4j:Event logger="net.minecraft.client.renderer.DynamicUniformStorage" timestamp="1791649502239" level="INFO" thread="Render thread">
+    <log4j:Message><![CDATA[Resizing Chunk Sections UBO, capacity limit of 8 reached during a single frame. New capacity will be 16.]]></log4j:Message>
+  </log4j:Event>
+  <log4j:Event logger="net.minecraft.client.renderer.DynamicUniformStorage" timestamp="1791649502437" level="INFO" thread="Render thread">
+    <log4j:Message><![CDATA[Resizing Chunk Sections UBO, capacity limit of 16 reached during a single frame. New capacity will be 32.]]></log4j:Message>
+  </log4j:Event>
+  <log4j:Event logger="net.minecraft.client.renderer.DynamicUniformStorage" timestamp="1791649503235" level="INFO" thread="Render thread">
+    <log4j:Message><![CDATA[Resizing Chunk Sections UBO, capacity limit of 32 reached during a single frame. New capacity will be 64.]]></log4j:Message>
+  </log4j:Event>
+  <log4j:Event logger="net.minecraft.client.renderer.DynamicUniformStorage" timestamp="1791649505558" level="INFO" thread="Render thread">
+    <log4j:Message><![CDATA[Resizing Chunk Sections UBO, capacity limit of 64 reached during a single frame. New capacity will be 128.]]></log4j:Message>
+  </log4j:Event>
+  <log4j:Event logger="net.minecraft.server.LoggedPrintStream" timestamp="1791649541549" level="INFO" thread="Render thread">
+    <log4j:Message><![CDATA[[STDOUT]: [Peregrine self-test] INFO benchmark: 23 fps average, 21 lowest, render distance 8, over 20 s]]></log4j:Message>
+  </log4j:Event>
+  <log4j:Event logger="net.minecraft.server.LoggedPrintStream" timestamp="1791649541651" level="INFO" thread="Render thread">
+    <log4j:Message><![CDATA[[STDOUT]: [Peregrine self-test] PASS HUD draws in game]]></log4j:Message>
+  </log4j:Event>
+  <log4j:Event logger="net.minecraft.server.LoggedPrintStream" timestamp="1791649546607" level="INFO" thread="Render thread">
+    <log4j:Message><![CDATA[[STDOUT]: [Peregrine self-test] PASS Stable FPS eases off settings when FPS is low]]></log4j:Message>
+  </log4j:Event>
+  <log4j:Event logger="net.minecraft.server.LoggedPrintStream" timestamp="1791649550374" level="INFO" thread="Render thread">
+    <log4j:Message><![CDATA[[STDOUT]: [Peregrine self-test] PASS mouse clicks are counted (CPS)]]></log4j:Message>
+  </log4j:Event>
+  <log4j:Event logger="net.minecraft.server.LoggedPrintStream" timestamp="1791649551329" level="INFO" thread="Render thread">
+    <log4j:Message><![CDATA[[STDOUT]: [Peregrine self-test] PASS holding C zooms in]]></log4j:Message>
+  </log4j:Event>
+  <log4j:Event logger="net.minecraft.server.LoggedPrintStream" timestamp="1791649554049" level="INFO" thread="Render thread">
+    <log4j:Message><![CDATA[[STDOUT]: [Peregrine self-test] PASS Right Shift opens the menu]]></log4j:Message>
+  </log4j:Event>
+  <log4j:Event logger="net.minecraft.server.LoggedPrintStream" timestamp="1791649557302" level="INFO" thread="Render thread">
+    <log4j:Message><![CDATA[[STDOUT]: [Peregrine self-test] PASS typing and Backspace work in the search box]]></log4j:Message>
+  </log4j:Event>
+  <log4j:Event logger="net.minecraft.server.LoggedPrintStream" timestamp="1791649559728" level="INFO" thread="Render thread">
+    <log4j:Message><![CDATA[[STDOUT]: [Peregrine self-test] PASS clicking a card switches it]]></log4j:Message>
+  </log4j:Event>
+  <log4j:Event logger="net.minecraft.server.LoggedPrintStream" timestamp="1791649561050" level="INFO" thread="Render thread">
+    <log4j:Message><![CDATA[[STDOUT]: [Peregrine self-test] PASS Edit HUD opens the editor]]></log4j:Message>
+  </log4j:Event>
+  <log4j:Event logger="net.minecraft.server.LoggedPrintStream" timestamp="1791649564752" level="INFO" thread="Render thread">
+    <log4j:Message><![CDATA[[STDOUT]: [Peregrine self-test] PASS dragging moves a HUD item]]></log4j:Message>
+  </log4j:Event>
+  <log4j:Event logger="net.minecraft.server.LoggedPrintStream" timestamp="1791649566846" level="INFO" thread="Render thread">
+    <log4j:Message><![CDATA[[STDOUT]: [Peregrine self-test] PASS right-click opens the style panel]]></log4j:Message>
+  </log4j:Event>
+  <log4j:Event logger="net.minecraft.server.LoggedPrintStream" timestamp="1791649569345" level="INFO" thread="Render thread">
+    <log4j:Message><![CDATA[[STDOUT]: [Peregrine self-test] PASS picking a colour recolours the text]]></log4j:Message>
+  </log4j:Event>
+  <log4j:Event logger="net.minecraft.server.LoggedPrintStream" timestamp="1791649571444" level="INFO" thread="Render thread">
+    <log4j:Message><![CDATA[[STDOUT]: [Peregrine self-test] PASS dragging the corner makes it bigger]]></log4j:Message>
+  </log4j:Event>
+  <log4j:Event logger="net.minecraft.server.LoggedPrintStream" timestamp="1791649573568" level="INFO" thread="Render thread">
+    <log4j:Message><![CDATA[[STDOUT]: [Peregrine self-test] PASS Esc saves and closes the editor]]></log4j:Message>
+  </log4j:Event>
+  <log4j:Event logger="net.minecraft.server.LoggedPrintStream" timestamp="1791649574497" level="INFO" thread="Render thread">
+    <log4j:Message><![CDATA[[STDOUT]: [Peregrine self-test] PASS the gear opens a settings page]]></log4j:Message>
+  </log4j:Event>
+  <log4j:Event logger="net.minecraft.server.LoggedPrintStream" timestamp="1791649577326" level="INFO" thread="Render thread">
+    <log4j:Message><![CDATA[[STDOUT]: [Peregrine self-test] PASS clicking an option changes it]]></log4j:Message>
+  </log4j:Event>
+  <log4j:Event logger="net.minecraft.server.LoggedPrintStream" timestamp="1791649578467" level="INFO" thread="Render thread">
+    <log4j:Message><![CDATA[[STDOUT]: [Peregrine self-test] PASS the keybind button waits for a key]]></log4j:Message>
+  </log4j:Event>
+  <log4j:Event logger="net.minecraft.server.LoggedPrintStream" timestamp="1791649580828" level="INFO" thread="Render thread">
+    <log4j:Message><![CDATA[[STDOUT]: [Peregrine self-test] PASS pressing K binds it]]></log4j:Message>
+  </log4j:Event>
+  <log4j:Event logger="net.minecraft.server.LoggedPrintStream" timestamp="1791649581716" level="INFO" thread="Render thread">
+    <log4j:Message><![CDATA[[STDOUT]: [Peregrine self-test] PASS Customize opens the editor with the style panel]]></log4j:Message>
+  </log4j:Event>
+  <log4j:Event logger="net.minecraft.server.LoggedPrintStream" timestamp="1791649584282" level="INFO" thread="Render thread">
+    <log4j:Message><![CDATA[[STDOUT]: [Peregrine self-test] PASS Esc goes back to the settings page]]></log4j:Message>
+  </log4j:Event>
+  <log4j:Event logger="net.minecraft.server.LoggedPrintStream" timestamp="1791649584878" level="INFO" thread="Render thread">
+    <log4j:Message><![CDATA[[STDOUT]: [Peregrine self-test] PASS Esc goes back to the list]]></log4j:Message>
+  </log4j:Event>
+  <log4j:Event logger="net.minecraft.server.LoggedPrintStream" timestamp="1791649585791" level="INFO" thread="Render thread">
+    <log4j:Message><![CDATA[[STDOUT]: [Peregrine self-test] PASS the Settings tab opens]]></log4j:Message>
+  </log4j:Event>
+  <log4j:Event logger="net.minecraft.server.LoggedPrintStream" timestamp="1791649588703" level="INFO" thread="Render thread">
+    <log4j:Message><![CDATA[[STDOUT]: [Peregrine self-test] PASS the Keybinds tab opens]]></log4j:Message>
+  </log4j:Event>
+  <log4j:Event logger="net.minecraft.server.LoggedPrintStream" timestamp="1791649591547" level="INFO" thread="Render thread">
+    <log4j:Message><![CDATA[[STDOUT]: [Peregrine self-test] PASS back to the Mods tab]]></log4j:Message>
+  </log4j:Event>
+  <log4j:Event logger="net.minecraft.server.LoggedPrintStream" timestamp="1791649594148" level="INFO" thread="Render thread">
+    <log4j:Message><![CDATA[[STDOUT]: [Peregrine self-test] PASS Esc closes the menu]]></log4j:Message>
+  </log4j:Event>
+  <log4j:Event logger="net.minecraft.server.LoggedPrintStream" timestamp="1791649594735" level="INFO" thread="Render thread">
+    <log4j:Message><![CDATA[[STDOUT]: [Peregrine self-test] PASS pressing K in game switches the Clock]]></log4j:Message>
+  </log4j:Event>
+  <log4j:Event logger="net.minecraft.server.packs.resources.ReloadableResourceManager" timestamp="1791649596170" level="INFO" thread="Render thread">
+    <log4j:Message><![CDATA[Reloading ResourceManager: vanilla, fabric-api, fabric-api-base, fabric-api-lookup-api-v1, fabric-biome-api-v1, fabric-block-api-v1, fabric-block-getter-api-v2, fabric-command-api-v2, fabric-content-registries-v0, fabric-convention-tags-v2, fabric-crash-report-info-v1, fabric-creative-tab-api-v1, fabric-data-attachment-api-v1, fabric-data-generation-api-v1, fabric-debug-api-v1, fabric-dimensions-v1, fabric-entity-events-v1, fabric-events-interaction-v0, fabric-game-rule-api-v1, fabric-item-api-v1, fabric-key-mapping-api-v1, fabric-lifecycle-events-v1, fabric-loot-api-v3, fabric-menu-api-v1, fabric-message-api-v1, fabric-model-loading-api-v1, fabric-networking-api-v1, fabric-object-builder-api-v1, fabric-particles-v1, fabric-permission-api-v1, fabric-recipe-api-v1, fabric-registry-sync-v0, fabric-renderer-api-v1, fabric-renderer-indigo, fabric-rendering-fluids-v1, fabric-rendering-v1, fabric-resource-conditions-api-v1, fabric-resource-loader-v0, fabric-resource-loader-v1, fabric-screen-api-v1, fabric-serialization-api-v1, fabric-sound-api-v1, fabric-tag-api-v1, fabric-transfer-api-v1, fabric-transitive-access-wideners-v1, fabricloader, peregrine-client, file/PeregrineTest]]></log4j:Message>
+  </log4j:Event>
+  <log4j:Event logger="net.minecraft.server.LoggedPrintStream" timestamp="1791649596246" level="INFO" thread="Render thread">
+    <log4j:Message><![CDATA[[STDOUT]: [Peregrine self-test] PASS clear_weather hook runs]]></log4j:Message>
+  </log4j:Event>
+  <log4j:Event logger="net.minecraft.client.server.IntegratedServer" timestamp="1791649596269" level="INFO" thread="Server thread">
+    <log4j:Message><![CDATA[Saving and pausing game...]]></log4j:Message>
+  </log4j:Event>
+  <log4j:Event logger="net.minecraft.server.MinecraftServer" timestamp="1791649596299" level="INFO" thread="Server thread">
+    <log4j:Message><![CDATA[Saving chunks for level 'ServerLevel[world]'/minecraft:overworld]]></log4j:Message>
+  </log4j:Event>
+  <log4j:Event logger="net.minecraft.server.MinecraftServer" timestamp="1791649596331" level="INFO" thread="Server thread">
+    <log4j:Message><![CDATA[Saving chunks for level 'ServerLevel[world]'/minecraft:the_end]]></log4j:Message>
+  </log4j:Event>
+  <log4j:Event logger="net.minecraft.server.MinecraftServer" timestamp="1791649596332" level="INFO" thread="Server thread">
+    <log4j:Message><![CDATA[Saving chunks for level 'ServerLevel[world]'/minecraft:the_nether]]></log4j:Message>
+  </log4j:Event>
+  <log4j:Event logger="net.minecraft.server.LoggedPrintStream" timestamp="1791649596349" level="INFO" thread="Render thread">
+    <log4j:Message><![CDATA[[STDOUT]: [Peregrine self-test] PASS clean_edges hook runs]]></log4j:Message>
+  </log4j:Event>
+  <log4j:Event logger="net.minecraft.client.gui.font.providers.UnihexProvider" timestamp="1791649596496" level="INFO" thread="Worker-Main-1">
+    <log4j:Message><![CDATA[Found unifont_all_no_pua-17.0.01.hex, loading]]></log4j:Message>
+  </log4j:Event>
+  <log4j:Event logger="net.minecraft.client.gui.font.providers.UnihexProvider" timestamp="1791649596502" level="INFO" thread="Worker-Main-2">
+    <log4j:Message><![CDATA[Found unifont_pua-17.0.01.hex, loading]]></log4j:Message>
+  </log4j:Event>
+  <log4j:Event logger="net.minecraft.client.gui.font.providers.UnihexProvider" timestamp="1791649596662" level="INFO" thread="Worker-Main-1">
+    <log4j:Message><![CDATA[Found unifont_jp_patch-17.0.01.hex, loading]]></log4j:Message>
+  </log4j:Event>
+ALSA lib confmisc.c:855:(parse_card) cannot find card '0'
+ALSA lib conf.c:5208:(_snd_config_evaluate) function snd_func_card_inum returned error: No such file or directory
+ALSA lib confmisc.c:422:(snd_func_concat) error evaluating strings
+ALSA lib conf.c:5208:(_snd_config_evaluate) function snd_func_concat returned error: No such file or directory
+ALSA lib confmisc.c:1342:(snd_func_refer) error evaluating name
+ALSA lib conf.c:5208:(_snd_config_evaluate) function snd_func_refer returned error: No such file or directory
+ALSA lib conf.c:5731:(snd_config_expand) Evaluate error: No such file or directory
+ALSA lib pcm.c:2721:(snd_pcm_open_noupdate) Unknown PCM default
+ALSA lib confmisc.c:855:(parse_card) cannot find card '0'
+ALSA lib conf.c:5208:(_snd_config_evaluate) function snd_func_card_inum returned error: No such file or directory
+ALSA lib confmisc.c:422:(snd_func_concat) error evaluating strings
+ALSA lib conf.c:5208:(_snd_config_evaluate) function snd_func_concat returned error: No such file or directory
+ALSA lib confmisc.c:1342:(snd_func_refer) error evaluating name
+ALSA lib conf.c:5208:(_snd_config_evaluate) function snd_func_refer returned error: No such file or directory
+ALSA lib conf.c:5731:(snd_config_expand) Evaluate error: No such file or directory
+ALSA lib pcm.c:2721:(snd_pcm_open_noupdate) Unknown PCM default
+  <log4j:Event logger="net.minecraft.client.sounds.SoundEngine" timestamp="1791649597156" level="ERROR" thread="Render thread">
+    <log4j:Message><![CDATA[Error starting SoundSystem. Turning off sounds & music]]></log4j:Message>
+    <log4j:Throwable><![CDATA[java.lang.IllegalStateException: Failed to open OpenAL device
+	at knot//com.mojang.blaze3d.audio.Library.openDeviceOrFallback(Library.java:275)
+	at knot//com.mojang.blaze3d.audio.Library.init(Library.java:150)
+	at knot//net.minecraft.client.sounds.SoundEngine.loadLibrary(SoundEngine.java:120)
+	at knot//net.minecraft.client.sounds.SoundEngine.reload(SoundEngine.java:109)
+	at knot//net.minecraft.client.sounds.SoundManager.apply(SoundManager.java:122)
+	at knot//net.minecraft.client.sounds.SoundManager.apply(SoundManager.java:41)
+	at knot//net.minecraft.server.packs.resources.SimplePreparableReloadListener.lambda$reload$1(SimplePreparableReloadListener.java:15)
+	at java.base/java.util.concurrent.CompletableFuture$UniAccept.tryFire(Unknown Source)
+	at java.base/java.util.concurrent.CompletableFuture$Completion.run(Unknown Source)
+	at knot//net.minecraft.server.packs.resources.SimpleReloadInstance.lambda$prepareTasks$3(SimpleReloadInstance.java:59)
+	at knot//net.minecraft.util.thread.BlockableEventLoop.doRunTask(BlockableEventLoop.java:173)
+	at knot//net.minecraft.util.thread.ReentrantBlockableEventLoop.doRunTask(ReentrantBlockableEventLoop.java:23)
+	at knot//net.minecraft.util.thread.BlockableEventLoop.pollTask(BlockableEventLoop.java:147)
+	at knot//net.minecraft.util.thread.BlockableEventLoop.runAllTasks(BlockableEventLoop.java:127)
+	at knot//net.minecraft.client.Minecraft.runTick(Minecraft.java:1345)
+	at knot//net.minecraft.client.Minecraft.run(Minecraft.java:991)
+	at knot//net.minecraft.client.main.Main.main(Main.java:248)
+	at net.fabricmc.loader.impl.game.minecraft.MinecraftGameProvider.launch(MinecraftGameProvider.java:517)
+	at net.fabricmc.loader.impl.launch.knot.Knot.launch(Knot.java:72)
+	at net.fabricmc.loader.impl.launch.knot.KnotClient.main(KnotClient.java:23)
+]]></log4j:Throwable>
+  </log4j:Event>
+  <log4j:Event logger="net.minecraft.client.renderer.texture.TextureAtlas" timestamp="1791649597157" level="INFO" thread="Render thread">
+    <log4j:Message><![CDATA[Created: 512x256x0 minecraft:textures/atlas/particles.png-atlas]]></log4j:Message>
+  </log4j:Event>
+  <log4j:Event logger="net.minecraft.client.renderer.texture.TextureAtlas" timestamp="1791649597164" level="INFO" thread="Render thread">
+    <log4j:Message><![CDATA[Created: 128x128x0 minecraft:textures/atlas/decorated_pot.png-atlas]]></log4j:Message>
+  </log4j:Event>
+  <log4j:Event logger="net.minecraft.client.renderer.texture.TextureAtlas" timestamp="1791649597165" level="INFO" thread="Render thread">
+    <log4j:Message><![CDATA[Created: 2048x1024x0 minecraft:textures/atlas/armor_trims.png-atlas]]></log4j:Message>
+  </log4j:Event>
+  <log4j:Event logger="net.minecraft.client.renderer.texture.TextureAtlas" timestamp="1791649597173" level="INFO" thread="Render thread">
+    <log4j:Message><![CDATA[Created: 512x256x0 minecraft:textures/atlas/paintings.png-atlas]]></log4j:Message>
+  </log4j:Event>
+  <log4j:Event logger="net.minecraft.client.renderer.texture.TextureAtlas" timestamp="1791649597175" level="INFO" thread="Render thread">
+    <log4j:Message><![CDATA[Created: 1024x512x0 minecraft:textures/atlas/shield_patterns.png-atlas]]></log4j:Message>
+  </log4j:Event>
+  <log4j:Event logger="net.minecraft.client.renderer.texture.TextureAtlas" timestamp="1791649597176" level="INFO" thread="Render thread">
+    <log4j:Message><![CDATA[Created: 2048x2048x4 minecraft:textures/atlas/blocks.png-atlas]]></log4j:Message>
+  </log4j:Event>
+  <log4j:Event logger="net.minecraft.client.renderer.texture.TextureAtlas" timestamp="1791649597271" level="INFO" thread="Render thread">
+    <log4j:Message><![CDATA[Created: 512x512x0 minecraft:textures/atlas/chest.png-atlas]]></log4j:Message>
+  </log4j:Event>
+  <log4j:Event logger="net.minecraft.client.renderer.texture.TextureAtlas" timestamp="1791649597272" level="INFO" thread="Render thread">
+    <log4j:Message><![CDATA[Created: 256x128x0 minecraft:textures/atlas/celestials.png-atlas]]></log4j:Message>
+  </log4j:Event>
+  <log4j:Event logger="net.minecraft.client.renderer.texture.TextureAtlas" timestamp="1791649597272" level="INFO" thread="Render thread">
+    <log4j:Message><![CDATA[Created: 1024x512x0 minecraft:textures/atlas/banner_patterns.png-atlas]]></log4j:Message>
+  </log4j:Event>
+  <log4j:Event logger="net.minecraft.client.renderer.texture.TextureAtlas" timestamp="1791649597273" level="INFO" thread="Render thread">
+    <log4j:Message><![CDATA[Created: 512x512x0 minecraft:textures/atlas/beds.png-atlas]]></log4j:Message>
+  </log4j:Event>
+  <log4j:Event logger="net.minecraft.client.renderer.texture.TextureAtlas" timestamp="1791649597274" level="INFO" thread="Render thread">
+    <log4j:Message><![CDATA[Created: 1024x512x0 minecraft:textures/atlas/items.png-atlas]]></log4j:Message>
+  </log4j:Event>
+  <log4j:Event logger="net.minecraft.client.renderer.texture.TextureAtlas" timestamp="1791649597284" level="INFO" thread="Render thread">
+    <log4j:Message><![CDATA[Created: 1024x1024x0 minecraft:textures/atlas/gui.png-atlas]]></log4j:Message>
+  </log4j:Event>
+  <log4j:Event logger="net.minecraft.client.renderer.texture.TextureAtlas" timestamp="1791649597293" level="INFO" thread="Render thread">
+    <log4j:Message><![CDATA[Created: 128x64x0 minecraft:textures/atlas/map_decorations.png-atlas]]></log4j:Message>
+  </log4j:Event>
+  <log4j:Event logger="net.minecraft.client.renderer.texture.TextureAtlas" timestamp="1791649597294" level="INFO" thread="Render thread">
+    <log4j:Message><![CDATA[Created: 512x256x0 minecraft:textures/atlas/signs.png-atlas]]></log4j:Message>
+  </log4j:Event>
+  <log4j:Event logger="net.minecraft.client.renderer.texture.TextureAtlas" timestamp="1791649597295" level="INFO" thread="Render thread">
+    <log4j:Message><![CDATA[Created: 512x512x0 minecraft:textures/atlas/shulker_boxes.png-atlas]]></log4j:Message>
+  </log4j:Event>
+  <log4j:Event logger="net.minecraft.server.LoggedPrintStream" timestamp="1791649598138" level="INFO" thread="Render thread">
+    <log4j:Message><![CDATA[[STDOUT]: [Peregrine self-test] PASS anti base leak: every block uses one rotation]]></log4j:Message>
+  </log4j:Event>
+  <log4j:Event logger="net.minecraft.server.LoggedPrintStream" timestamp="1791649598191" level="INFO" thread="Render thread">
+    <log4j:Message><![CDATA[[STDOUT]: [Peregrine self-test] PASS anti base leak: block model hook runs (diamond bedrock)]]></log4j:Message>
+  </log4j:Event>
+  <log4j:Event logger="net.minecraft.server.LoggedPrintStream" timestamp="1791649598268" level="INFO" thread="Render thread">
+    <log4j:Message><![CDATA[[STDOUT]: [Peregrine self-test] PASS bedrock is drawn as diamond blocks]]></log4j:Message>
+  </log4j:Event>
+  <log4j:Event logger="net.minecraft.server.LoggedPrintStream" timestamp="1791649598358" level="INFO" thread="Render thread">
+    <log4j:Message><![CDATA[[STDOUT]: [Peregrine self-test] PASS item physics lays the dropped item down]]></log4j:Message>
+  </log4j:Event>
+  <log4j:Event logger="net.minecraft.server.packs.resources.ReloadableResourceManager" timestamp="1791649599522" level="INFO" thread="Render thread">
+    <log4j:Message><![CDATA[Reloading ResourceManager: vanilla, fabric-api, fabric-api-base, fabric-api-lookup-api-v1, fabric-biome-api-v1, fabric-block-api-v1, fabric-block-getter-api-v2, fabric-command-api-v2, fabric-content-registries-v0, fabric-convention-tags-v2, fabric-crash-report-info-v1, fabric-creative-tab-api-v1, fabric-data-attachment-api-v1, fabric-data-generation-api-v1, fabric-debug-api-v1, fabric-dimensions-v1, fabric-entity-events-v1, fabric-events-interaction-v0, fabric-game-rule-api-v1, fabric-item-api-v1, fabric-key-mapping-api-v1, fabric-lifecycle-events-v1, fabric-loot-api-v3, fabric-menu-api-v1, fabric-message-api-v1, fabric-model-loading-api-v1, fabric-networking-api-v1, fabric-object-builder-api-v1, fabric-particles-v1, fabric-permission-api-v1, fabric-recipe-api-v1, fabric-registry-sync-v0, fabric-renderer-api-v1, fabric-renderer-indigo, fabric-rendering-fluids-v1, fabric-rendering-v1, fabric-resource-conditions-api-v1, fabric-resource-loader-v0, fabric-resource-loader-v1, fabric-screen-api-v1, fabric-serialization-api-v1, fabric-sound-api-v1, fabric-tag-api-v1, fabric-transfer-api-v1, fabric-transitive-access-wideners-v1, fabricloader, peregrine-client, file/PeregrineTest]]></log4j:Message>
+  </log4j:Event>
+  <log4j:Event logger="net.minecraft.client.server.IntegratedServer" timestamp="1791649599769" level="INFO" thread="Server thread">
+    <log4j:Message><![CDATA[Saving and pausing game...]]></log4j:Message>
+  </log4j:Event>
+  <log4j:Event logger="net.minecraft.server.MinecraftServer" timestamp="1791649599785" level="INFO" thread="Server thread">
+    <log4j:Message><![CDATA[Saving chunks for level 'ServerLevel[world]'/minecraft:overworld]]></log4j:Message>
+  </log4j:Event>
+  <log4j:Event logger="net.minecraft.client.gui.font.providers.UnihexProvider" timestamp="1791649599809" level="INFO" thread="Worker-Main-1">
+    <log4j:Message><![CDATA[Found unifont_all_no_pua-17.0.01.hex, loading]]></log4j:Message>
+  </log4j:Event>
+  <log4j:Event logger="net.minecraft.server.MinecraftServer" timestamp="1791649599822" level="INFO" thread="Server thread">
+    <log4j:Message><![CDATA[Saving chunks for level 'ServerLevel[world]'/minecraft:the_end]]></log4j:Message>
+  </log4j:Event>
+  <log4j:Event logger="net.minecraft.server.MinecraftServer" timestamp="1791649599823" level="INFO" thread="Server thread">
+    <log4j:Message><![CDATA[Saving chunks for level 'ServerLevel[world]'/minecraft:the_nether]]></log4j:Message>
+  </log4j:Event>
+  <log4j:Event logger="net.minecraft.client.gui.font.providers.UnihexProvider" timestamp="1791649599826" level="INFO" thread="Worker-Main-3">
+    <log4j:Message><![CDATA[Found unifont_pua-17.0.01.hex, loading]]></log4j:Message>
+  </log4j:Event>
+  <log4j:Event logger="net.minecraft.client.gui.font.providers.UnihexProvider" timestamp="1791649599955" level="INFO" thread="Worker-Main-1">
+    <log4j:Message><![CDATA[Found unifont_jp_patch-17.0.01.hex, loading]]></log4j:Message>
+  </log4j:Event>
+ALSA lib confmisc.c:855:(parse_card) cannot find card '0'
+ALSA lib conf.c:5208:(_snd_config_evaluate) function snd_func_card_inum returned error: No such file or directory
+ALSA lib confmisc.c:422:(snd_func_concat) error evaluating strings
+ALSA lib conf.c:5208:(_snd_config_evaluate) function snd_func_concat returned error: No such file or directory
+ALSA lib confmisc.c:1342:(snd_func_refer) error evaluating name
+ALSA lib conf.c:5208:(_snd_config_evaluate) function snd_func_refer returned error: No such file or directory
+ALSA lib conf.c:5731:(snd_config_expand) Evaluate error: No such file or directory
+ALSA lib pcm.c:2721:(snd_pcm_open_noupdate) Unknown PCM default
+ALSA lib confmisc.c:855:(parse_card) cannot find card '0'
+ALSA lib conf.c:5208:(_snd_config_evaluate) function snd_func_card_inum returned error: No such file or directory
+ALSA lib confmisc.c:422:(snd_func_concat) error evaluating strings
+ALSA lib conf.c:5208:(_snd_config_evaluate) function snd_func_concat returned error: No such file or directory
+ALSA lib confmisc.c:1342:(snd_func_refer) error evaluating name
+ALSA lib conf.c:5208:(_snd_config_evaluate) function snd_func_refer returned error: No such file or directory
+ALSA lib conf.c:5731:(snd_config_expand) Evaluate error: No such file or directory
+ALSA lib pcm.c:2721:(snd_pcm_open_noupdate) Unknown PCM default
+  <log4j:Event logger="net.minecraft.client.sounds.SoundEngine" timestamp="1791649600356" level="ERROR" thread="Render thread">
+    <log4j:Message><![CDATA[Error starting SoundSystem. Turning off sounds & music]]></log4j:Message>
+    <log4j:Throwable><![CDATA[java.lang.IllegalStateException: Failed to open OpenAL device
+	at knot//com.mojang.blaze3d.audio.Library.openDeviceOrFallback(Library.java:275)
+	at knot//com.mojang.blaze3d.audio.Library.init(Library.java:150)
+	at knot//net.minecraft.client.sounds.SoundEngine.loadLibrary(SoundEngine.java:120)
+	at knot//net.minecraft.client.sounds.SoundEngine.reload(SoundEngine.java:109)
+	at knot//net.minecraft.client.sounds.SoundManager.apply(SoundManager.java:122)
+	at knot//net.minecraft.client.sounds.SoundManager.apply(SoundManager.java:41)
+	at knot//net.minecraft.server.packs.resources.SimplePreparableReloadListener.lambda$reload$1(SimplePreparableReloadListener.java:15)
+	at java.base/java.util.concurrent.CompletableFuture$UniAccept.tryFire(Unknown Source)
+	at java.base/java.util.concurrent.CompletableFuture$Completion.run(Unknown Source)
+	at knot//net.minecraft.server.packs.resources.SimpleReloadInstance.lambda$prepareTasks$3(SimpleReloadInstance.java:59)
+	at knot//net.minecraft.util.thread.BlockableEventLoop.doRunTask(BlockableEventLoop.java:173)
+	at knot//net.minecraft.util.thread.ReentrantBlockableEventLoop.doRunTask(ReentrantBlockableEventLoop.java:23)
+	at knot//net.minecraft.util.thread.BlockableEventLoop.pollTask(BlockableEventLoop.java:147)
+	at knot//net.minecraft.util.thread.BlockableEventLoop.runAllTasks(BlockableEventLoop.java:127)
+	at knot//net.minecraft.client.Minecraft.runTick(Minecraft.java:1345)
+	at knot//net.minecraft.client.Minecraft.run(Minecraft.java:991)
+	at knot//net.minecraft.client.main.Main.main(Main.java:248)
+	at net.fabricmc.loader.impl.game.minecraft.MinecraftGameProvider.launch(MinecraftGameProvider.java:517)
+	at net.fabricmc.loader.impl.launch.knot.Knot.launch(Knot.java:72)
+	at net.fabricmc.loader.impl.launch.knot.KnotClient.main(KnotClient.java:23)
+]]></log4j:Throwable>
+  </log4j:Event>
+  <log4j:Event logger="net.minecraft.client.renderer.texture.TextureAtlas" timestamp="1791649600357" level="INFO" thread="Render thread">
+    <log4j:Message><![CDATA[Created: 512x256x0 minecraft:textures/atlas/particles.png-atlas]]></log4j:Message>
+  </log4j:Event>
+  <log4j:Event logger="net.minecraft.client.renderer.texture.TextureAtlas" timestamp="1791649600362" level="INFO" thread="Render thread">
+    <log4j:Message><![CDATA[Created: 128x128x0 minecraft:textures/atlas/decorated_pot.png-atlas]]></log4j:Message>
+  </log4j:Event>
+  <log4j:Event logger="net.minecraft.client.renderer.texture.TextureAtlas" timestamp="1791649600363" level="INFO" thread="Render thread">
+    <log4j:Message><![CDATA[Created: 2048x1024x0 minecraft:textures/atlas/armor_trims.png-atlas]]></log4j:Message>
+  </log4j:Event>
+  <log4j:Event logger="net.minecraft.client.renderer.texture.TextureAtlas" timestamp="1791649600371" level="INFO" thread="Render thread">
+    <log4j:Message><![CDATA[Created: 512x256x0 minecraft:textures/atlas/paintings.png-atlas]]></log4j:Message>
+  </log4j:Event>
+  <log4j:Event logger="net.minecraft.client.renderer.texture.TextureAtlas" timestamp="1791649600377" level="INFO" thread="Render thread">
+    <log4j:Message><![CDATA[Created: 1024x512x0 minecraft:textures/atlas/shield_patterns.png-atlas]]></log4j:Message>
+  </log4j:Event>
+  <log4j:Event logger="net.minecraft.client.renderer.texture.TextureAtlas" timestamp="1791649600378" level="INFO" thread="Render thread">
+    <log4j:Message><![CDATA[Created: 2048x2048x4 minecraft:textures/atlas/blocks.png-atlas]]></log4j:Message>
+  </log4j:Event>
+  <log4j:Event logger="net.minecraft.client.renderer.texture.TextureAtlas" timestamp="1791649600440" level="INFO" thread="Render thread">
+    <log4j:Message><![CDATA[Created: 512x512x0 minecraft:textures/atlas/chest.png-atlas]]></log4j:Message>
+  </log4j:Event>
+  <log4j:Event logger="net.minecraft.client.renderer.texture.TextureAtlas" timestamp="1791649600441" level="INFO" thread="Render thread">
+    <log4j:Message><![CDATA[Created: 256x128x0 minecraft:textures/atlas/celestials.png-atlas]]></log4j:Message>
+  </log4j:Event>
+  <log4j:Event logger="net.minecraft.client.renderer.texture.TextureAtlas" timestamp="1791649600442" level="INFO" thread="Render thread">
+    <log4j:Message><![CDATA[Created: 1024x512x0 minecraft:textures/atlas/banner_patterns.png-atlas]]></log4j:Message>
+  </log4j:Event>
+  <log4j:Event logger="net.minecraft.client.renderer.texture.TextureAtlas" timestamp="1791649600447" level="INFO" thread="Render thread">
+    <log4j:Message><![CDATA[Created: 512x512x0 minecraft:textures/atlas/beds.png-atlas]]></log4j:Message>
+  </log4j:Event>
+  <log4j:Event logger="net.minecraft.client.renderer.texture.TextureAtlas" timestamp="1791649600447" level="INFO" thread="Render thread">
+    <log4j:Message><![CDATA[Created: 1024x512x0 minecraft:textures/atlas/items.png-atlas]]></log4j:Message>
+  </log4j:Event>
+  <log4j:Event logger="net.minecraft.client.renderer.texture.TextureAtlas" timestamp="1791649600456" level="INFO" thread="Render thread">
+    <log4j:Message><![CDATA[Created: 1024x1024x0 minecraft:textures/atlas/gui.png-atlas]]></log4j:Message>
+  </log4j:Event>
+  <log4j:Event logger="net.minecraft.client.renderer.texture.TextureAtlas" timestamp="1791649600460" level="INFO" thread="Render thread">
+    <log4j:Message><![CDATA[Created: 128x64x0 minecraft:textures/atlas/map_decorations.png-atlas]]></log4j:Message>
+  </log4j:Event>
+  <log4j:Event logger="net.minecraft.client.renderer.texture.TextureAtlas" timestamp="1791649600461" level="INFO" thread="Render thread">
+    <log4j:Message><![CDATA[Created: 512x256x0 minecraft:textures/atlas/signs.png-atlas]]></log4j:Message>
+  </log4j:Event>
+  <log4j:Event logger="net.minecraft.client.renderer.texture.TextureAtlas" timestamp="1791649600462" level="INFO" thread="Render thread">
+    <log4j:Message><![CDATA[Created: 512x512x0 minecraft:textures/atlas/shulker_boxes.png-atlas]]></log4j:Message>
+  </log4j:Event>
+  <log4j:Event logger="net.minecraft.server.LoggedPrintStream" timestamp="1791649601740" level="INFO" thread="Render thread">
+    <log4j:Message><![CDATA[[STDOUT]: [Peregrine self-test] PASS custom crosshair draws]]></log4j:Message>
+  </log4j:Event>
+  <log4j:Event logger="net.minecraft.server.LoggedPrintStream" timestamp="1791649603973" level="INFO" thread="Render thread">
+    <log4j:Message><![CDATA[[STDOUT]: [Peregrine self-test] PASS holding Alt starts freelook in third person]]></log4j:Message>
+  </log4j:Event>
+  <log4j:Event logger="net.minecraft.server.LoggedPrintStream" timestamp="1791649606339" level="INFO" thread="Render thread">
+    <log4j:Message><![CDATA[[STDOUT]: [Peregrine self-test] PASS letting go of Alt goes back to first person]]></log4j:Message>
+  </log4j:Event>
+  <log4j:Event logger="net.minecraft.client.renderer.DynamicUniformStorage" timestamp="1791649606522" level="INFO" thread="Render thread">
+    <log4j:Message><![CDATA[Resizing Dynamic Transforms UBO, capacity limit of 8 reached during a single frame. New capacity will be 16.]]></log4j:Message>
+  </log4j:Event>
+  <log4j:Event logger="net.minecraft.server.LoggedPrintStream" timestamp="1791649606534" level="INFO" thread="Render thread">
+    <log4j:Message><![CDATA[[STDOUT]: [Peregrine self-test] PASS particles: lava sparks are thinned out]]></log4j:Message>
+  </log4j:Event>
+  <log4j:Event logger="net.minecraft.server.LoggedPrintStream" timestamp="1791649606535" level="INFO" thread="Render thread">
+    <log4j:Message><![CDATA[[STDOUT]: [Peregrine self-test] PASS fullbright lights up dark places]]></log4j:Message>
+  </log4j:Event>
+  <log4j:Event logger="net.minecraft.server.LoggedPrintStream" timestamp="1791649606535" level="INFO" thread="Render thread">
+    <log4j:Message><![CDATA[[STDOUT]: [Peregrine self-test] PASS 1.7 animations: held item moves]]></log4j:Message>
+  </log4j:Event>
+  <log4j:Event logger="net.minecraft.server.LoggedPrintStream" timestamp="1791649606591" level="INFO" thread="Render thread">
+    <log4j:Message><![CDATA[[STDOUT]: [Peregrine self-test] PASS hitboxes draw without F3+B]]></log4j:Message>
+  </log4j:Event>
+  <log4j:Event logger="net.minecraft.server.LoggedPrintStream" timestamp="1791649606644" level="INFO" thread="Render thread">
+    <log4j:Message><![CDATA[[STDOUT]: [Peregrine self-test] PASS resource packs leave the menus alone (test pack's button and splash skipped)]]></log4j:Message>
+  </log4j:Event>
+  <log4j:Event logger="net.minecraft.server.LoggedPrintStream" timestamp="1791649606696" level="INFO" thread="Render thread">
+    <log4j:Message><![CDATA[[STDOUT]: [Peregrine self-test] PASS small totem: the totem in your hand is drawn smaller]]></log4j:Message>
+  </log4j:Event>
+  <log4j:Event logger="net.minecraft.server.LoggedPrintStream" timestamp="1791649608426" level="INFO" thread="Render thread">
+    <log4j:Message><![CDATA[[STDOUT]: [Peregrine self-test] PASS your own name tag shows in third person]]></log4j:Message>
+  </log4j:Event>
+  <log4j:Event logger="net.minecraft.server.LoggedPrintStream" timestamp="1791649610164" level="INFO" thread="Render thread">
+    <log4j:Message><![CDATA[[STDOUT]: [Peregrine self-test] PASS fog is pushed away]]></log4j:Message>
+  </log4j:Event>
+  <log4j:Event logger="net.minecraft.server.LoggedPrintStream" timestamp="1791649610218" level="INFO" thread="Render thread">
+    <log4j:Message><![CDATA[[STDOUT]: [Peregrine self-test] PASS block outline in the chosen color]]></log4j:Message>
+  </log4j:Event>
+  <log4j:Event logger="net.minecraft.server.LoggedPrintStream" timestamp="1791649610254" level="INFO" thread="Render thread">
+    <log4j:Message><![CDATA[[STDOUT]: [Peregrine self-test] PASS ores you can see get an outline]]></log4j:Message>
+  </log4j:Event>
+  <log4j:Event logger="net.minecraft.server.LoggedPrintStream" timestamp="1791649610311" level="INFO" thread="Render thread">
+    <log4j:Message><![CDATA[[STDOUT]: [Peregrine self-test] PASS the sky stops moving]]></log4j:Message>
+  </log4j:Event>
+  <log4j:Event logger="net.minecraft.server.LoggedPrintStream" timestamp="1791649610365" level="INFO" thread="Render thread">
+    <log4j:Message><![CDATA[[STDOUT]: [Peregrine self-test] PASS swing speed changes the swing]]></log4j:Message>
+  </log4j:Event>
+  <log4j:Event logger="net.minecraft.server.LoggedPrintStream" timestamp="1791649612010" level="INFO" thread="Render thread">
+    <log4j:Message><![CDATA[[STDOUT]: [Peregrine self-test] INFO hooks: seed=1000 offset=1000 model=1000 bedrock=12 items=268 crosshair=155 camera=47 particles=844 nightvision=248 animation=212 hitbox=1000 nametag=35 scoreboard=0 fire=0 inventory=0 totem=106 packs=85 fog=68 outline=68 ores=68 sky=68 swing=38 sound=0]]></log4j:Message>
+  </log4j:Event>
+  <log4j:Event logger="net.minecraft.server.LoggedPrintStream" timestamp="1791649612061" level="INFO" thread="Render thread">
+    <log4j:Message><![CDATA[[STDOUT]: [Peregrine self-test] INFO counts {on:clear_weather=843035, click@79,47/0=1, keybind:clock=1, click@95,205/0=1, editor=340, click@159,102/0=1, zoom-hook=2246, click@69,44/1=1, click@183,106/0=1, click@10,4/0=1, zoom-active=121, click@229,51/0=1, menu=551, click@118,82/0=1, mouse=1, click@245,134/0=1, hud=2363, on:clean_edges=2363, click@95,51/0=1, click@159,85/0=1, click@162,51/0=1, click@341,89/0=1}]]></log4j:Message>
+  </log4j:Event>
+  <log4j:Event logger="net.minecraft.server.LoggedPrintStream" timestamp="1791649612061" level="INFO" thread="Render thread">
+    <log4j:Message><![CDATA[[STDOUT]: [Peregrine self-test] PASS finished with 0 failure(s)]]></log4j:Message>
+  </log4j:Event>
+  <log4j:Event logger="net.minecraft.client.Minecraft" timestamp="1791649613194" level="INFO" thread="Render thread">
+    <log4j:Message><![CDATA[Stopping!]]></log4j:Message>
+  </log4j:Event>
+  <log4j:Event logger="net.minecraft.server.MinecraftServer" timestamp="1791649613221" level="INFO" thread="Server thread">
+    <log4j:Message><![CDATA[Stopping server]]></log4j:Message>
+  </log4j:Event>
+  <log4j:Event logger="net.minecraft.server.MinecraftServer" timestamp="1791649613221" level="INFO" thread="Server thread">
+    <log4j:Message><![CDATA[Saving players]]></log4j:Message>
+  </log4j:Event>
+  <log4j:Event logger="net.minecraft.server.network.ServerGamePacketListenerImpl" timestamp="1791649613228" level="INFO" thread="Server thread">
+    <log4j:Message><![CDATA[Tester lost connection: Disconnected]]></log4j:Message>
+  </log4j:Event>
+  <log4j:Event logger="net.minecraft.server.MinecraftServer" timestamp="1791649613229" level="INFO" thread="Server thread">
+    <log4j:Message><![CDATA[Tester left the game]]></log4j:Message>
+  </log4j:Event>
+  <log4j:Event logger="net.minecraft.server.network.ServerCommonPacketListenerImpl" timestamp="1791649613233" level="INFO" thread="Server thread">
+    <log4j:Message><![CDATA[Stopping singleplayer server as player logged out]]></log4j:Message>
+  </log4j:Event>
+  <log4j:Event logger="net.minecraft.server.MinecraftServer" timestamp="1791649613233" level="INFO" thread="Server thread">
+    <log4j:Message><![CDATA[Saving worlds]]></log4j:Message>
+  </log4j:Event>
+  <log4j:Event logger="net.minecraft.server.MinecraftServer" timestamp="1791649613708" level="INFO" thread="Server thread">
+    <log4j:Message><![CDATA[Saving chunks for level 'ServerLevel[world]'/minecraft:overworld]]></log4j:Message>
+  </log4j:Event>
+  <log4j:Event logger="net.minecraft.server.MinecraftServer" timestamp="1791649614249" level="INFO" thread="Server thread">
+    <log4j:Message><![CDATA[Saving chunks for level 'ServerLevel[world]'/minecraft:the_end]]></log4j:Message>
+  </log4j:Event>
+  <log4j:Event logger="net.minecraft.server.MinecraftServer" timestamp="1791649614255" level="INFO" thread="Server thread">
+    <log4j:Message><![CDATA[Saving chunks for level 'ServerLevel[world]'/minecraft:the_nether]]></log4j:Message>
+  </log4j:Event>
+  <log4j:Event logger="net.minecraft.server.MinecraftServer" timestamp="1791649614260" level="INFO" thread="Server thread">
+    <log4j:Message><![CDATA[ThreadedAnvilChunkStorage (world): All chunks are saved]]></log4j:Message>
+  </log4j:Event>
+  <log4j:Event logger="net.minecraft.server.MinecraftServer" timestamp="1791649614260" level="INFO" thread="Server thread">
+    <log4j:Message><![CDATA[ThreadedAnvilChunkStorage (DIM1): All chunks are saved]]></log4j:Message>
+  </log4j:Event>
+  <log4j:Event logger="net.minecraft.server.MinecraftServer" timestamp="1791649614260" level="INFO" thread="Server thread">
+    <log4j:Message><![CDATA[ThreadedAnvilChunkStorage (DIM-1): All chunks are saved]]></log4j:Message>
+  </log4j:Event>
+  <log4j:Event logger="net.minecraft.server.MinecraftServer" timestamp="1791649614260" level="INFO" thread="Server thread">
+    <log4j:Message><![CDATA[ThreadedAnvilChunkStorage: All dimensions are saved]]></log4j:Message>
+  </log4j:Event>

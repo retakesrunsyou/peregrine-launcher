@@ -1,0 +1,380 @@
+[16:25:10] [main/INFO]: Loading Minecraft 26.2 with Fabric Loader 0.19.5
+[16:25:10] [main/INFO]: Mappings not present!
+[16:25:10] [main/INFO]: Loading 50 mods:
+	- fabric-api 0.161.0+26.2
+	   |-- fabric-advancement-api-v1 1.0.0+58719a3b9e
+	   |-- fabric-api-base 2.0.4+ece063239e
+	   |-- fabric-api-lookup-api-v1 2.0.18+11e1c9a39e
+	   |-- fabric-biome-api-v1 18.0.6+c7bd5b8e9e
+	   |-- fabric-block-api-v1 3.1.0+53515aab9e
+	   |-- fabric-block-getter-api-v2 2.0.7+ec56b6019e
+	   |-- fabric-command-api-v2 3.1.0+00cb03469e
+	   |-- fabric-content-registries-v0 11.3.2+37b1aa249e
+	   |-- fabric-convention-tags-v2 4.7.1+1f023a9e9e
+	   |-- fabric-crash-report-info-v1 1.0.5+086d547a9e
+	   |-- fabric-creative-tab-api-v1 5.0.15+6468574f9e
+	   |-- fabric-data-attachment-api-v1 2.2.19+515ac5339e
+	   |-- fabric-data-generation-api-v1 25.6.0+c0da0b829e
+	   |-- fabric-debug-api-v1 1.0.2+c792624d9e
+	   |-- fabric-dimensions-v1 5.1.12+515ac5339e
+	   |-- fabric-entity-events-v1 5.0.5+06488ac19e
+	   |-- fabric-events-interaction-v0 5.2.8+515ac5339e
+	   |-- fabric-game-rule-api-v1 4.0.8+46a6d00c9e
+	   |-- fabric-item-api-v1 14.5.0+c68f6cbe9e
+	   |-- fabric-key-mapping-api-v1 2.0.5+e2bdee789e
+	   |-- fabric-lifecycle-events-v1 4.1.4+29b6eb019e
+	   |-- fabric-loot-api-v3 3.0.17+06488ac19e
+	   |-- fabric-menu-api-v1 2.0.17+086d547a9e
+	   |-- fabric-message-api-v1 7.0.8+bb2ed3f79e
+	   |-- fabric-model-loading-api-v1 8.0.17+c80601bb9e
+	   |-- fabric-networking-api-v1 6.3.4+2989c6a09e
+	   |-- fabric-object-builder-api-v1 24.1.1+6fcd5f039e
+	   |-- fabric-particles-v1 5.0.19+d1756aa99e
+	   |-- fabric-permission-api-v1 1.0.5+e442d8d09e
+	   |-- fabric-recipe-api-v1 9.0.22+11e1c9a39e
+	   |-- fabric-registry-sync-v0 7.1.1+c7bd5b8e9e
+	   |-- fabric-renderer-api-v1 14.1.4+2b0d8a229e
+	   |-- fabric-renderer-indigo 9.1.4+2b0d8a229e
+	   |-- fabric-rendering-fluids-v1 6.0.4+06488ac19e
+	   |-- fabric-rendering-v1 25.3.3+515ac5339e
+	   |-- fabric-resource-conditions-api-v1 6.1.0+10e9a28b9e
+	   |-- fabric-resource-loader-v0 3.3.20+4fc5413f9e
+	   |-- fabric-resource-loader-v1 2.0.13+9edec1269e
+	   |-- fabric-screen-api-v1 5.2.1+5087f8249e
+	   |-- fabric-serialization-api-v1 2.0.4+11a26f319e
+	   |-- fabric-sound-api-v1 2.0.5+11a26f319e
+	   |-- fabric-tag-api-v1 2.1.4+515ac5339e
+	   |-- fabric-transfer-api-v1 8.0.13+11dbb7d79e
+	   \-- fabric-transitive-access-wideners-v1 8.1.4+67c847259e
+	- fabricloader 0.19.5
+	   \-- mixinextras 0.5.5
+	- java 25
+	- minecraft 26.2
+	- peregrine-client 1.0.1
+[16:25:10] [main/INFO]: SpongePowered MIXIN Subsystem Version=0.8.7 Source=file:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.2/home/data/peregrine/libraries/net/fabricmc/sponge-mixin/0.17.4+mixin.0.8.7/sponge-mixin-0.17.4+mixin.0.8.7.jar Service=Knot/Fabric Env=CLIENT
+[16:25:11] [main/WARN]: Error loading class: net/minecraft/client/renderer/FirstPersonHandsAndItemsRenderer (java.lang.ClassNotFoundException: net/minecraft/client/renderer/FirstPersonHandsAndItemsRenderer)
+[16:25:11] [main/WARN]: @Mixin target net.minecraft.client.renderer.FirstPersonHandsAndItemsRenderer was not found peregrine-client-extras.mixins.json:OldAnimationsMixin from mod peregrine-client
+[16:25:11] [main/WARN]: @Mixin target net.minecraft.client.renderer.FirstPersonHandsAndItemsRenderer was not found peregrine-client-extras.mixins.json:TotemHeldMixin from mod peregrine-client
+[16:25:12] [main/INFO]: Initializing MixinExtras via com.llamalad7.mixinextras.service.MixinExtrasServiceImpl(version=0.5.5).
+[16:25:13] [Datafixer Bootstrap #0/INFO]: 295 Datafixer optimizations took 606 milliseconds
+[16:25:18] [Render thread/INFO]: Environment: Environment[sessionHost=https://sessionserver.mojang.com, servicesHost=https://api.minecraftservices.com, profilesHost=https://api.mojang.com, name=PROD]
+[16:25:18] [Render thread/INFO]: Setting user: Tester
+[16:25:19] [Render thread/INFO]: [Indigo] Registering Indigo renderer!
+[16:25:19] [Download-2/ERROR]: Failed to fetch user properties
+com.mojang.authlib.exceptions.InvalidCredentialsException: Status: 401
+	at knot//com.mojang.authlib.exceptions.MinecraftClientHttpException.toAuthenticationException(MinecraftClientHttpException.java:70)
+	at knot//com.mojang.authlib.yggdrasil.YggdrasilUserApiService.fetchProperties(YggdrasilUserApiService.java:173)
+	at knot//net.minecraft.client.Minecraft.lambda$new$1(Minecraft.java:438)
+	at java.base/java.util.concurrent.CompletableFuture$AsyncSupply.run(Unknown Source)
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(Unknown Source)
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(Unknown Source)
+	at java.base/java.lang.Thread.run(Unknown Source)
+Caused by: MinecraftClientHttpException[type=HTTP_ERROR, status=401, response=ErrorResponse[path=/player/attributes, error=null, errorMessage=null, details=null]]
+	at knot//com.mojang.authlib.minecraft.client.MinecraftClient.buildHttpException(MinecraftClient.java:170)
+	at knot//com.mojang.authlib.minecraft.client.MinecraftClient.readServiceResponse(MinecraftClient.java:147)
+	at knot//com.mojang.authlib.minecraft.client.MinecraftClient.getWithEtag(MinecraftClient.java:81)
+	at knot//com.mojang.authlib.minecraft.client.MinecraftClient.get(MinecraftClient.java:65)
+	at knot//com.mojang.authlib.yggdrasil.YggdrasilUserApiService.fetchProperties(YggdrasilUserApiService.java:123)
+	... 5 more
+[16:25:19] [Render thread/INFO]: Backend library: LWJGL version 3.4.1-snapshot
+[16:25:19] [Render thread/INFO]: Using graphics backend OpenGL, using drivers: 4.5 (Core Profile) Mesa 25.2.8-0ubuntu0.24.04.4
+[16:25:19] [Render thread/INFO]: Using graphics device: llvmpipe (LLVM 20.1.2, 256 bits) (Mesa)
+[16:25:19] [Render thread/INFO]: Using graphics device extensions: GL_ARB_multi_draw_indirect, GL_ARB_buffer_storage, GL_ARB_shader_draw_parameters, GL_ARB_base_instance, GL_KHR_debug, GL_ARB_draw_indirect, GL_ARB_clip_control, GL_ARB_vertex_attrib_binding, GL_ARB_direct_state_access, GL_EXT_texture_filter_anisotropic
+[16:25:20] [Render thread/ERROR]: Error while loading the narrator
+com.mojang.text2speech.Narrator$InitializeException: Failed to load library flite
+	at knot//com.mojang.text2speech.NarratorLinux$FliteLibrary.loadNative(NarratorLinux.java:82)
+	at knot//com.mojang.text2speech.NarratorLinux.<init>(NarratorLinux.java:19)
+	at knot//com.mojang.text2speech.Narrator.getNarrator(Narrator.java:41)
+	at knot//net.minecraft.client.GameNarrator.<init>(GameNarrator.java:20)
+	at knot//net.minecraft.client.Minecraft.<init>(Minecraft.java:733)
+	at knot//net.minecraft.client.main.Main.main(Main.java:278)
+	at net.fabricmc.loader.impl.game.minecraft.MinecraftGameProvider.launch(MinecraftGameProvider.java:517)
+	at net.fabricmc.loader.impl.launch.knot.Knot.launch(Knot.java:72)
+	at net.fabricmc.loader.impl.launch.knot.KnotClient.main(KnotClient.java:23)
+Caused by: java.lang.UnsatisfiedLinkError: Unable to load library 'flite':
+libflite.so: cannot open shared object file: No such file or directory
+libflite.so: cannot open shared object file: No such file or directory
+Native library (linux-x86-64/libflite.so) not found in resource path (/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.2/home/data/peregrine/libraries/org/ow2/asm/asm/9.10.1/asm-9.10.1.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.2/home/data/peregrine/libraries/org/ow2/asm/asm-analysis/9.10.1/asm-analysis-9.10.1.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.2/home/data/peregrine/libraries/org/ow2/asm/asm-commons/9.10.1/asm-commons-9.10.1.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.2/home/data/peregrine/libraries/org/ow2/asm/asm-tree/9.10.1/asm-tree-9.10.1.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.2/home/data/peregrine/libraries/org/ow2/asm/asm-util/9.10.1/asm-util-9.10.1.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.2/home/data/peregrine/libraries/net/fabricmc/sponge-mixin/0.17.4+mixin.0.8.7/sponge-mixin-0.17.4+mixin.0.8.7.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.2/home/data/peregrine/libraries/net/fabricmc/fabric-loader/0.19.5/fabric-loader-0.19.5.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.2/home/data/peregrine/libraries/at/yawk/lz4/lz4-java/1.10.1/lz4-java-1.10.1.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.2/home/data/peregrine/libraries/com/azure/azure-json/1.4.0/azure-json-1.4.0.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.2/home/data/peregrine/libraries/com/github/oshi/oshi-core/6.9.0/oshi-core-6.9.0.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.2/home/data/peregrine/libraries/com/google/code/gson/gson/2.14.0/gson-2.14.0.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.2/home/data/peregrine/libraries/com/google/guava/failureaccess/1.0.3/failureaccess-1.0.3.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.2/home/data/peregrine/libraries/com/google/guava/guava/33.6.0-jre/guava-33.6.0-jre.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.2/home/data/peregrine/libraries/com/ibm/icu/icu4j/78.3/icu4j-78.3.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.2/home/data/peregrine/libraries/com/microsoft/azure/msal4j/1.24.1/msal4j-1.24.1.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.2/home/data/peregrine/libraries/com/mojang/authlib/9.0.75/authlib-9.0.75.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.2/home/data/peregrine/libraries/com/mojang/blocklist/1.0.10/blocklist-1.0.10.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.2/home/data/peregrine/libraries/com/mojang/brigadier/1.3.10/brigadier-1.3.10.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.2/home/data/peregrine/libraries/com/mojang/datafixerupper/10.0.21/datafixerupper-10.0.21.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.2/home/data/peregrine/libraries/com/mojang/jtracy/1.0.37/jtracy-1.0.37.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.2/home/data/peregrine/libraries/com/mojang/jtracy/1.0.37/jtracy-1.0.37-natives-linux.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.2/home/data/peregrine/libraries/com/mojang/logging/1.7.12/logging-1.7.12.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.2/home/data/peregrine/libraries/com/mojang/patchy/2.2.10/patchy-2.2.10.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.2/home/data/peregrine/libraries/com/mojang/text2speech/1.19.12/text2speech-1.19.12.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.2/home/data/peregrine/libraries/commons-codec/commons-codec/1.22.0/commons-codec-1.22.0.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.2/home/data/peregrine/libraries/commons-io/commons-io/2.20.0/commons-io-2.20.0.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.2/home/data/peregrine/libraries/io/netty/netty-buffer/4.2.15.Final/netty-buffer-4.2.15.Final.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.2/home/data/peregrine/libraries/io/netty/netty-codec-base/4.2.15.Final/netty-codec-base-4.2.15.Final.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.2/home/data/peregrine/libraries/io/netty/netty-codec-compression/4.2.15.Final/netty-codec-compression-4.2.15.Final.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.2/home/data/peregrine/libraries/io/netty/netty-codec-http/4.2.15.Final/netty-codec-http-4.2.15.Final.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.2/home/data/peregrine/libraries/io/netty/netty-common/4.2.15.Final/netty-common-4.2.15.Final.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.2/home/data/peregrine/libraries/io/netty/netty-handler/4.2.15.Final/netty-handler-4.2.15.Final.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.2/home/data/peregrine/libraries/io/netty/netty-resolver/4.2.15.Final/netty-resolver-4.2.15.Final.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.2/home/data/peregrine/libraries/io/netty/netty-transport-classes-epoll/4.2.15.Final/netty-transport-classes-epoll-4.2.15.Final.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.2/home/data/peregrine/libraries/io/netty/netty-transport-classes-kqueue/4.2.15.Final/netty-transport-classes-kqueue-4.2.15.Final.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.2/home/data/peregrine/libraries/io/netty/netty-transport-native-epoll/4.2.15.Final/netty-transport-native-epoll-4.2.15.Final-linux-aarch_64.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.2/home/data/peregrine/libraries/io/netty/netty-transport-native-epoll/4.2.15.Final/netty-transport-native-epoll-4.2.15.Final-linux-x86_64.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.2/home/data/peregrine/libraries/io/netty/netty-transport-native-unix-common/4.2.15.Final/netty-transport-native-unix-common-4.2.15.Final.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.2/home/data/peregrine/libraries/io/netty/netty-transport/4.2.15.Final/netty-transport-4.2.15.Final.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.2/home/data/peregrine/libraries/it/unimi/dsi/fastutil/8.5.18/fastutil-8.5.18.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.2/home/data/peregrine/libraries/net/java/dev/jna/jna-platform/5.17.0/jna-platform-5.17.0.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.2/home/data/peregrine/libraries/net/java/dev/jna/jna/5.17.0/jna-5.17.0.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.2/home/data/peregrine/libraries/net/sf/jopt-simple/jopt-simple/5.0.4/jopt-simple-5.0.4.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.2/home/data/peregrine/libraries/org/apache/commons/commons-compress/1.28.0/commons-compress-1.28.0.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.2/home/data/peregrine/libraries/org/apache/commons/commons-lang3/3.20.0/commons-lang3-3.20.0.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.2/home/data/peregrine/libraries/org/apache/logging/log4j/log4j-api/2.26.0/log4j-api-2.26.0.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.2/home/data/peregrine/libraries/org/apache/logging/log4j/log4j-core/2.26.0/log4j-core-2.26.0.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.2/home/data/peregrine/libraries/org/apache/logging/log4j/log4j-slf4j2-impl/2.26.0/log4j-slf4j2-impl-2.26.0.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.2/home/data/peregrine/libraries/org/jcraft/jorbis/0.0.17/jorbis-0.0.17.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.2/home/data/peregrine/libraries/org/joml/joml/1.10.8/joml-1.10.8.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.2/home/data/peregrine/libraries/org/jspecify/jspecify/1.0.0/jspecify-1.0.0.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.2/home/data/peregrine/libraries/org/lwjgl/lwjgl-freetype/3.4.1/lwjgl-freetype-3.4.1.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.2/home/data/peregrine/libraries/org/lwjgl/lwjgl-freetype/3.4.1/lwjgl-freetype-3.4.1-natives-linux.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.2/home/data/peregrine/libraries/org/lwjgl/lwjgl-glfw/3.4.1/lwjgl-glfw-3.4.1.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.2/home/data/peregrine/libraries/org/lwjgl/lwjgl-glfw/3.4.1/lwjgl-glfw-3.4.1-natives-linux.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.2/home/data/peregrine/libraries/org/lwjgl/lwjgl-jemalloc/3.4.1/lwjgl-jemalloc-3.4.1.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.2/home/data/peregrine/libraries/org/lwjgl/lwjgl-jemalloc/3.4.1/lwjgl-jemalloc-3.4.1-natives-linux.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.2/home/data/peregrine/libraries/org/lwjgl/lwjgl-openal/3.4.1/lwjgl-openal-3.4.1.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.2/home/data/peregrine/libraries/org/lwjgl/lwjgl-openal/3.4.1/lwjgl-openal-3.4.1-natives-linux.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.2/home/data/peregrine/libraries/org/lwjgl/lwjgl-opengl/3.4.1/lwjgl-opengl-3.4.1.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.2/home/data/peregrine/libraries/org/lwjgl/lwjgl-opengl/3.4.1/lwjgl-opengl-3.4.1-natives-linux.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.2/home/data/peregrine/libraries/org/lwjgl/lwjgl-shaderc/3.4.1/lwjgl-shaderc-3.4.1.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.2/home/data/peregrine/libraries/org/lwjgl/lwjgl-shaderc/3.4.1/lwjgl-shaderc-3.4.1-natives-linux.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.2/home/data/peregrine/libraries/org/lwjgl/lwjgl-spvc/3.4.1/lwjgl-spvc-3.4.1.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.2/home/data/peregrine/libraries/org/lwjgl/lwjgl-spvc/3.4.1/lwjgl-spvc-3.4.1-natives-linux.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.2/home/data/peregrine/libraries/org/lwjgl/lwjgl-stb/3.4.1/lwjgl-stb-3.4.1.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.2/home/data/peregrine/libraries/org/lwjgl/lwjgl-stb/3.4.1/lwjgl-stb-3.4.1-natives-linux.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.2/home/data/peregrine/libraries/org/lwjgl/lwjgl-tinyfd/3.4.1/lwjgl-tinyfd-3.4.1.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.2/home/data/peregrine/libraries/org/lwjgl/lwjgl-tinyfd/3.4.1/lwjgl-tinyfd-3.4.1-natives-linux.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.2/home/data/peregrine/libraries/org/lwjgl/lwjgl-vma/3.4.1/lwjgl-vma-3.4.1.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.2/home/data/peregrine/libraries/org/lwjgl/lwjgl-vma/3.4.1/lwjgl-vma-3.4.1-natives-linux.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.2/home/data/peregrine/libraries/org/lwjgl/lwjgl-vulkan/3.4.1/lwjgl-vulkan-3.4.1.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.2/home/data/peregrine/libraries/org/lwjgl/lwjgl/3.4.1/lwjgl-3.4.1-natives-linux.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.2/home/data/peregrine/libraries/org/lwjgl/lwjgl/3.4.1/lwjgl-3.4.1-unsafe.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.2/home/data/peregrine/libraries/org/slf4j/slf4j-api/2.0.17/slf4j-api-2.0.17.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.2/home/data/peregrine/versions/26.2/26.2.jar)
+	at knot//com.sun.jna.NativeLibrary.loadLibrary(NativeLibrary.java:325)
+	at knot//com.sun.jna.NativeLibrary.getInstance(NativeLibrary.java:481)
+	at knot//com.sun.jna.NativeLibrary.getInstance(NativeLibrary.java:423)
+	at knot//com.mojang.text2speech.NarratorLinux$FliteLibrary.loadNative(NarratorLinux.java:80)
+	... 8 more
+	Suppressed: java.lang.UnsatisfiedLinkError: libflite.so: cannot open shared object file: No such file or directory
+		at knot//com.sun.jna.Native.open(Native Method)
+		at knot//com.sun.jna.NativeLibrary.loadLibrary(NativeLibrary.java:213)
+		... 11 more
+	Suppressed: java.lang.UnsatisfiedLinkError: libflite.so: cannot open shared object file: No such file or directory
+		at knot//com.sun.jna.Native.open(Native Method)
+		at knot//com.sun.jna.NativeLibrary.loadLibrary(NativeLibrary.java:226)
+		... 11 more
+	Suppressed: java.io.IOException: Native library (linux-x86-64/libflite.so) not found in resource path (/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.2/home/data/peregrine/libraries/org/ow2/asm/asm/9.10.1/asm-9.10.1.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.2/home/data/peregrine/libraries/org/ow2/asm/asm-analysis/9.10.1/asm-analysis-9.10.1.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.2/home/data/peregrine/libraries/org/ow2/asm/asm-commons/9.10.1/asm-commons-9.10.1.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.2/home/data/peregrine/libraries/org/ow2/asm/asm-tree/9.10.1/asm-tree-9.10.1.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.2/home/data/peregrine/libraries/org/ow2/asm/asm-util/9.10.1/asm-util-9.10.1.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.2/home/data/peregrine/libraries/net/fabricmc/sponge-mixin/0.17.4+mixin.0.8.7/sponge-mixin-0.17.4+mixin.0.8.7.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.2/home/data/peregrine/libraries/net/fabricmc/fabric-loader/0.19.5/fabric-loader-0.19.5.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.2/home/data/peregrine/libraries/at/yawk/lz4/lz4-java/1.10.1/lz4-java-1.10.1.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.2/home/data/peregrine/libraries/com/azure/azure-json/1.4.0/azure-json-1.4.0.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.2/home/data/peregrine/libraries/com/github/oshi/oshi-core/6.9.0/oshi-core-6.9.0.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.2/home/data/peregrine/libraries/com/google/code/gson/gson/2.14.0/gson-2.14.0.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.2/home/data/peregrine/libraries/com/google/guava/failureaccess/1.0.3/failureaccess-1.0.3.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.2/home/data/peregrine/libraries/com/google/guava/guava/33.6.0-jre/guava-33.6.0-jre.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.2/home/data/peregrine/libraries/com/ibm/icu/icu4j/78.3/icu4j-78.3.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.2/home/data/peregrine/libraries/com/microsoft/azure/msal4j/1.24.1/msal4j-1.24.1.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.2/home/data/peregrine/libraries/com/mojang/authlib/9.0.75/authlib-9.0.75.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.2/home/data/peregrine/libraries/com/mojang/blocklist/1.0.10/blocklist-1.0.10.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.2/home/data/peregrine/libraries/com/mojang/brigadier/1.3.10/brigadier-1.3.10.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.2/home/data/peregrine/libraries/com/mojang/datafixerupper/10.0.21/datafixerupper-10.0.21.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.2/home/data/peregrine/libraries/com/mojang/jtracy/1.0.37/jtracy-1.0.37.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.2/home/data/peregrine/libraries/com/mojang/jtracy/1.0.37/jtracy-1.0.37-natives-linux.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.2/home/data/peregrine/libraries/com/mojang/logging/1.7.12/logging-1.7.12.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.2/home/data/peregrine/libraries/com/mojang/patchy/2.2.10/patchy-2.2.10.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.2/home/data/peregrine/libraries/com/mojang/text2speech/1.19.12/text2speech-1.19.12.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.2/home/data/peregrine/libraries/commons-codec/commons-codec/1.22.0/commons-codec-1.22.0.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.2/home/data/peregrine/libraries/commons-io/commons-io/2.20.0/commons-io-2.20.0.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.2/home/data/peregrine/libraries/io/netty/netty-buffer/4.2.15.Final/netty-buffer-4.2.15.Final.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.2/home/data/peregrine/libraries/io/netty/netty-codec-base/4.2.15.Final/netty-codec-base-4.2.15.Final.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.2/home/data/peregrine/libraries/io/netty/netty-codec-compression/4.2.15.Final/netty-codec-compression-4.2.15.Final.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.2/home/data/peregrine/libraries/io/netty/netty-codec-http/4.2.15.Final/netty-codec-http-4.2.15.Final.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.2/home/data/peregrine/libraries/io/netty/netty-common/4.2.15.Final/netty-common-4.2.15.Final.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.2/home/data/peregrine/libraries/io/netty/netty-handler/4.2.15.Final/netty-handler-4.2.15.Final.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.2/home/data/peregrine/libraries/io/netty/netty-resolver/4.2.15.Final/netty-resolver-4.2.15.Final.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.2/home/data/peregrine/libraries/io/netty/netty-transport-classes-epoll/4.2.15.Final/netty-transport-classes-epoll-4.2.15.Final.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.2/home/data/peregrine/libraries/io/netty/netty-transport-classes-kqueue/4.2.15.Final/netty-transport-classes-kqueue-4.2.15.Final.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.2/home/data/peregrine/libraries/io/netty/netty-transport-native-epoll/4.2.15.Final/netty-transport-native-epoll-4.2.15.Final-linux-aarch_64.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.2/home/data/peregrine/libraries/io/netty/netty-transport-native-epoll/4.2.15.Final/netty-transport-native-epoll-4.2.15.Final-linux-x86_64.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.2/home/data/peregrine/libraries/io/netty/netty-transport-native-unix-common/4.2.15.Final/netty-transport-native-unix-common-4.2.15.Final.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.2/home/data/peregrine/libraries/io/netty/netty-transport/4.2.15.Final/netty-transport-4.2.15.Final.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.2/home/data/peregrine/libraries/it/unimi/dsi/fastutil/8.5.18/fastutil-8.5.18.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.2/home/data/peregrine/libraries/net/java/dev/jna/jna-platform/5.17.0/jna-platform-5.17.0.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.2/home/data/peregrine/libraries/net/java/dev/jna/jna/5.17.0/jna-5.17.0.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.2/home/data/peregrine/libraries/net/sf/jopt-simple/jopt-simple/5.0.4/jopt-simple-5.0.4.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.2/home/data/peregrine/libraries/org/apache/commons/commons-compress/1.28.0/commons-compress-1.28.0.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.2/home/data/peregrine/libraries/org/apache/commons/commons-lang3/3.20.0/commons-lang3-3.20.0.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.2/home/data/peregrine/libraries/org/apache/logging/log4j/log4j-api/2.26.0/log4j-api-2.26.0.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.2/home/data/peregrine/libraries/org/apache/logging/log4j/log4j-core/2.26.0/log4j-core-2.26.0.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.2/home/data/peregrine/libraries/org/apache/logging/log4j/log4j-slf4j2-impl/2.26.0/log4j-slf4j2-impl-2.26.0.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.2/home/data/peregrine/libraries/org/jcraft/jorbis/0.0.17/jorbis-0.0.17.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.2/home/data/peregrine/libraries/org/joml/joml/1.10.8/joml-1.10.8.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.2/home/data/peregrine/libraries/org/jspecify/jspecify/1.0.0/jspecify-1.0.0.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.2/home/data/peregrine/libraries/org/lwjgl/lwjgl-freetype/3.4.1/lwjgl-freetype-3.4.1.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.2/home/data/peregrine/libraries/org/lwjgl/lwjgl-freetype/3.4.1/lwjgl-freetype-3.4.1-natives-linux.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.2/home/data/peregrine/libraries/org/lwjgl/lwjgl-glfw/3.4.1/lwjgl-glfw-3.4.1.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.2/home/data/peregrine/libraries/org/lwjgl/lwjgl-glfw/3.4.1/lwjgl-glfw-3.4.1-natives-linux.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.2/home/data/peregrine/libraries/org/lwjgl/lwjgl-jemalloc/3.4.1/lwjgl-jemalloc-3.4.1.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.2/home/data/peregrine/libraries/org/lwjgl/lwjgl-jemalloc/3.4.1/lwjgl-jemalloc-3.4.1-natives-linux.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.2/home/data/peregrine/libraries/org/lwjgl/lwjgl-openal/3.4.1/lwjgl-openal-3.4.1.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.2/home/data/peregrine/libraries/org/lwjgl/lwjgl-openal/3.4.1/lwjgl-openal-3.4.1-natives-linux.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.2/home/data/peregrine/libraries/org/lwjgl/lwjgl-opengl/3.4.1/lwjgl-opengl-3.4.1.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.2/home/data/peregrine/libraries/org/lwjgl/lwjgl-opengl/3.4.1/lwjgl-opengl-3.4.1-natives-linux.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.2/home/data/peregrine/libraries/org/lwjgl/lwjgl-shaderc/3.4.1/lwjgl-shaderc-3.4.1.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.2/home/data/peregrine/libraries/org/lwjgl/lwjgl-shaderc/3.4.1/lwjgl-shaderc-3.4.1-natives-linux.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.2/home/data/peregrine/libraries/org/lwjgl/lwjgl-spvc/3.4.1/lwjgl-spvc-3.4.1.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.2/home/data/peregrine/libraries/org/lwjgl/lwjgl-spvc/3.4.1/lwjgl-spvc-3.4.1-natives-linux.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.2/home/data/peregrine/libraries/org/lwjgl/lwjgl-stb/3.4.1/lwjgl-stb-3.4.1.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.2/home/data/peregrine/libraries/org/lwjgl/lwjgl-stb/3.4.1/lwjgl-stb-3.4.1-natives-linux.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.2/home/data/peregrine/libraries/org/lwjgl/lwjgl-tinyfd/3.4.1/lwjgl-tinyfd-3.4.1.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.2/home/data/peregrine/libraries/org/lwjgl/lwjgl-tinyfd/3.4.1/lwjgl-tinyfd-3.4.1-natives-linux.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.2/home/data/peregrine/libraries/org/lwjgl/lwjgl-vma/3.4.1/lwjgl-vma-3.4.1.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.2/home/data/peregrine/libraries/org/lwjgl/lwjgl-vma/3.4.1/lwjgl-vma-3.4.1-natives-linux.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.2/home/data/peregrine/libraries/org/lwjgl/lwjgl-vulkan/3.4.1/lwjgl-vulkan-3.4.1.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.2/home/data/peregrine/libraries/org/lwjgl/lwjgl/3.4.1/lwjgl-3.4.1-natives-linux.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.2/home/data/peregrine/libraries/org/lwjgl/lwjgl/3.4.1/lwjgl-3.4.1-unsafe.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.2/home/data/peregrine/libraries/org/slf4j/slf4j-api/2.0.17/slf4j-api-2.0.17.jar:/home/runner/work/peregrine-launcher/peregrine-launcher/out/26.2/home/data/peregrine/versions/26.2/26.2.jar)
+		at knot//com.sun.jna.Native.extractFromResourcePath(Native.java:1141)
+		at knot//com.sun.jna.NativeLibrary.loadLibrary(NativeLibrary.java:297)
+		... 11 more
+[16:25:20] [Download-1/INFO]: Could not authorize you against Realms server: java.lang.RuntimeException: Failed to parse into SignedJWT: 0
+[16:25:20] [Download-1/ERROR]: Failed to fetch Realms feature flags
+com.mojang.realmsclient.exception.RealmsServiceException: Realms authentication error with message 'java.lang.RuntimeException: Failed to parse into SignedJWT: 0'
+	at knot//com.mojang.realmsclient.client.RealmsClient.execute(RealmsClient.java:528)
+	at knot//com.mojang.realmsclient.client.RealmsClient.fetchFeatureFlags(RealmsClient.java:187)
+	at java.base/java.util.concurrent.CompletableFuture$AsyncSupply.run(Unknown Source)
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(Unknown Source)
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(Unknown Source)
+	at java.base/java.lang.Thread.run(Unknown Source)
+[16:25:20] [Render thread/INFO]: Reloading ResourceManager: vanilla, fabric-advancement-api-v1, fabric-api, fabric-api-base, fabric-api-lookup-api-v1, fabric-biome-api-v1, fabric-block-api-v1, fabric-block-getter-api-v2, fabric-command-api-v2, fabric-content-registries-v0, fabric-convention-tags-v2, fabric-crash-report-info-v1, fabric-creative-tab-api-v1, fabric-data-attachment-api-v1, fabric-data-generation-api-v1, fabric-debug-api-v1, fabric-dimensions-v1, fabric-entity-events-v1, fabric-events-interaction-v0, fabric-game-rule-api-v1, fabric-item-api-v1, fabric-key-mapping-api-v1, fabric-lifecycle-events-v1, fabric-loot-api-v3, fabric-menu-api-v1, fabric-message-api-v1, fabric-model-loading-api-v1, fabric-networking-api-v1, fabric-object-builder-api-v1, fabric-particles-v1, fabric-permission-api-v1, fabric-recipe-api-v1, fabric-registry-sync-v0, fabric-renderer-api-v1, fabric-renderer-indigo, fabric-rendering-fluids-v1, fabric-rendering-v1, fabric-resource-conditions-api-v1, fabric-resource-loader-v0, fabric-resource-loader-v1, fabric-screen-api-v1, fabric-serialization-api-v1, fabric-sound-api-v1, fabric-tag-api-v1, fabric-transfer-api-v1, fabric-transitive-access-wideners-v1, fabricloader, peregrine-client, file/PeregrineTest
+[16:25:20] [Render thread/INFO]: [STDOUT]: [Peregrine self-test] INFO phase world on Minecraft 26.2
+[16:25:21] [Worker-Main-2/INFO]: Found unifont_all_no_pua-17.0.01.hex, loading
+[16:25:21] [Worker-Main-1/INFO]: Found unifont_pua-17.0.01.hex, loading
+[16:25:21] [Worker-Main-2/INFO]: Found unifont_jp_patch-17.0.01.hex, loading
+[16:25:23] [Render thread/ERROR]: Error starting SoundSystem. Turning off sounds & music
+java.lang.IllegalStateException: Failed to open OpenAL device
+	at knot//com.mojang.blaze3d.audio.Library.openDeviceOrFallback(Library.java:275)
+	at knot//com.mojang.blaze3d.audio.Library.init(Library.java:150)
+	at knot//net.minecraft.client.sounds.SoundEngine.loadLibrary(SoundEngine.java:120)
+	at knot//net.minecraft.client.sounds.SoundEngine.reload(SoundEngine.java:109)
+	at knot//net.minecraft.client.sounds.SoundManager.apply(SoundManager.java:122)
+	at knot//net.minecraft.client.sounds.SoundManager.apply(SoundManager.java:41)
+	at knot//net.minecraft.server.packs.resources.SimplePreparableReloadListener.lambda$reload$1(SimplePreparableReloadListener.java:15)
+	at java.base/java.util.concurrent.CompletableFuture$UniAccept.tryFire(Unknown Source)
+	at java.base/java.util.concurrent.CompletableFuture$Completion.run(Unknown Source)
+	at knot//net.minecraft.server.packs.resources.SimpleReloadInstance.lambda$prepareTasks$3(SimpleReloadInstance.java:59)
+	at knot//net.minecraft.util.thread.BlockableEventLoop.doRunTask(BlockableEventLoop.java:173)
+	at knot//net.minecraft.util.thread.ReentrantBlockableEventLoop.doRunTask(ReentrantBlockableEventLoop.java:23)
+	at knot//net.minecraft.util.thread.BlockableEventLoop.pollTask(BlockableEventLoop.java:147)
+	at knot//net.minecraft.util.thread.BlockableEventLoop.runAllTasks(BlockableEventLoop.java:127)
+	at knot//net.minecraft.client.Minecraft.runTick(Minecraft.java:1235)
+	at knot//net.minecraft.client.Minecraft.run(Minecraft.java:959)
+	at knot//net.minecraft.client.main.Main.main(Main.java:292)
+	at net.fabricmc.loader.impl.game.minecraft.MinecraftGameProvider.launch(MinecraftGameProvider.java:517)
+	at net.fabricmc.loader.impl.launch.knot.Knot.launch(Knot.java:72)
+	at net.fabricmc.loader.impl.launch.knot.KnotClient.main(KnotClient.java:23)
+[16:25:23] [Render thread/INFO]: Created: 512x256x0 minecraft:textures/atlas/particles.png-atlas
+[16:25:23] [Render thread/INFO]: Created: 128x128x0 minecraft:textures/atlas/decorated_pot.png-atlas
+[16:25:23] [Render thread/INFO]: Created: 2048x1024x0 minecraft:textures/atlas/armor_trims.png-atlas
+[16:25:23] [Render thread/INFO]: Created: 512x256x0 minecraft:textures/atlas/paintings.png-atlas
+[16:25:23] [Render thread/INFO]: Created: 1024x512x0 minecraft:textures/atlas/shield_patterns.png-atlas
+[16:25:23] [Render thread/INFO]: Created: 2048x2048x4 minecraft:textures/atlas/blocks.png-atlas
+[16:25:24] [Render thread/INFO]: Created: 512x512x0 minecraft:textures/atlas/chest.png-atlas
+[16:25:24] [Render thread/INFO]: Created: 256x128x0 minecraft:textures/atlas/celestials.png-atlas
+[16:25:24] [Render thread/INFO]: Created: 1024x512x0 minecraft:textures/atlas/banner_patterns.png-atlas
+[16:25:24] [Render thread/INFO]: Created: 1024x512x0 minecraft:textures/atlas/items.png-atlas
+[16:25:24] [Render thread/INFO]: Created: 1024x1024x0 minecraft:textures/atlas/gui.png-atlas
+[16:25:24] [Render thread/INFO]: Created: 128x64x0 minecraft:textures/atlas/map_decorations.png-atlas
+[16:25:24] [Render thread/INFO]: Created: 512x512x0 minecraft:textures/atlas/shulker_boxes.png-atlas
+[16:25:24] [Render thread/INFO]: Found new data pack fabric-convention-tags-v2, loading it automatically
+[16:25:26] [Render thread/INFO]: Loaded 1585 recipes
+[16:25:26] [Render thread/INFO]: Loaded 1688 advancements
+[16:25:26] [Render thread/INFO]: Applied 0 biome modifications to 0 of 66 new biomes in 4.989 ms
+[16:25:26] [Server thread/INFO]: Starting integrated minecraft server version 26.2
+[16:25:26] [Server thread/INFO]: Generating keypair
+[16:25:27] [Server thread/INFO]: Loading 0 persistent chunks...
+[16:25:27] [Server thread/INFO]: Preparing spawn area: 16%
+[16:25:27] [Server thread/INFO]: Saving chunks for level 'ServerLevel[world]'/minecraft:overworld
+[16:25:27] [Server thread/INFO]: Saving chunks for level 'ServerLevel[world]'/minecraft:the_nether
+[16:25:27] [Server thread/INFO]: Saving chunks for level 'ServerLevel[world]'/minecraft:the_end
+[16:25:27] [Server thread/INFO]: ThreadedAnvilChunkStorage (world): All chunks are saved
+[16:25:27] [Server thread/INFO]: ThreadedAnvilChunkStorage (DIM-1): All chunks are saved
+[16:25:27] [Server thread/INFO]: ThreadedAnvilChunkStorage (DIM1): All chunks are saved
+[16:25:27] [Server thread/INFO]: ThreadedAnvilChunkStorage: All dimensions are saved
+[16:25:31] [Server thread/INFO]: Loading 48 chunks for player spawn...
+[16:25:31] [Server thread/INFO]: Preparing spawn area: 16%
+[16:25:31] [Server thread/INFO]: Preparing spawn area: 16%
+[16:25:31] [Server thread/INFO]: Preparing spawn area: 16%
+[16:25:31] [Server thread/INFO]: Preparing spawn area: 16%
+[16:25:31] [Server thread/INFO]: Preparing spawn area: 16%
+[16:25:31] [Server thread/INFO]: Preparing spawn area: 16%
+[16:25:31] [Server thread/INFO]: Preparing spawn area: 16%
+[16:25:31] [Server thread/INFO]: Preparing spawn area: 16%
+[16:25:32] [Server thread/INFO]: Preparing spawn area: 16%
+[16:25:32] [Server thread/INFO]: Preparing spawn area: 16%
+[16:25:32] [Server thread/INFO]: Preparing spawn area: 16%
+[16:25:33] [Server thread/INFO]: Preparing spawn area: 16%
+[16:25:33] [Server thread/INFO]: Preparing spawn area: 16%
+[16:25:34] [Server thread/INFO]: Preparing spawn area: 16%
+[16:25:34] [Server thread/INFO]: Preparing spawn area: 16%
+[16:25:35] [Server thread/INFO]: Preparing spawn area: 30%
+[16:25:35] [Server thread/INFO]: Preparing spawn area: 30%
+[16:25:36] [Server thread/INFO]: Preparing spawn area: 30%
+[16:25:36] [Server thread/INFO]: Preparing spawn area: 32%
+[16:25:37] [Server thread/INFO]: Preparing spawn area: 58%
+[16:25:37] [Server thread/INFO]: Preparing spawn area: 58%
+[16:25:38] [Server thread/INFO]: Preparing spawn area: 58%
+[16:25:38] [Server thread/INFO]: Preparing spawn area: 58%
+[16:25:39] [Server thread/INFO]: Time elapsed: 11687 ms
+[16:25:39] [Server thread/INFO]: Tester[local:E:df1d841f] logged in with entity id 24 at (2.5, 73.0, 1.5)
+[16:25:39] [Server thread/INFO]: Tester joined the game
+[16:25:39] [Server thread/INFO]: Changing view distance to 4, from 10
+[16:25:39] [Render thread/INFO]: Loaded 2 advancements
+[16:25:39] [Server thread/INFO]: Changing simulation distance to 5, from 0
+[16:25:39] [Download-1/ERROR]: Failed to retrieve profile key pair
+MinecraftClientHttpException[type=HTTP_ERROR, status=401, response=ErrorResponse[path=/player/certificates, error=null, errorMessage=null, details=null]]
+	at knot//com.mojang.authlib.minecraft.client.MinecraftClient.buildHttpException(MinecraftClient.java:170)
+	at knot//com.mojang.authlib.minecraft.client.MinecraftClient.readServiceResponse(MinecraftClient.java:147)
+	at knot//com.mojang.authlib.minecraft.client.MinecraftClient.post(MinecraftClient.java:89)
+	at knot//com.mojang.authlib.yggdrasil.YggdrasilUserApiService.getKeyPair(YggdrasilUserApiService.java:62)
+	at knot//net.minecraft.client.multiplayer.AccountProfileKeyPairManager.fetchProfileKeyPair(AccountProfileKeyPairManager.java:128)
+	at knot//net.minecraft.client.multiplayer.AccountProfileKeyPairManager.lambda$readOrFetchProfileKeyPair$0(AccountProfileKeyPairManager.java:77)
+	at java.base/java.util.concurrent.CompletableFuture$AsyncSupply.run(Unknown Source)
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(Unknown Source)
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(Unknown Source)
+	at java.base/java.lang.Thread.run(Unknown Source)
+[16:25:40] [Render thread/INFO]: Resizing Dynamic Transforms UBO, capacity limit of 2 reached during a single frame. New capacity will be 4.
+[16:25:40] [Render thread/INFO]: Resizing Dynamic Transforms UBO, capacity limit of 4 reached during a single frame. New capacity will be 8.
+[16:25:41] [Render thread/INFO]: Resizing Dynamic Transforms UBO, capacity limit of 8 reached during a single frame. New capacity will be 16.
+[16:25:42] [Render thread/INFO]: [STDOUT]: [Peregrine self-test] PASS joins the world
+[16:25:42] [Server thread/INFO]: Changing view distance to 8, from 4
+[16:25:42] [Render thread/INFO]: Resizing Chunk Sections UBO, capacity limit of 2 reached during a single frame. New capacity will be 8.
+[16:25:43] [Render thread/INFO]: Resizing Chunk Sections UBO, capacity limit of 8 reached during a single frame. New capacity will be 16.
+[16:25:44] [Render thread/INFO]: Resizing Chunk Sections UBO, capacity limit of 16 reached during a single frame. New capacity will be 32.
+[16:25:44] [Render thread/INFO]: Resizing Chunk Sections UBO, capacity limit of 32 reached during a single frame. New capacity will be 64.
+[16:25:45] [Render thread/INFO]: Resizing Chunk Sections UBO, capacity limit of 64 reached during a single frame. New capacity will be 128.
+[16:26:22] [Render thread/INFO]: [STDOUT]: [Peregrine self-test] INFO benchmark: 14 fps average, 11 lowest, render distance 8, over 20 s
+[16:26:22] [Render thread/INFO]: [STDOUT]: [Peregrine self-test] PASS HUD draws in game
+[16:26:27] [Render thread/INFO]: [STDOUT]: [Peregrine self-test] PASS Stable FPS eases off settings when FPS is low
+[16:26:31] [Render thread/INFO]: [STDOUT]: [Peregrine self-test] PASS mouse clicks are counted (CPS)
+[16:26:32] [Render thread/INFO]: [STDOUT]: [Peregrine self-test] PASS holding C zooms in
+[16:26:35] [Render thread/INFO]: [STDOUT]: [Peregrine self-test] PASS Right Shift opens the menu
+[16:26:38] [Render thread/INFO]: [STDOUT]: [Peregrine self-test] PASS typing and Backspace work in the search box
+[16:26:41] [Render thread/INFO]: [STDOUT]: [Peregrine self-test] PASS clicking a card switches it
+[16:26:42] [Render thread/INFO]: [STDOUT]: [Peregrine self-test] PASS Edit HUD opens the editor
+[16:26:46] [Render thread/INFO]: [STDOUT]: [Peregrine self-test] PASS dragging moves a HUD item
+[16:26:48] [Render thread/INFO]: [STDOUT]: [Peregrine self-test] PASS right-click opens the style panel
+[16:26:51] [Render thread/INFO]: [STDOUT]: [Peregrine self-test] PASS picking a colour recolours the text
+[16:26:53] [Render thread/INFO]: [STDOUT]: [Peregrine self-test] PASS dragging the corner makes it bigger
+[16:26:55] [Render thread/INFO]: [STDOUT]: [Peregrine self-test] PASS Esc saves and closes the editor
+[16:26:56] [Render thread/INFO]: [STDOUT]: [Peregrine self-test] PASS the gear opens a settings page
+[16:26:59] [Render thread/INFO]: [STDOUT]: [Peregrine self-test] PASS clicking an option changes it
+[16:27:00] [Render thread/INFO]: [STDOUT]: [Peregrine self-test] PASS the keybind button waits for a key
+[16:27:03] [Render thread/INFO]: [STDOUT]: [Peregrine self-test] PASS pressing K binds it
+[16:27:04] [Render thread/INFO]: [STDOUT]: [Peregrine self-test] PASS Customize opens the editor with the style panel
+[16:27:07] [Render thread/INFO]: [STDOUT]: [Peregrine self-test] PASS Esc goes back to the settings page
+[16:27:07] [Render thread/INFO]: [STDOUT]: [Peregrine self-test] PASS Esc goes back to the list
+[16:27:08] [Render thread/INFO]: [STDOUT]: [Peregrine self-test] PASS the Settings tab opens
+[16:27:11] [Render thread/INFO]: [STDOUT]: [Peregrine self-test] PASS the Keybinds tab opens
+[16:27:14] [Render thread/INFO]: [STDOUT]: [Peregrine self-test] PASS back to the Mods tab
+[16:27:17] [Render thread/INFO]: [STDOUT]: [Peregrine self-test] PASS Esc closes the menu
+[16:27:18] [Render thread/INFO]: [STDOUT]: [Peregrine self-test] PASS pressing K in game switches the Clock
+[16:27:19] [Render thread/INFO]: Reloading ResourceManager: vanilla, fabric-advancement-api-v1, fabric-api, fabric-api-base, fabric-api-lookup-api-v1, fabric-biome-api-v1, fabric-block-api-v1, fabric-block-getter-api-v2, fabric-command-api-v2, fabric-content-registries-v0, fabric-convention-tags-v2, fabric-crash-report-info-v1, fabric-creative-tab-api-v1, fabric-data-attachment-api-v1, fabric-data-generation-api-v1, fabric-debug-api-v1, fabric-dimensions-v1, fabric-entity-events-v1, fabric-events-interaction-v0, fabric-game-rule-api-v1, fabric-item-api-v1, fabric-key-mapping-api-v1, fabric-lifecycle-events-v1, fabric-loot-api-v3, fabric-menu-api-v1, fabric-message-api-v1, fabric-model-loading-api-v1, fabric-networking-api-v1, fabric-object-builder-api-v1, fabric-particles-v1, fabric-permission-api-v1, fabric-recipe-api-v1, fabric-registry-sync-v0, fabric-renderer-api-v1, fabric-renderer-indigo, fabric-rendering-fluids-v1, fabric-rendering-v1, fabric-resource-conditions-api-v1, fabric-resource-loader-v0, fabric-resource-loader-v1, fabric-screen-api-v1, fabric-serialization-api-v1, fabric-sound-api-v1, fabric-tag-api-v1, fabric-transfer-api-v1, fabric-transitive-access-wideners-v1, fabricloader, peregrine-client, file/PeregrineTest
+[16:27:20] [Render thread/INFO]: [STDOUT]: [Peregrine self-test] PASS clear_weather hook runs
+[16:27:20] [Render thread/INFO]: [STDOUT]: [Peregrine self-test] PASS clean_edges hook runs
+[16:27:20] [Server thread/INFO]: Saving and pausing game...
+[16:27:20] [Server thread/INFO]: Saving chunks for level 'ServerLevel[world]'/minecraft:overworld
+[16:27:20] [Server thread/INFO]: Saving chunks for level 'ServerLevel[world]'/minecraft:the_nether
+[16:27:20] [Server thread/INFO]: Saving chunks for level 'ServerLevel[world]'/minecraft:the_end
+[16:27:20] [Worker-Main-1/INFO]: Found unifont_all_no_pua-17.0.01.hex, loading
+[16:27:20] [Worker-Main-3/INFO]: Found unifont_pua-17.0.01.hex, loading
+[16:27:20] [Worker-Main-1/INFO]: Found unifont_jp_patch-17.0.01.hex, loading
+[16:27:21] [Render thread/ERROR]: Error starting SoundSystem. Turning off sounds & music
+java.lang.IllegalStateException: Failed to open OpenAL device
+	at knot//com.mojang.blaze3d.audio.Library.openDeviceOrFallback(Library.java:275)
+	at knot//com.mojang.blaze3d.audio.Library.init(Library.java:150)
+	at knot//net.minecraft.client.sounds.SoundEngine.loadLibrary(SoundEngine.java:120)
+	at knot//net.minecraft.client.sounds.SoundEngine.reload(SoundEngine.java:109)
+	at knot//net.minecraft.client.sounds.SoundManager.apply(SoundManager.java:122)
+	at knot//net.minecraft.client.sounds.SoundManager.apply(SoundManager.java:41)
+	at knot//net.minecraft.server.packs.resources.SimplePreparableReloadListener.lambda$reload$1(SimplePreparableReloadListener.java:15)
+	at java.base/java.util.concurrent.CompletableFuture$UniAccept.tryFire(Unknown Source)
+	at java.base/java.util.concurrent.CompletableFuture$Completion.run(Unknown Source)
+	at knot//net.minecraft.server.packs.resources.SimpleReloadInstance.lambda$prepareTasks$3(SimpleReloadInstance.java:59)
+	at knot//net.minecraft.util.thread.BlockableEventLoop.doRunTask(BlockableEventLoop.java:173)
+	at knot//net.minecraft.util.thread.ReentrantBlockableEventLoop.doRunTask(ReentrantBlockableEventLoop.java:23)
+	at knot//net.minecraft.util.thread.BlockableEventLoop.pollTask(BlockableEventLoop.java:147)
+	at knot//net.minecraft.util.thread.BlockableEventLoop.runAllTasks(BlockableEventLoop.java:127)
+	at knot//net.minecraft.client.Minecraft.runTick(Minecraft.java:1235)
+	at knot//net.minecraft.client.Minecraft.run(Minecraft.java:959)
+	at knot//net.minecraft.client.main.Main.main(Main.java:292)
+	at net.fabricmc.loader.impl.game.minecraft.MinecraftGameProvider.launch(MinecraftGameProvider.java:517)
+	at net.fabricmc.loader.impl.launch.knot.Knot.launch(Knot.java:72)
+	at net.fabricmc.loader.impl.launch.knot.KnotClient.main(KnotClient.java:23)
+[16:27:21] [Render thread/INFO]: Created: 512x256x0 minecraft:textures/atlas/particles.png-atlas
+[16:27:21] [Render thread/INFO]: Created: 128x128x0 minecraft:textures/atlas/decorated_pot.png-atlas
+[16:27:21] [Render thread/INFO]: Created: 2048x1024x0 minecraft:textures/atlas/armor_trims.png-atlas
+[16:27:21] [Render thread/INFO]: Created: 512x256x0 minecraft:textures/atlas/paintings.png-atlas
+[16:27:21] [Render thread/INFO]: Created: 1024x512x0 minecraft:textures/atlas/shield_patterns.png-atlas
+[16:27:21] [Render thread/INFO]: Created: 2048x2048x4 minecraft:textures/atlas/blocks.png-atlas
+[16:27:21] [Render thread/INFO]: Created: 512x512x0 minecraft:textures/atlas/chest.png-atlas
+[16:27:21] [Render thread/INFO]: Created: 256x128x0 minecraft:textures/atlas/celestials.png-atlas
+[16:27:21] [Render thread/INFO]: Created: 1024x512x0 minecraft:textures/atlas/banner_patterns.png-atlas
+[16:27:21] [Render thread/INFO]: Created: 1024x512x0 minecraft:textures/atlas/items.png-atlas
+[16:27:21] [Render thread/INFO]: Created: 1024x1024x0 minecraft:textures/atlas/gui.png-atlas
+[16:27:21] [Render thread/INFO]: Created: 128x64x0 minecraft:textures/atlas/map_decorations.png-atlas
+[16:27:21] [Render thread/INFO]: Created: 512x512x0 minecraft:textures/atlas/shulker_boxes.png-atlas
+[16:27:21] [Render thread/INFO]: [STDOUT]: [Peregrine self-test] PASS anti base leak: every block uses one rotation
+[16:27:21] [Render thread/INFO]: [STDOUT]: [Peregrine self-test] PASS anti base leak: block model hook runs (diamond bedrock)
+[16:27:22] [Render thread/INFO]: [STDOUT]: [Peregrine self-test] PASS bedrock is drawn as diamond blocks
+[16:27:22] [Render thread/INFO]: [STDOUT]: [Peregrine self-test] PASS item physics lays the dropped item down
+[16:27:23] [Render thread/INFO]: Reloading ResourceManager: vanilla, fabric-advancement-api-v1, fabric-api, fabric-api-base, fabric-api-lookup-api-v1, fabric-biome-api-v1, fabric-block-api-v1, fabric-block-getter-api-v2, fabric-command-api-v2, fabric-content-registries-v0, fabric-convention-tags-v2, fabric-crash-report-info-v1, fabric-creative-tab-api-v1, fabric-data-attachment-api-v1, fabric-data-generation-api-v1, fabric-debug-api-v1, fabric-dimensions-v1, fabric-entity-events-v1, fabric-events-interaction-v0, fabric-game-rule-api-v1, fabric-item-api-v1, fabric-key-mapping-api-v1, fabric-lifecycle-events-v1, fabric-loot-api-v3, fabric-menu-api-v1, fabric-message-api-v1, fabric-model-loading-api-v1, fabric-networking-api-v1, fabric-object-builder-api-v1, fabric-particles-v1, fabric-permission-api-v1, fabric-recipe-api-v1, fabric-registry-sync-v0, fabric-renderer-api-v1, fabric-renderer-indigo, fabric-rendering-fluids-v1, fabric-rendering-v1, fabric-resource-conditions-api-v1, fabric-resource-loader-v0, fabric-resource-loader-v1, fabric-screen-api-v1, fabric-serialization-api-v1, fabric-sound-api-v1, fabric-tag-api-v1, fabric-transfer-api-v1, fabric-transitive-access-wideners-v1, fabricloader, peregrine-client, file/PeregrineTest
+[16:27:24] [Server thread/INFO]: Saving and pausing game...
+[16:27:24] [Server thread/INFO]: Saving chunks for level 'ServerLevel[world]'/minecraft:overworld
+[16:27:24] [Server thread/INFO]: Saving chunks for level 'ServerLevel[world]'/minecraft:the_nether
+[16:27:24] [Server thread/INFO]: Saving chunks for level 'ServerLevel[world]'/minecraft:the_end
+[16:27:24] [Worker-Main-2/INFO]: Found unifont_all_no_pua-17.0.01.hex, loading
+[16:27:24] [Worker-Main-1/INFO]: Found unifont_pua-17.0.01.hex, loading
+[16:27:24] [Worker-Main-2/INFO]: Found unifont_jp_patch-17.0.01.hex, loading
+[16:27:25] [Render thread/ERROR]: Error starting SoundSystem. Turning off sounds & music
+java.lang.IllegalStateException: Failed to open OpenAL device
+	at knot//com.mojang.blaze3d.audio.Library.openDeviceOrFallback(Library.java:275)
+	at knot//com.mojang.blaze3d.audio.Library.init(Library.java:150)
+	at knot//net.minecraft.client.sounds.SoundEngine.loadLibrary(SoundEngine.java:120)
+	at knot//net.minecraft.client.sounds.SoundEngine.reload(SoundEngine.java:109)
+	at knot//net.minecraft.client.sounds.SoundManager.apply(SoundManager.java:122)
+	at knot//net.minecraft.client.sounds.SoundManager.apply(SoundManager.java:41)
+	at knot//net.minecraft.server.packs.resources.SimplePreparableReloadListener.lambda$reload$1(SimplePreparableReloadListener.java:15)
+	at java.base/java.util.concurrent.CompletableFuture$UniAccept.tryFire(Unknown Source)
+	at java.base/java.util.concurrent.CompletableFuture$Completion.run(Unknown Source)
+	at knot//net.minecraft.server.packs.resources.SimpleReloadInstance.lambda$prepareTasks$3(SimpleReloadInstance.java:59)
+	at knot//net.minecraft.util.thread.BlockableEventLoop.doRunTask(BlockableEventLoop.java:173)
+	at knot//net.minecraft.util.thread.ReentrantBlockableEventLoop.doRunTask(ReentrantBlockableEventLoop.java:23)
+	at knot//net.minecraft.util.thread.BlockableEventLoop.pollTask(BlockableEventLoop.java:147)
+	at knot//net.minecraft.util.thread.BlockableEventLoop.runAllTasks(BlockableEventLoop.java:127)
+	at knot//net.minecraft.client.Minecraft.runTick(Minecraft.java:1235)
+	at knot//net.minecraft.client.Minecraft.run(Minecraft.java:959)
+	at knot//net.minecraft.client.main.Main.main(Main.java:292)
+	at net.fabricmc.loader.impl.game.minecraft.MinecraftGameProvider.launch(MinecraftGameProvider.java:517)
+	at net.fabricmc.loader.impl.launch.knot.Knot.launch(Knot.java:72)
+	at net.fabricmc.loader.impl.launch.knot.KnotClient.main(KnotClient.java:23)
+[16:27:25] [Render thread/INFO]: Created: 512x256x0 minecraft:textures/atlas/particles.png-atlas
+[16:27:25] [Render thread/INFO]: Created: 128x128x0 minecraft:textures/atlas/decorated_pot.png-atlas
+[16:27:25] [Render thread/INFO]: Created: 2048x1024x0 minecraft:textures/atlas/armor_trims.png-atlas
+[16:27:25] [Render thread/INFO]: Created: 512x256x0 minecraft:textures/atlas/paintings.png-atlas
+[16:27:25] [Render thread/INFO]: Created: 1024x512x0 minecraft:textures/atlas/shield_patterns.png-atlas
+[16:27:25] [Render thread/INFO]: Created: 2048x2048x4 minecraft:textures/atlas/blocks.png-atlas
+[16:27:25] [Render thread/INFO]: Created: 512x512x0 minecraft:textures/atlas/chest.png-atlas
+[16:27:25] [Render thread/INFO]: Created: 256x128x0 minecraft:textures/atlas/celestials.png-atlas
+[16:27:25] [Render thread/INFO]: Created: 1024x512x0 minecraft:textures/atlas/banner_patterns.png-atlas
+[16:27:25] [Render thread/INFO]: Created: 1024x512x0 minecraft:textures/atlas/items.png-atlas
+[16:27:25] [Render thread/INFO]: Created: 1024x1024x0 minecraft:textures/atlas/gui.png-atlas
+[16:27:25] [Render thread/INFO]: Created: 128x64x0 minecraft:textures/atlas/map_decorations.png-atlas
+[16:27:25] [Render thread/INFO]: Created: 512x512x0 minecraft:textures/atlas/shulker_boxes.png-atlas
+[16:27:25] [Render thread/INFO]: [STDOUT]: [Peregrine self-test] PASS custom crosshair draws
+[16:27:28] [Render thread/INFO]: [STDOUT]: [Peregrine self-test] PASS holding Alt starts freelook in third person
+[16:27:30] [Render thread/INFO]: [STDOUT]: [Peregrine self-test] PASS letting go of Alt goes back to first person
+[16:27:30] [Render thread/INFO]: [STDOUT]: [Peregrine self-test] PASS particles: lava sparks are thinned out
+[16:27:30] [Render thread/INFO]: [STDOUT]: [Peregrine self-test] PASS fullbright lights up dark places
+[16:27:30] [Render thread/INFO]: [STDOUT]: [Peregrine self-test] PASS 1.7 animations: held item moves
+[16:27:30] [Render thread/INFO]: [STDOUT]: [Peregrine self-test] PASS hitboxes draw without F3+B
+[16:27:30] [Render thread/INFO]: [STDOUT]: [Peregrine self-test] PASS resource packs leave the menus alone (test pack's button and splash skipped)
+[16:27:30] [Render thread/INFO]: [STDOUT]: [Peregrine self-test] PASS small totem: the totem in your hand is drawn smaller
+[16:27:32] [Render thread/INFO]: [STDOUT]: [Peregrine self-test] PASS your own name tag shows in third person
+[16:27:34] [Render thread/INFO]: [STDOUT]: [Peregrine self-test] PASS fog is pushed away
+[16:27:34] [Render thread/INFO]: [STDOUT]: [Peregrine self-test] PASS block outline in the chosen color
+[16:27:34] [Render thread/INFO]: [STDOUT]: [Peregrine self-test] PASS ores you can see get an outline
+[16:27:34] [Render thread/INFO]: [STDOUT]: [Peregrine self-test] PASS the sky stops moving
+[16:27:34] [Render thread/INFO]: [STDOUT]: [Peregrine self-test] PASS swing speed changes the swing
+[16:27:36] [Render thread/INFO]: [STDOUT]: [Peregrine self-test] INFO hooks: seed=1000 offset=1000 model=1000 bedrock=12 items=129 crosshair=122 camera=28 particles=628 nightvision=221 animation=168 hitbox=249 nametag=36 scoreboard=0 fire=0 inventory=0 totem=84 packs=85 fog=57 outline=57 ores=57 sky=57 swing=39 sound=0
+[16:27:36] [Render thread/INFO]: [STDOUT]: [Peregrine self-test] INFO counts {on:clear_weather=676077, keybind:clock=1, click@95,205/0=1, editor=223, click@159,102/0=1, click@83,47/0=1, zoom-hook=1398, click@73,44/1=1, click@183,106/0=1, click@10,4/0=1, zoom-active=46, click@229,51/0=1, menu=362, mouse=1, click@245,134/0=1, hud=1440, on:clean_edges=1440, click@95,51/0=1, click@159,85/0=1, click@162,51/0=1, click@341,89/0=1, click@122,82/0=1}
+[16:27:36] [Render thread/INFO]: [STDOUT]: [Peregrine self-test] PASS finished with 0 failure(s)
+[16:27:37] [Render thread/INFO]: Stopping!
+[16:27:37] [Server thread/INFO]: Stopping server
+[16:27:37] [Server thread/INFO]: Saving players
+[16:27:37] [Server thread/INFO]: Tester lost connection: Disconnected
+[16:27:37] [Server thread/INFO]: Tester left the game
+[16:27:37] [Server thread/INFO]: Stopping singleplayer server as player logged out
+[16:27:37] [Server thread/INFO]: Saving worlds
+[16:27:38] [Server thread/INFO]: Saving chunks for level 'ServerLevel[world]'/minecraft:overworld
+[16:27:38] [Server thread/INFO]: Saving chunks for level 'ServerLevel[world]'/minecraft:the_nether
+[16:27:38] [Server thread/INFO]: Saving chunks for level 'ServerLevel[world]'/minecraft:the_end
+[16:27:38] [Server thread/INFO]: ThreadedAnvilChunkStorage (world): All chunks are saved
+[16:27:38] [Server thread/INFO]: ThreadedAnvilChunkStorage (DIM-1): All chunks are saved
+[16:27:38] [Server thread/INFO]: ThreadedAnvilChunkStorage (DIM1): All chunks are saved
+[16:27:38] [Server thread/INFO]: ThreadedAnvilChunkStorage: All dimensions are saved

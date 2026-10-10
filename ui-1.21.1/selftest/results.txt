@@ -1,0 +1,6 @@
+INFO phase smoke on Minecraft 1.21.1
+PASS Peregrine main menu shows
+PASS Peregrine menu opens
+PASS menu draws
+INFO counts {title=22, menu=8}
+PASS finished with 0 failure(s)
