@@ -27,12 +27,30 @@ function randomHex(bytes) {
 }
 
 // Asks Mojang whether this player just did the join handshake with this server id.
+// Mojang can be a moment behind, or briefly busy, so it asks a few times before giving up.
+// Returns {uuid, name}, or {failed: <Mojang's answer>}.
 async function verified(name, serverId) {
   const url = `https://sessionserver.mojang.com/session/minecraft/hasJoined?username=${encodeURIComponent(name)}&serverId=${encodeURIComponent(serverId)}`;
-  const r = await fetch(url);
-  if (r.status !== 200) return null;
-  const p = await r.json();
-  return p && p.id ? { uuid: p.id, name: p.name } : null;
+  let status = 0;
+  for (const wait of [0, 400, 900, 1600, 2500]) {
+    if (wait) await new Promise((r) => setTimeout(r, wait));
+    try {
+      const r = await fetch(url, { headers: { "user-agent": "peregrine-profiles/1.1", accept: "application/json" } });
+      status = r.status;
+      if (r.status === 200) {
+        const p = await r.json();
+        if (p && p.id) return { uuid: p.id, name: p.name };
+      }
+    } catch (e) {
+      status = "unreachable";
+    }
+  }
+  return { failed: status };
+}
+
+function notConfirmed(who) {
+  return reply({ error: `Mojang didn't confirm this account (Mojang answered ${who.failed}). Try again in a minute.`,
+                 mojang: who.failed }, 401);
 }
 
 // One use only: the id is forgotten as soon as it's checked.
@@ -70,7 +88,7 @@ export default {
       const asked = await takeChallenge(env, body.serverId);
       if (!asked || asked !== name.toLowerCase()) return reply({ error: "start again" }, 401);
       const who = await verified(name, body.serverId);
-      if (!who) return reply({ error: "Mojang didn't confirm this account" }, 401);
+      if (who.failed !== undefined) return notConfirmed(who);
       const key = `profile:${who.name.toLowerCase()}`;
       if (request.method === "DELETE") {
         await env.PROFILES.delete(key);
@@ -102,7 +120,7 @@ export default {
       const asked = await takeChallenge(env, body.serverId);
       if (!asked || asked !== name.toLowerCase()) return reply({ error: "start again" }, 401);
       const who = await verified(name, body.serverId);
-      if (!who) return reply({ error: "Mojang didn't confirm this account" }, 401);
+      if (who.failed !== undefined) return notConfirmed(who);
       const key = `user:${who.uuid.toLowerCase()}`;
       if (request.method === "DELETE") {
         await env.PROFILES.delete(key);
@@ -134,6 +152,17 @@ export default {
       const p = await env.PROFILES.get(`profile:${m[1].toLowerCase()}`);
       return p ? new Response(p, { headers: { "content-type": "application/json", "access-control-allow-origin": "*" } })
                : reply({ error: "not shared" }, 404);
+    }
+
+    // Can this service reach Mojang? (for checking problems: a made-up player should give 204)
+    if (path === "/v1/mojang" && request.method === "GET") {
+      try {
+        const r = await fetch("https://sessionserver.mojang.com/session/minecraft/hasJoined?username=Peregrine_Check&serverId=0",
+                              { headers: { "user-agent": "peregrine-profiles/1.1" } });
+        return reply({ mojang: r.status, ok: r.status === 204 || r.status === 200 });
+      } catch (e) {
+        return reply({ mojang: "unreachable", ok: false, why: String(e) });
+      }
     }
 
     if (path === "" || path === "/v1") return reply({ service: "peregrine-profiles", ok: true });
