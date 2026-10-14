@@ -146,6 +146,74 @@ def unshare(account: dict) -> None:
         raise RuntimeError(r.json().get("error", f"Couldn't stop sharing ({r.status_code})"))
 
 
+# ---------------------------------------------------------------------- badges and capes
+
+CAPE_FILES = ("", "falcon", "violet", "ember", "starry", "pumpkin", "frost")  # the in-game Cosmetics list
+RESEND_AFTER = 20 * 3600
+
+
+def chosen_cape() -> str:
+    """The cape picked in the in-game Cosmetics settings ("" for none or Cosmetics off)."""
+    try:
+        data = json.loads(paths.CLIENT_SETTINGS.read_text())
+        m = (data.get("modules") or {}).get("cosmetics") or {}
+        if m.get("enabled") is False:
+            return ""
+        i = int((m.get("settings") or {}).get("cape", 1))
+        return CAPE_FILES[i] if 0 <= i < len(CAPE_FILES) else ""
+    except (OSError, ValueError, TypeError):
+        return CAPE_FILES[1]  # the default: Falcon
+
+
+def announce(account: dict, force: bool = False) -> str:
+    """Tells the service this account plays with Peregrine (and its cape), so other Peregrine
+    players see the falcon by its name. Only now and then: when the cape changed, or about
+    once a day. Returns what happened, for the log."""
+    from . import config
+    cfg = config.load()
+    if not available() or not cfg.get("show_badge", True):
+        return "off"
+    if account.get("type") != "msa":
+        return "not a Microsoft account"
+    cape = chosen_cape()
+    sent = dict(cfg.get("badge_sent") or {})
+    last = sent.get(account["uuid"]) or {}
+    import time
+    if not force and last.get("cape") == cape and time.time() - last.get("at", 0) < RESEND_AFTER:
+        return "up to date"
+    from . import auth
+    account = auth.refresh(account, cfg.get("client_id", ""))
+    auth.add_account(account)
+    server_id = _prove(account)
+    r = net.session.put(_url("/v1/presence"), json={"name": account["name"], "serverId": server_id, "cape": cape},
+                        timeout=30)
+    if r.status_code != 200:
+        raise RuntimeError(r.json().get("error", f"badge not saved ({r.status_code})"))
+    cfg = config.load()
+    sent = dict(cfg.get("badge_sent") or {})
+    sent[account["uuid"]] = {"cape": cape, "at": time.time()}
+    config.save(dict(cfg, badge_sent=sent))
+    return f"badge on, cape {cape or 'none'}"
+
+
+def hide(account: dict) -> None:
+    """Switch the badge off: the service forgets this account."""
+    from . import auth, config
+    if not available() or account.get("type") != "msa":
+        return
+    cfg = config.load()
+    account = auth.refresh(account, cfg.get("client_id", ""))
+    auth.add_account(account)
+    server_id = _prove(account)
+    r = net.session.delete(_url("/v1/presence"), json={"name": account["name"], "serverId": server_id}, timeout=30)
+    if r.status_code != 200:
+        raise RuntimeError(r.json().get("error", f"couldn't switch the badge off ({r.status_code})"))
+    cfg = config.load()
+    sent = dict(cfg.get("badge_sent") or {})
+    sent.pop(account["uuid"], None)
+    config.save(dict(cfg, badge_sent=sent))
+
+
 def lookup(name: str) -> dict:
     """A player's shared profile. Raises LookupError if they haven't shared one."""
     name = name.strip()

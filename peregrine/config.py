@@ -40,6 +40,8 @@ DEFAULTS = {
     "fast_start": True,       # Java class snapshot for quicker game startup
     # Extras
     "discord": True,          # show what you're playing on Discord
+    "show_badge": True,       # other Peregrine players see the falcon by your name and your cape
+    "badge_sent": {},         # account id -> {"cape", "at"}: when it was last told to the service
     "ingame_menu": True,
     "share_game_settings": True,  # FOV, keys, sound... follow you to every instance      # install Peregrine Client (Right Shift menu) in Fabric instances
 }

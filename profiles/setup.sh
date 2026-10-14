@@ -14,8 +14,9 @@ if grep -q PUT_YOUR_KV_ID_HERE wrangler.toml; then
   sed -i.bak "s/PUT_YOUR_KV_ID_HERE/$id/" wrangler.toml && rm -f wrangler.toml.bak
 fi
 echo "3/3  Putting the service online"
-npx --yes wrangler@3 deploy | tee /tmp/peregrine-deploy.txt
-url="$(grep -oE 'https://[a-z0-9.-]+\.workers\.dev' /tmp/peregrine-deploy.txt | head -1)"
+echo "     (the first time, Cloudflare asks you to pick a workers.dev name: type any name you like)"
+npx --yes wrangler@3 deploy
 echo
-echo "Done! Your profile service is at: ${url:-(see the address above)}"
-echo "Send that address to whoever builds Peregrine, or put it in peregrine/__init__.py as PROFILES_URL."
+echo "Done! Your service's address is the https://...workers.dev line just above."
+echo "Put it in peregrine/__init__.py as PROFILES_URL (or send it to whoever builds Peregrine)."
+echo "After changing profiles/worker.js later, update the service with:  cd profiles && npx --yes wrangler@3 deploy"

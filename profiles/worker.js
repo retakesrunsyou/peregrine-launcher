@@ -9,6 +9,9 @@
 
 const MAX_BYTES = 256 * 1024;
 const NAME = /^[A-Za-z0-9_]{3,16}$/;
+const UUID = /^[0-9a-f]{32}$/;
+const CAPES = ["", "falcon", "violet", "ember", "starry", "pumpkin", "frost"];
+const PRESENCE_DAYS = 60;
 
 function reply(body, status = 200) {
   return new Response(JSON.stringify(body), {
@@ -89,7 +92,43 @@ export default {
       return reply({ ok: true, name: who.name });
     }
 
-    // 3. Look someone up by Minecraft name.
+    // 3. "I play with Peregrine": other Peregrine players then see the falcon next to your
+    //    name and the cape you picked. Proven with the handshake like profiles; only your
+    //    account id, cape and the day you last played are kept, for 60 days after you last play.
+    if (path === "/v1/presence" && (request.method === "PUT" || request.method === "DELETE")) {
+      const body = await request.json().catch(() => ({}));
+      const name = body.name || "";
+      if (!NAME.test(name)) return reply({ error: "bad name" }, 400);
+      const asked = await takeChallenge(env, body.serverId);
+      if (!asked || asked !== name.toLowerCase()) return reply({ error: "start again" }, 401);
+      const who = await verified(name, body.serverId);
+      if (!who) return reply({ error: "Mojang didn't confirm this account" }, 401);
+      const key = `user:${who.uuid.toLowerCase()}`;
+      if (request.method === "DELETE") {
+        await env.PROFILES.delete(key);
+        return reply({ ok: true, removed: true });
+      }
+      const cape = CAPES.includes(body.cape) ? body.cape : "";
+      await env.PROFILES.put(key, JSON.stringify({ cape, seen: new Date().toISOString().slice(0, 10) }),
+                             { expirationTtl: PRESENCE_DAYS * 86400 });
+      return reply({ ok: true, uuid: who.uuid, cape });
+    }
+
+    // 4. Which of these players use Peregrine? (the game asks about players it can see)
+    if (path === "/v1/players" && request.method === "POST") {
+      const body = await request.json().catch(() => ({}));
+      const ids = [...new Set((body.uuids || []).map((u) => String(u).replace(/-/g, "").toLowerCase()))]
+        .filter((u) => UUID.test(u)).slice(0, 100);
+      const found = await Promise.all(ids.map((u) => env.PROFILES.get(`user:${u}`)));
+      const players = {};
+      ids.forEach((u, i) => {
+        if (!found[i]) return;
+        try { players[u] = { cape: JSON.parse(found[i]).cape || "" }; } catch { players[u] = { cape: "" }; }
+      });
+      return reply({ players });
+    }
+
+    // 5. Look someone up by Minecraft name.
     const m = path.match(/^\/v1\/profile\/([A-Za-z0-9_]{3,16})$/);
     if (m && request.method === "GET") {
       const p = await env.PROFILES.get(`profile:${m[1].toLowerCase()}`);

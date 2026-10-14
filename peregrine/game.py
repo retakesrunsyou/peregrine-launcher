@@ -501,6 +501,9 @@ def build_command(profile: dict, info: dict, java: str, account: dict,
     if info.get("log_arg"):
         tuned.append(info["log_arg"])
     tuned.append(f"-Dperegrine.config={paths.CLIENT_SETTINGS}")
+    from . import PROFILES_URL
+    if PROFILES_URL:
+        tuned.append(f"-Dperegrine.service={PROFILES_URL}")  # in game: who else plays with Peregrine
     tuned += cfg.get("extra_jvm_args", "").split()
 
     cmd = [java] + tuned + jvm + [profile["mainClass"]] + game

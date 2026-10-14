@@ -11,7 +11,14 @@ Only what a player chooses to share, and only after they press **Share** in the 
 - the mods, resource packs and shaders they added **from Modrinth** (by Modrinth id; their own files stay private)
 - optionally their in-game mod settings (HUD layout, modules), **without** waypoints, nickname, quick commands or servers
 
-**Stop sharing** deletes it. Nobody can post as someone else: the launcher does Mojang's own
+**Stop sharing** deletes it.
+
+It also powers **Peregrine badges and capes**: when you press Play, the launcher tells the
+service that your account plays with Peregrine and which cape you picked in game (only your
+account id, the cape and the day; forgotten 60 days after you last play). In game, Peregrine
+asks about the players you can see, so everyone using Peregrine sees the falcon by each
+other's names and each other's capes. Switch it off in Settings → "Show my Peregrine badge
+to others". Nobody can post as someone else: the launcher does Mojang's own
 "join" handshake (the one joining a server uses), and the service asks Mojang whether that
 name really did it. Players' logins never reach this service.
 
@@ -29,6 +36,15 @@ bash profiles/setup.sh
 
 Put that address in `peregrine/__init__.py` as `PROFILES_URL = "https://..."` and publish a
 release. The **Profiles** page in the launcher switches on for everyone who updates.
+
+## Updating the service
+
+After `profiles/worker.js` changes, put the new version online (your storage and profiles stay):
+
+```bash
+cd profiles
+npx --yes wrangler@3 deploy
+```
 
 ## Check it's working
 

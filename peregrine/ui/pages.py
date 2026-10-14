@@ -823,6 +823,12 @@ class SettingsPage(QWidget):
             discord_toggle = self._check(cfg, "discord")
             discord_toggle.toggled.connect(lambda on: discord.update("idle" if on else "clear"))
             launcher.row("Show what you're playing on Discord", discord_toggle)
+        from .. import profiles as _profiles
+        if _profiles.available():
+            badge_toggle = self._check(cfg, "show_badge")
+            badge_toggle.toggled.connect(self._badge_changed)
+            launcher.row("Show my Peregrine badge to others", badge_toggle,
+                         "Other Peregrine players see the falcon by your name and the cape you picked in game.")
         launcher.row("In-game menu (Right Shift)", self._check(cfg, "ingame_menu"),
                      "Adds Peregrine Client to Fabric instances: HUD, zoom, toggle sprint and more.")
         self.body.addWidget(launcher)
@@ -851,6 +857,15 @@ class SettingsPage(QWidget):
         updates.row("Look for a new version", check_now)
         self.body.addWidget(updates)
         self.body.addStretch()
+
+    def _badge_changed(self, on):
+        from .. import auth, profiles
+        from . import workers
+        account = auth.active_account()
+        if not account or account.get("type") != "msa":
+            return
+        work = (lambda: profiles.announce(account, force=True)) if on else (lambda: profiles.hide(account))
+        workers.run(work, failed=lambda m: print(f"[peregrine] badge: {m}"))
 
     def _check(self, cfg, key) -> Toggle:
         c = Toggle(bool(cfg[key]))

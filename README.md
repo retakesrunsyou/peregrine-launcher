@@ -76,8 +76,9 @@ drawn in software; real graphics cards usually gain more from Sodium):
 - **Titles**, **action bar** and **boss bars**: resize, move or hide each one; **compact tab list** with ping as numbers;
   **shulker preview**; **Better F3**; **MC Tiers** next to names; **smooth hotbar**; **borderless fullscreen**
 - **Peregrine capes and badges**: pick your cape (Falcon, Violet, Ember, Starry night, Pumpkin, Frost) under
-  Cosmetics. Players on the Peregrine list ([`cosmetics.json`](cosmetics.json)) show their cape and a badge to
-  everyone using Peregrine; get your ID with **Copy ID** on the launcher's Accounts page
+  Cosmetics. Everyone playing with Peregrine sees the falcon by each other's names and each other's capes,
+  automatically (switch it off in Settings). Special badges (dev, staff, supporter, early) come from
+  [`cosmetics.json`](cosmetics.json); get a player's ID with **Copy ID** on the launcher's Accounts page
 - **Item switch**: a smoother, quicker or snappier hand when you change items
 - **Smooth inventory** (on by default): inventories and chests grow in and shrink away, the slot highlight glides, and items
   you swap with the number keys fly to their new slot. Optional **see-through inventory**: dark glass with grey slots instead

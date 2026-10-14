@@ -1,7 +1,7 @@
 """Peregrine Launcher: a Minecraft: Java Edition launcher for Windows and Linux."""
 
 NAME = "Peregrine"
-VERSION = "1.3.1"
+VERSION = "1.3.2"
 TAGLINE = "Fast to launch. Faster to play."
 USER_AGENT = f"peregrine-launcher/{VERSION} (Minecraft launcher)"
 
@@ -19,4 +19,4 @@ UPDATE_REPO = "retakesrunsyou/peregrine-launcher"
 
 # The Peregrine profiles service (a free Cloudflare Worker, see profiles/README.md).
 # Leave empty to hide profiles until it's set up.
-PROFILES_URL = ""
+PROFILES_URL = "https://peregrine-profiles.retakesdevemail.workers.dev"

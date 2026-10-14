@@ -403,6 +403,7 @@ class Instance:
         account = auth.refresh(account, cfg.get("client_id", ""))
         if account.get("type") == "msa":
             auth.add_account(account)  # store refreshed tokens
+            _announce_later(account)
         self.game_dir.mkdir(parents=True, exist_ok=True)
         (self.game_dir / "quickPlay").mkdir(exist_ok=True)
         cmd = game.build_command(prof, info, java, account, self.game_dir, cfg, join=join)
@@ -449,3 +450,17 @@ def all_instances() -> list:
             except (OSError, ValueError, KeyError, AttributeError, TypeError):
                 pass
     return out
+
+
+def _announce_later(account: dict) -> None:
+    """In the background while the game starts: let other Peregrine players see the falcon
+    by this player's name, and their cape (see profiles.announce)."""
+    import threading
+
+    def go():
+        try:
+            from . import profiles
+            print(f"[peregrine] Peregrine badge: {profiles.announce(account)}")
+        except Exception as e:
+            print(f"[peregrine] Peregrine badge not updated: {e}")
+    threading.Thread(target=go, name="peregrine-badge", daemon=True).start()
