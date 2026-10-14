@@ -1,0 +1,3 @@
+# Minecraft version, Fabric API version (from Fabric's example project for each version)
+1.21 0.102.0+1.21
+1.21.1 0.116.17+1.21.1

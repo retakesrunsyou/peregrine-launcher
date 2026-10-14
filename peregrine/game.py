@@ -1,0 +1,570 @@
+"""Everything needed to install and start a Minecraft version.
+
+Reads Mojang's version manifest, works out which libraries/assets/Java a
+version needs, downloads them, and builds the java command line.
+"""
+
+import os
+import platform
+import re
+import shutil
+import sys
+import zipfile
+from pathlib import Path
+from typing import Optional
+
+from . import NAME, VERSION, net, paths
+
+MANIFEST_URL = "https://piston-meta.mojang.com/mc/game/version_manifest_v2.json"
+# Mojang's list of Java runtimes (the old launchermeta address stopped working).
+RUNTIME_INDEX_URLS = [
+    "https://piston-meta.mojang.com/v1/products/java-runtime/2ec0cc96c44e5a76b9c8b7c39df7210883d12871/all.json",
+    "https://launchermeta.mojang.com/v1/products/java-runtime/2ec0cc96c44e5a76b9c8b7c39df7210883d12871/all.json",
+]
+RESOURCES_URL = "https://resources.download.minecraft.net"
+MAVEN_CENTRAL = "https://repo1.maven.org/maven2/"
+
+_manifest_cache = None
+
+# This computer, as Mojang's version files name it.
+OS_NAME = {"win32": "windows", "darwin": "osx"}.get(sys.platform, "linux")
+WINDOWS = OS_NAME == "windows"
+
+
+# ---------------------------------------------------------------- versions
+
+def manifest(refresh: bool = False) -> dict:
+    global _manifest_cache
+    if _manifest_cache is None or refresh:
+        _manifest_cache = net.get_json_cached(MANIFEST_URL, paths.CACHE / "version_manifest.json",
+                                              0 if refresh else 3600)
+    return _manifest_cache
+
+
+def list_versions(include_snapshots: bool = False) -> list:
+    return [v["id"] for v in manifest()["versions"]
+            if v["type"] == "release" or (include_snapshots and v["type"] == "snapshot")]
+
+
+def version_json(version_id: str) -> dict:
+    """Download (or read cached) version JSON."""
+    path = paths.VERSIONS / version_id / f"{version_id}.json"
+    if path.is_file():  # already downloaded: no network needed (version files never change)
+        import json
+        try:
+            return json.loads(path.read_text())
+        except ValueError:
+            path.unlink()
+    entry = next((v for v in manifest()["versions"] if v["id"] == version_id), None)
+    if entry is None:
+        raise ValueError(f"Unknown Minecraft version: {version_id}")
+    net.fetch_all([net.Download(entry["url"], path, entry.get("sha1"))], "Version info")
+    import json
+    return json.loads(path.read_text())
+
+
+# ------------------------------------------------------------------- rules
+
+FEATURES = {}  # demo mode, custom resolution, quick play... all off
+
+
+def _os_matches(os_rule: dict) -> bool:
+    if "name" in os_rule and os_rule["name"] != OS_NAME:
+        return False
+    if "arch" in os_rule:
+        is_32 = platform.architecture()[0] == "32bit"
+        if os_rule["arch"] == "x86" and not is_32:
+            return False
+    return True
+
+
+def rules_allow(rules: Optional[list], features: dict = FEATURES) -> bool:
+    if not rules:
+        return True
+    allowed = False
+    for rule in rules:
+        ok = True
+        if "os" in rule and not _os_matches(rule["os"]):
+            ok = False
+        for key, want in rule.get("features", {}).items():
+            if features.get(key, False) != want:
+                ok = False
+        if ok:
+            allowed = rule["action"] == "allow"
+    return allowed
+
+
+# --------------------------------------------------------------- libraries
+
+def maven_path(name: str) -> str:
+    """'group:artifact:version[:classifier][@ext]' -> relative jar path."""
+    ext = "jar"
+    if "@" in name:
+        name, ext = name.split("@", 1)
+    parts = name.split(":")
+    group, artifact, version = parts[:3]
+    classifier = f"-{parts[3]}" if len(parts) > 3 else ""
+    return f"{group.replace('.', '/')}/{artifact}/{version}/{artifact}-{version}{classifier}.{ext}"
+
+
+def _lib_key(name: str) -> str:
+    parts = name.split("@")[0].split(":")
+    classifier = parts[3] if len(parts) > 3 else ""
+    return f"{parts[0]}:{parts[1]}:{classifier}"
+
+
+def collect_libraries(libraries: list):
+    """Return (classpath_downloads, native_downloads_with_excludes)."""
+    classpath, natives, seen = [], [], set()
+    for lib in libraries:
+        if not rules_allow(lib.get("rules")):
+            continue
+        name = lib["name"]
+        key = _lib_key(name)
+        downloads = lib.get("downloads", {})
+
+        # Old-style natives (LWJGL 2 / 3.2): a classifier to unzip.
+        if "natives" in lib:
+            classifier = lib["natives"].get(OS_NAME)
+            if classifier:
+                classifier = classifier.replace("${arch}", "64")
+                info = downloads.get("classifiers", {}).get(classifier)
+                if info:
+                    dl = net.Download(info["url"], paths.LIBRARIES / info["path"], info.get("sha1"),
+                                      size=info.get("size"))
+                    natives.append((dl, lib.get("extract", {}).get("exclude", [])))
+
+        if key in seen:
+            continue  # an earlier (mod-loader) entry wins
+        if "artifact" in downloads:
+            art = downloads["artifact"]
+            if art.get("url"):
+                classpath.append(net.Download(art["url"], paths.LIBRARIES / art["path"], art.get("sha1"),
+                                              size=art.get("size")))
+                seen.add(key)
+        elif "downloads" not in lib:
+            # Maven-style entry (used by Fabric): name + repository url.
+            rel = maven_path(name)
+            base = lib.get("url", MAVEN_CENTRAL)
+            if not base.endswith("/"):
+                base += "/"
+            classpath.append(net.Download(base + rel, paths.LIBRARIES / rel, lib.get("sha1"),
+                                          size=lib.get("size")))
+            seen.add(key)
+    return classpath, natives
+
+
+def extract_natives(natives: list, target: Path) -> None:
+    target.mkdir(parents=True, exist_ok=True)
+    for dl, excludes in natives:
+        with zipfile.ZipFile(dl.path) as z:
+            for member in z.namelist():
+                if member.endswith("/") or any(member.startswith(e) for e in excludes):
+                    continue
+                if member.startswith("META-INF"):
+                    continue
+                out = target / member
+                if not out.resolve().is_relative_to(target.resolve()):
+                    continue  # ignore weird paths
+                out.parent.mkdir(parents=True, exist_ok=True)
+                with z.open(member) as src, open(out, "wb") as dst:
+                    shutil.copyfileobj(src, dst)
+
+
+# ------------------------------------------------------------------ assets
+
+def install_assets(profile: dict, progress=None) -> tuple:
+    """Download the asset index + objects. Returns (assets_root, index_id, legacy_dir)."""
+    import json
+    idx = profile["assetIndex"]
+    index_path = paths.ASSETS / "indexes" / f"{idx['id']}.json"
+    net.fetch_all([net.Download(idx["url"], index_path, idx.get("sha1"))], "Asset index")
+    index = json.loads(index_path.read_text())
+
+    downloads = []
+    for obj in index["objects"].values():
+        h = obj["hash"]
+        downloads.append(net.Download(f"{RESOURCES_URL}/{h[:2]}/{h}",
+                                      paths.ASSETS / "objects" / h[:2] / h, h, size=obj.get("size")))
+    net.fetch_all(downloads, "Assets", progress)
+
+    legacy_dir = None
+    if index.get("virtual") or index.get("map_to_resources"):
+        # Very old versions want assets laid out by name instead of by hash.
+        legacy_dir = paths.ASSETS / "virtual" / idx["id"]
+        for name, obj in index["objects"].items():
+            h = obj["hash"]
+            dest = legacy_dir / name
+            if not dest.exists():
+                dest.parent.mkdir(parents=True, exist_ok=True)
+                shutil.copyfile(paths.ASSETS / "objects" / h[:2] / h, dest)
+    return paths.ASSETS, idx["id"], legacy_dir
+
+
+# -------------------------------------------------------------------- java
+
+def _runtime_platform() -> Optional[str]:
+    """This computer in Mojang's Java list ("linux", "windows-x64"...), or None."""
+    m = platform.machine().lower()
+    if WINDOWS:
+        return {"amd64": "windows-x64", "x86_64": "windows-x64", "arm64": "windows-arm64"}.get(m, "windows-x86")
+    if OS_NAME == "osx":
+        return "mac-os-arm64" if m == "arm64" else "mac-os"
+    return "linux" if m in ("x86_64", "amd64") else None  # Mojang only ships x86_64 Linux runtimes
+
+
+def java_exe(home: Path) -> Path:
+    return home / "bin" / ("java.exe" if WINDOWS else "java")
+
+
+def install_java(component: str, progress=None) -> Optional[Path]:
+    """Install Mojang's own Java runtime. Returns path to java, or None."""
+    home = paths.RUNTIMES / component
+    java = java_exe(home)
+    marker = home / ".peregrine-complete"
+    if marker.exists() and java.exists():
+        return java
+    where = _runtime_platform()
+    if where is None:
+        return None
+    index, last_err = None, None
+    for url in RUNTIME_INDEX_URLS:
+        try:
+            index = net.get_json_cached(url, paths.CACHE / "java_runtimes.json", 6 * 3600)
+            break
+        except Exception as e:
+            last_err = e
+    if index is None:
+        raise RuntimeError(f"Couldn't get Mojang's Java list: {last_err}")
+    builds = index.get(where, {}).get(component) or []
+    if not builds:
+        return None
+    files = net.get_json(builds[0]["manifest"]["url"])["files"]
+
+    downloads, links = [], []
+    for rel, info in files.items():
+        dest = home / rel
+        if info["type"] == "directory":
+            dest.mkdir(parents=True, exist_ok=True)
+        elif info["type"] == "file":
+            raw = info["downloads"]["raw"]
+            downloads.append(net.Download(raw["url"], dest, raw.get("sha1"), size=raw.get("size"),
+                                          executable=info.get("executable", False)))
+        elif info["type"] == "link":
+            links.append((dest, info["target"]))
+    net.fetch_all(downloads, f"Java ({component})", progress)
+    for dest, target in links:
+        dest.parent.mkdir(parents=True, exist_ok=True)
+        if dest.is_symlink() or dest.exists():
+            dest.unlink()
+        try:
+            dest.symlink_to(target)
+        except OSError:  # Windows without the right to make links: a copy does the job
+            src = (dest.parent / target).resolve()
+            if src.is_file():
+                shutil.copyfile(src, dest)
+    marker.touch()
+    return java
+
+
+def java_major(java: str) -> int:
+    """The major version of a java executable (8, 17, 21, 25...), or 0 if it won't run."""
+    import subprocess
+    try:
+        out = subprocess.run([java, "-version"], capture_output=True, text=True, timeout=20,
+                             **({"creationflags": subprocess.CREATE_NO_WINDOW} if WINDOWS else {})).stderr
+    except (OSError, subprocess.SubprocessError):
+        return 0
+    m = re.search(r'version "(\d+)(?:\.(\d+))?', out)
+    if not m:
+        return 0
+    first = int(m.group(1))
+    return int(m.group(2) or 0) if first == 1 else first  # "1.8.0" means Java 8
+
+
+ADOPTIUM = "https://api.adoptium.net/v3/assets/latest/{major}/hotspot"
+
+
+def install_adoptium(major: int, progress=None) -> Optional[Path]:
+    """Download Eclipse Temurin (the standard free Java build) when Mojang has no
+    runtime for this Java version yet. Returns path to java, or None."""
+    import hashlib
+    import tarfile
+    arch = {"x86_64": "x64", "AMD64": "x64", "aarch64": "aarch64", "arm64": "aarch64"}.get(platform.machine())
+    if not arch:
+        return None
+    home = paths.RUNTIMES / f"temurin-{major}"
+    marker = home / ".peregrine-complete"
+    if marker.exists():
+        found = next(home.glob("*/bin/" + java_exe(Path(".")).name), None)
+        if found:
+            return found
+    assets = net.get_json(ADOPTIUM.format(major=major), params={
+        "os": "windows" if WINDOWS else "linux", "architecture": arch, "image_type": "jre", "vendor": "eclipse"})
+    if not assets:
+        return None
+    pkg = assets[0]["binary"]["package"]
+    archive = paths.RUNTIMES / pkg["name"]
+    net.fetch_all([net.Download(pkg["link"], archive, size=pkg.get("size"))], f"Java {major}", progress)
+    digest = hashlib.sha256(archive.read_bytes()).hexdigest()
+    if digest != pkg["checksum"]:
+        archive.unlink()
+        raise RuntimeError(f"The Java {major} download was damaged. Try again.")
+    if home.exists():
+        shutil.rmtree(home)
+    home.mkdir(parents=True)
+    if archive.name.endswith(".zip"):  # Windows builds come as zip files
+        with zipfile.ZipFile(archive) as z:
+            for name in z.namelist():
+                if not (home / name).resolve().is_relative_to(home.resolve()):
+                    raise RuntimeError("The Java download contained unsafe paths.")
+            z.extractall(home)
+    else:
+        with tarfile.open(archive) as tar:
+            for member in tar.getmembers():
+                if not (home / member.name).resolve().is_relative_to(home.resolve()):
+                    raise RuntimeError("The Java download contained unsafe paths.")
+            tar.extractall(home)
+    archive.unlink()
+    marker.touch()
+    return next(home.glob("*/bin/" + java_exe(Path(".")).name), None)
+
+
+def find_java(profile: dict, override: str = "", progress=None) -> str:
+    """Pick a Java that's new enough for this Minecraft version, downloading one if needed."""
+    need = int(profile.get("javaVersion", {}).get("majorVersion", 8))
+    if override:
+        have = java_major(override)
+        if have and have < need:
+            raise RuntimeError(f"The Java set in Settings is Java {have}, but this Minecraft version "
+                               f"needs Java {need}. Clear the Java path in Settings to use the "
+                               f"right one automatically.")
+        return override
+
+    # 1. Mojang's own runtime (what the official launcher uses).
+    component = profile.get("javaVersion", {}).get("component", "jre-legacy")
+    try:
+        java = install_java(component, progress)
+        if java and java_major(str(java)) >= need:
+            return str(java)
+    except Exception as e:
+        print(f"[peregrine] Mojang's Java runtime didn't install, using Temurin: {e!r}")
+    # 2. Eclipse Temurin, for Java versions Mojang hasn't published for Linux.
+    try:
+        java = install_adoptium(need, progress)
+        if java:
+            return str(java)
+    except Exception:
+        pass
+    # 3. The system's Java, only if it's new enough.
+    system = shutil.which("java")
+    if system and java_major(system) >= need:
+        return system
+    raise RuntimeError(f"This Minecraft version needs Java {need}, and Peregrine couldn't download it. "
+                       f"Check your internet connection" + (f", or install Java {need} from adoptium.net."
+                                                            if WINDOWS else
+                                                            f", or install it with: sudo apt install openjdk-{need}-jre"))
+
+
+# ----------------------------------------------------------------- profile
+
+def merge_profiles(parent: dict, child: dict) -> dict:
+    """Layer a mod-loader profile (child) on top of a vanilla version (parent)."""
+    merged = dict(parent)
+    merged["id"] = child.get("id", parent["id"])
+    merged["mainClass"] = child.get("mainClass", parent["mainClass"])
+    merged["libraries"] = child.get("libraries", []) + parent.get("libraries", [])
+    if "arguments" in child:
+        args = {k: list(v) for k, v in parent.get("arguments", {}).items()}
+        for kind in ("jvm", "game"):
+            args[kind] = args.get(kind, []) + child["arguments"].get(kind, [])
+        merged["arguments"] = args
+    if "minecraftArguments" in child:
+        merged["minecraftArguments"] = child["minecraftArguments"]
+    merged["_vanilla_id"] = parent["id"]
+    return merged
+
+
+def install(profile: dict, progress=None) -> dict:
+    """Download everything a (possibly merged) profile needs. Returns launch info."""
+    vanilla_id = profile.get("_vanilla_id", profile["id"])
+    client = profile["downloads"]["client"]
+    client_jar = paths.VERSIONS / vanilla_id / f"{vanilla_id}.jar"
+
+    classpath, natives = collect_libraries(profile["libraries"])
+    files = classpath + [dl for dl, _ in natives]
+    files.append(net.Download(client["url"], client_jar, client.get("sha1"), size=client.get("size")))
+
+    log_arg = None
+    logging_cfg = profile.get("logging", {}).get("client")
+    if logging_cfg:
+        f = logging_cfg["file"]
+        log_path = paths.ASSETS / "log_configs" / f["id"]
+        files.append(net.Download(f["url"], log_path, f.get("sha1")))
+        log_arg = logging_cfg["argument"].replace("${path}", str(log_path))
+
+    net.fetch_all(files, "Libraries", progress)
+
+    natives_dir = paths.NATIVES / profile["id"]
+    if natives:
+        extract_natives(natives, natives_dir)
+    natives_dir.mkdir(parents=True, exist_ok=True)
+
+    assets_root, index_id, legacy_dir = install_assets(profile, progress)
+    return {
+        "classpath": [str(d.path) for d in classpath] + [str(client_jar)],
+        "natives_dir": str(natives_dir),
+        "assets_root": str(assets_root),
+        "assets_index": index_id,
+        "legacy_assets": str(legacy_dir) if legacy_dir else None,
+        "log_arg": log_arg,
+    }
+
+
+# --------------------------------------------------------------- arguments
+
+_VAR = re.compile(r"\$\{(\w+)\}")
+
+
+def _expand(items: list, values: dict, features: dict = FEATURES) -> list:
+    out = []
+    for item in items:
+        if isinstance(item, dict):
+            if not rules_allow(item.get("rules"), features):
+                continue
+            val = item["value"]
+            out.extend(val if isinstance(val, list) else [val])
+        else:
+            out.append(item)
+    return [_VAR.sub(lambda m: str(values.get(m.group(1), m.group(0))), s) for s in out]
+
+
+def build_command(profile: dict, info: dict, java: str, account: dict,
+                  game_dir: Path, cfg: dict, join: str = None) -> list:
+    """join: a server address to go straight into (quick play)."""
+    values = {
+        "auth_player_name": account["name"],
+        "auth_uuid": account["uuid"],
+        "auth_access_token": account.get("mc_token") or "0",
+        "auth_session": account.get("mc_token") or "0",
+        "auth_xuid": account.get("xuid", ""),
+        "clientid": cfg.get("client_id", ""),
+        "user_type": "msa" if account.get("type") == "msa" else "legacy",
+        "user_properties": "{}",
+        "version_name": profile["id"],
+        "version_type": NAME,
+        "game_directory": str(game_dir),
+        "assets_root": info["assets_root"],
+        "game_assets": info["legacy_assets"] or info["assets_root"],
+        "assets_index_name": info["assets_index"],
+        "natives_directory": info["natives_dir"],
+        "launcher_name": NAME.lower(),
+        "launcher_version": VERSION,
+        "classpath": os.pathsep.join(info["classpath"]),
+        "classpath_separator": os.pathsep,
+        "library_directory": str(paths.LIBRARIES),
+    }
+
+    width, height = int(cfg.get("width") or 0), int(cfg.get("height") or 0)
+    features = {"has_custom_resolution": bool(width and height),
+                # Minecraft keeps a log of what you played (for the Recent page) ...
+                "has_quick_plays_support": True,
+                # ... and can go straight into a server.
+                "is_quick_play_multiplayer": bool(join)}
+    values.update(resolution_width=width, resolution_height=height,
+                  quick_play_path="quickPlay/log.json", quick_play_multiplayer=join or "")
+
+    if "arguments" in profile:
+        jvm = _expand(profile["arguments"].get("jvm", []), values, features)
+        game = _expand(profile["arguments"].get("game", []), values, features)
+    else:  # versions before 1.13
+        jvm = _expand(["-Djava.library.path=${natives_directory}", "-cp", "${classpath}"], values)
+        game = _expand(profile["minecraftArguments"].split(), values)
+        if features["has_custom_resolution"]:
+            game += ["--width", str(width), "--height", str(height)]
+    if cfg.get("fullscreen"):
+        game.append("--fullscreen")
+
+    major = int(profile.get("javaVersion", {}).get("majorVersion", 8))
+    tuned = jvm_tuning(cfg, major)
+    if major >= 19 and cfg.get("fast_start", True):
+        # Class snapshot: the first launch records the classes Java loaded, later
+        # launches map them straight in instead of loading them one by one.
+        # One file per Java version (a snapshot from another Java can't be used),
+        # and Java's notes about it stay out of the game log.
+        have = java_major(java) or major
+        cds = paths.CACHE / "cds" / f"{profile['id']}-java{have}.jsa"
+        cds.parent.mkdir(parents=True, exist_ok=True)
+        tuned += ["-XX:+AutoCreateSharedArchive", f"-XX:SharedArchiveFile={cds}", "-Xlog:cds*=off"]
+        if have >= 25:
+            tuned.append("-Xlog:aot*=off")
+    if info.get("log_arg"):
+        tuned.append(info["log_arg"])
+    tuned.append(f"-Dperegrine.config={paths.CLIENT_SETTINGS}")
+    tuned += cfg.get("extra_jvm_args", "").split()
+
+    cmd = [java] + tuned + jvm + [profile["mainClass"]] + game
+    if cfg.get("use_gamemode") and not WINDOWS and shutil.which("gamemoderun"):
+        cmd = ["gamemoderun"] + cmd
+    return cmd
+
+
+# ------------------------------------------------------------- performance
+
+def jvm_tuning(cfg: dict, java_major: int) -> list:
+    """Memory and garbage-collector settings that cut stutter in Minecraft."""
+    mx = int(cfg["max_memory_mb"])
+    ms = min(int(cfg.get("min_memory_mb") or mx), mx)
+    gc = cfg.get("gc", "auto")
+    common = [
+        # A flag one Java version doesn't know must never stop the game from starting.
+        "-XX:+IgnoreUnrecognizedVMOptions",
+        f"-Xmx{mx}M", f"-Xms{ms}M",
+        "-XX:+DisableExplicitGC",        # mods can't force full-pause collections
+        "-XX:+PerfDisableSharedMem",     # avoids disk stalls from JVM stats files
+        # The JIT compiler: let it compile Minecraft's biggest methods (rendering and
+        # chunk building have some), with room for all the compiled code mods add.
+        "-XX:-DontCompileHugeMethods",
+        "-XX:ReservedCodeCacheSize=400M",
+        "-XX:+AlwaysActAsServerClassMachine",
+        # Bigger memory pages where the kernel offers them: fewer TLB misses.
+    ]
+    if not sys.platform == "win32":
+        common.append("-XX:+UseTransparentHugePages")  # a Linux kernel feature
+    # ZGC: tiny pauses even with lots of RAM. Generational ZGC needs Java 21+.
+    if gc == "zgc" and java_major >= 21:
+        return common + ["-XX:+UseZGC", "-XX:+ZGenerational"]
+    # G1 tuned for a game: short pauses, room for the young generation.
+    return common + [
+        "-XX:+UseG1GC", "-XX:+ParallelRefProcEnabled", "-XX:+UnlockExperimentalVMOptions",
+        "-XX:G1NewSizePercent=30", "-XX:G1MaxNewSizePercent=40", "-XX:G1ReservePercent=20",
+        "-XX:G1HeapRegionSize=16M", "-XX:MaxGCPauseMillis=40",
+        "-XX:G1MixedGCCountTarget=4", "-XX:InitiatingHeapOccupancyPercent=15",
+    ]
+
+
+def has_nvidia() -> bool:
+    return not WINDOWS and Path("/proc/driver/nvidia/version").exists()
+
+
+def launch_env(cfg: dict) -> dict:
+    """Environment for the game process: graphics driver speed-ups."""
+    import os
+    env = dict(os.environ)
+    if cfg.get("driver_boost", True):
+        # Let the graphics driver work on a second CPU thread. Big FPS gains
+        # on AMD/Intel (Mesa); NVIDIA's equivalent setting.
+        env.setdefault("mesa_glthread", "true")
+        env.setdefault("__GL_THREADED_OPTIMIZATIONS", "1")
+        env.setdefault("__GL_SHADER_DISK_CACHE", "1")
+        # Keep compiled shaders between launches (no hitching while they rebuild).
+        env.setdefault("__GL_SHADER_DISK_CACHE_SKIP_CLEANUP", "1")
+        env.setdefault("MESA_SHADER_CACHE_MAX_SIZE", "1G")
+    if cfg.get("dedicated_gpu"):
+        # Laptops with two GPUs: run on the stronger one.
+        env["DRI_PRIME"] = "1"
+        if has_nvidia():
+            env["__NV_PRIME_RENDER_OFFLOAD"] = "1"
+            env["__GLX_VENDOR_LIBRARY_NAME"] = "nvidia"
+            env["__VK_LAYER_NV_optimus"] = "NVIDIA_only"
+    return env

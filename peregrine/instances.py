@@ -1,0 +1,451 @@
+"""Instances: separate game folders, each with its own version, loader and mods."""
+
+import json
+import re
+import shutil
+import subprocess
+from pathlib import Path
+
+from . import auth, client_mod, config, extras, fabric, game, modrinth, paths, performance
+
+# Colors new instances cycle through (each card gets its own).
+INSTANCE_COLORS = ["#e8a33d", "#5aa9e6", "#7bc47f", "#c38be0", "#e07a7a", "#d9c25a"]
+
+CONTENT_FOLDERS = {
+    "mods": (".jar",),
+    "resourcepacks": (".zip",),
+    "shaderpacks": (".zip",),
+}
+
+
+# Mod ids of the performance mods, for instances that got them before
+# performance mode tracked its files.
+_ID_TO_SLUG = {"sodium": "sodium", "lithium": "lithium", "ferritecore": "ferrite-core",
+               "entityculling": "entityculling", "immediatelyfast": "immediatelyfast",
+               "modernfix": "modernfix", "dynamic_fps": "dynamic-fps", "moreculling": "moreculling",
+               "badoptimizations": "badoptimizations", "scalablelux": "scalablelux", "clumps": "clumps"}
+
+
+def _write_json(path: Path, data) -> None:
+    """Write via a temp file so a crash can't leave a half-written file."""
+    tmp = path.with_suffix(".tmp")
+    tmp.write_text(json.dumps(data, indent=2))
+    tmp.replace(path)
+
+
+def _slug(name: str) -> str:
+    s = re.sub(r"[^a-zA-Z0-9_-]+", "-", name.strip()).strip("-").lower() or "instance"
+    candidate, n = s, 2
+    while (paths.INSTANCES / candidate).exists():
+        candidate, n = f"{s}-{n}", n + 1
+    return candidate
+
+
+def _read_options(path: Path) -> dict:
+    """options.txt as {key: value}, in file order."""
+    out = {}
+    for line in path.read_text(errors="replace").splitlines():
+        if ":" in line:
+            k, v = line.split(":", 1)
+            out[k] = v
+    return out
+
+
+class Instance:
+    def __init__(self, folder: Path):
+        self.folder = folder
+        self.data = json.loads((folder / "instance.json").read_text())
+
+    @property
+    def name(self) -> str:
+        return self.data["name"]
+
+    @property
+    def game_dir(self) -> Path:
+        return self.folder / "minecraft"
+
+    @property
+    def color(self) -> str:
+        return self.data.get("color") or INSTANCE_COLORS[0]
+
+    def subtitle(self) -> str:
+        return f"{self.data['loader'].capitalize()} {self.data['mc_version']}"
+
+    @property
+    def performance(self) -> bool:
+        """Performance mode: speed-up mods and fast settings. On unless switched off."""
+        return self.data.get("performance", True)
+
+    def save(self) -> None:
+        _write_json(self.folder / "instance.json", self.data)
+
+    def update(self, **changes) -> None:
+        """Save just these keys, on top of what's on disk now. Used by background
+        tasks, so they don't undo edits made in the settings dialog meanwhile."""
+        try:
+            current = json.loads((self.folder / "instance.json").read_text())
+        except (OSError, ValueError):
+            current = dict(self.data)
+        current.update(changes)
+        self.data.update(changes)
+        _write_json(self.folder / "instance.json", current)
+
+    @property
+    def icon(self):
+        p = self.folder / "icon.png"
+        return p if p.is_file() else None
+
+    @property
+    def log_file(self) -> Path:
+        return self.folder / "latest.log"
+
+    def optimize_video(self) -> list:
+        """Write the fast game settings to options.txt now. Returns what changed."""
+        changed = performance.apply_fast_settings(self.game_dir)
+        self.update(perf_settings=performance.PRESET_VERSION)
+        return changed
+
+    def enable_resource_pack(self, filename: str) -> None:
+        """Switch a resource pack on in options.txt (on top of the others), so it's
+        active the next time the game starts."""
+        import json as _json
+        opts = self.game_dir / "options.txt"
+        lines = opts.read_text(errors="replace").splitlines() if opts.exists() else []
+        current = dict(l.split(":", 1) for l in lines if ":" in l)
+        try:
+            packs = _json.loads(current.get("resourcePacks", "[]"))
+        except ValueError:
+            packs = []
+        if not packs:
+            packs = ["vanilla"]
+        entry = f"file/{filename}"
+        if entry not in packs:
+            packs.append(entry)  # the last one listed is on top
+        current["resourcePacks"] = _json.dumps(packs, separators=(",", ":"))
+        self.game_dir.mkdir(parents=True, exist_ok=True)
+        opts.write_text("\n".join(f"{k}:{v}" for k, v in current.items()) + "\n")
+
+    def delete(self) -> None:
+        shutil.rmtree(self.folder)
+
+    # ---- content (mods, resource packs, shaders)
+
+    def content(self, kind: str) -> list:
+        """[(path, enabled)] for a content folder, sorted by name."""
+        folder = self.game_dir / kind
+        exts = CONTENT_FOLDERS[kind]
+        if not folder.is_dir():
+            return []
+        items = []
+        for f in folder.iterdir():
+            name = f.name[:-len(".disabled")] if f.name.endswith(".disabled") else f.name
+            if f.is_file() and name.lower().endswith(exts):
+                items.append((f, not f.name.endswith(".disabled")))
+            elif f.is_dir() and kind != "mods":
+                items.append((f, not f.name.endswith(".disabled")))  # unzipped packs
+        return sorted(items, key=lambda i: i[0].name.lower())
+
+    @staticmethod
+    def set_enabled(path: Path, enabled: bool) -> Path:
+        if enabled and path.name.endswith(".disabled"):
+            new = path.with_name(path.name[:-len(".disabled")])
+        elif not enabled and not path.name.endswith(".disabled"):
+            new = path.with_name(path.name + ".disabled")
+        else:
+            return path
+        path.rename(new)
+        return new
+
+    def install_performance_mods(self, progress=None) -> list:
+        """Turn performance mode on and fetch its mods now. Returns [(slug, filename)]."""
+        if self.data["loader"] != "fabric":
+            raise ValueError("Performance mods need a Fabric instance.")
+        self.update(performance=True, perf_off=[])
+        performance.sync(self, progress, force=True)
+        return list((self.data.get("perf_files") or {}).items())
+
+    def set_performance(self, on: bool) -> None:
+        """Switch performance mode. Off removes the mods it added (not the player's own)
+        and, for an instance Peregrine moved to Fabric for speed, goes back to Vanilla."""
+        self.update(performance=on)
+        if not on:
+            performance.sync(self)
+            if self.data.get("auto_fabric"):
+                self.update(loader="vanilla", loader_version=None, auto_fabric=False)
+        else:
+            self.update(perf_checked=0, perf_off=[])
+
+    # ---- mods the player added from Modrinth, kept across Minecraft versions
+
+    def remember_mods(self, added) -> None:
+        """Record mods added from Modrinth ([(project id, filename)]), so they can be
+        fetched again for another Minecraft version."""
+        mods = dict(self.data.get("user_mods") or {})
+        for pid, name in added:
+            mods[pid] = name
+        self.update(user_mods=mods)
+
+    def change_version(self, mc_version: str) -> None:
+        """Move this instance to another Minecraft version. Worlds and settings stay;
+        the player's Modrinth mods are fetched again for the new version on the next
+        Play (performance mods and Peregrine Client take care of themselves)."""
+        if mc_version == self.data["mc_version"]:
+            return
+        mods = self.game_dir / "mods"
+        user = dict(self.data.get("user_mods") or {})
+        for name in user.values():
+            for f in (mods / name, mods / (name + ".disabled")):
+                if f.exists():
+                    f.unlink()
+        pending = sorted(set(self.data.get("pending_mods") or []) | set(user))
+        self.update(mc_version=mc_version, loader_version=None, user_mods={}, pending_mods=pending)
+
+    def _fetch_pending_mods(self, progress) -> list:
+        """Mods waiting to be fetched for this version. Returns the ones that aren't out
+        for it yet (they're tried again next time)."""
+        pending = list(self.data.get("pending_mods") or [])
+        if not pending or self.data["loader"] != "fabric":
+            return []
+        waiting = []
+        for pid in pending:
+            try:
+                added = modrinth.install([pid], self.data["mc_version"], "fabric", self.game_dir / "mods", progress)
+            except Exception as e:
+                print(f"[peregrine] {pid} not fetched: {e}")
+                waiting.append(pid)
+                continue
+            if added:
+                self.remember_mods(added)
+            else:
+                waiting.append(pid)
+        self.update(pending_mods=waiting)
+        return waiting
+
+    def copy_setup_from(self, other: "Instance") -> None:
+        """Start this instance with another one's game settings, resource packs, shaders
+        and mods (the mods are fetched for this instance's version on the first Play)."""
+        self.game_dir.mkdir(parents=True, exist_ok=True)
+        opts = other.game_dir / "options.txt"
+        if opts.is_file():
+            shutil.copy2(opts, self.game_dir / "options.txt")
+        for kind in ("resourcepacks", "shaderpacks"):
+            src = other.game_dir / kind
+            if src.is_dir():
+                shutil.copytree(src, self.game_dir / kind, dirs_exist_ok=True)
+        pending = sorted(set(other.data.get("user_mods") or {}) | set(other.data.get("pending_mods") or []))
+        self.update(pending_mods=pending, perf_settings=other.data.get("perf_settings", 0))
+
+    # Minecraft settings that belong to one instance only; everything else (FOV, keys,
+    # sensitivity, sound, chat, video...) follows the player from instance to instance.
+    OWN_OPTIONS = {"version", "resourcePacks", "incompatibleResourcePacks"}
+
+    def _sync_game_settings(self) -> bool:
+        """Bring over the Minecraft settings the player changed most recently in any
+        other instance (newest options.txt wins). Returns True if anything was copied."""
+        if not config.load().get("share_game_settings", True):
+            return False
+        mine = self.game_dir / "options.txt"
+        mine_time = mine.stat().st_mtime if mine.is_file() else 0
+        newest, newest_time, source = None, mine_time, None
+        for other in all_instances():
+            if other.folder == self.folder:
+                continue
+            opts = other.game_dir / "options.txt"
+            try:
+                t = opts.stat().st_mtime
+            except OSError:
+                continue
+            if t > newest_time:
+                newest, newest_time, source = opts, t, other
+        if newest is None:
+            return False
+        theirs = _read_options(newest)
+        ours = _read_options(mine) if mine.is_file() else {}
+        changed = False
+        for key, value in theirs.items():
+            if key not in self.OWN_OPTIONS and ours.get(key) != value:
+                ours[key] = value
+                changed = True
+        if changed:
+            self.game_dir.mkdir(parents=True, exist_ok=True)
+            tmp = mine.with_suffix(".tmp")
+            tmp.write_text("".join(f"{k}:{v}\n" for k, v in ours.items()))
+            tmp.replace(mine)
+        # Those settings already went through the fast settings: don't apply them again.
+        if source.data.get("perf_settings", 0) > self.data.get("perf_settings", 0):
+            self.update(perf_settings=source.data["perf_settings"])
+        return changed
+
+    def _share_client_settings(self) -> None:
+        """Peregrine Client's settings now live in one file for all instances. The first
+        time, start it from the newest copy any instance has, so nobody loses their HUD layout."""
+        shared = paths.CLIENT_SETTINGS
+        if shared.exists():
+            return
+        # The copy from whichever instance was set up last, not just the one being opened.
+        copies = [i.game_dir / "config" / "peregrine-client.json" for i in all_instances()]
+        copies = [c for c in copies if c.is_file()]
+        if copies:
+            shared.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(max(copies, key=lambda c: c.stat().st_mtime), shared)
+
+    def _migrate_performance(self) -> None:
+        """Instances from before performance mode: adopt the FPS mods they already have."""
+        old = self.data.get("mods_installed")
+        if old is None or "perf_files" in self.data:
+            return
+        tracked = {}
+        mods = self.game_dir / "mods"
+        for name in old:
+            if (mods / name).exists() or (mods / (name + ".disabled")).exists():
+                mid = performance.mod_id(mods / name if (mods / name).exists() else mods / (name + ".disabled"))
+                slug = _ID_TO_SLUG.get(mid or "")
+                if mid == "fabric-api":
+                    continue
+                tracked[slug or f"dep:{mid or name}"] = name
+        self.update(perf_files=tracked, perf_mc=self.data["mc_version"], perf_checked=0)
+
+    def _prepare_performance(self, progress):
+        """Performance mode, before every launch: Fabric if the instance can have it,
+        the right mods for this exact version, and fast settings the first time."""
+        cfg = config.load()
+        if not (self.performance and cfg.get("performance_first", True)):
+            if self.data["loader"] == "fabric" and self.data.get("perf_files"):
+                performance.sync(self)  # switched off: take our mods back out
+            return
+        if self.data["loader"] == "vanilla":
+            try:
+                if self.data["mc_version"] in fabric.supported_game_versions():
+                    # Fabric is what makes the speed-up mods possible. Worlds are unaffected,
+                    # and switching performance mode off goes back to Vanilla.
+                    self.update(loader="fabric", loader_version=None, auto_fabric=True)
+            except Exception as e:
+                print(f"[peregrine] couldn't check Fabric support: {e}")
+        if self.data.get("perf_settings", 0) < performance.PRESET_VERSION:
+            try:
+                performance.apply_fast_settings(self.game_dir)
+                self.update(perf_settings=performance.PRESET_VERSION)
+            except OSError as e:
+                print(f"[peregrine] fast settings not written: {e}")
+        if self.data["loader"] == "fabric":
+            self._migrate_performance()
+            try:
+                return performance.sync(self, progress)
+            except Exception as e:  # never let this stop the game from starting
+                print(f"[peregrine] performance mods not updated: {e}")
+                return {"error": repr(e)}
+
+    # ---- install + launch
+
+    def profile(self) -> dict:
+        vanilla = game.version_json(self.data["mc_version"])
+        if self.data["loader"] == "fabric":
+            if not self.data.get("loader_version"):
+                self.update(loader_version=fabric.latest_loader(self.data["mc_version"]))
+            return game.merge_profiles(vanilla, fabric.profile(self.data["mc_version"],
+                                                               self.data["loader_version"]))
+        return vanilla
+
+    def setup_mods(self, progress=None) -> dict:
+        """Put in the mods every instance gets (performance mods, the extras and the
+        in-game menu) right away, so a new instance shows them before its first Play.
+        Play does the same again and only fetches what changed."""
+        cfg = config.load()
+        report = {"performance": self._prepare_performance(progress)}
+        if self.data["loader"] != "fabric":
+            return report
+        try:
+            report["extras"] = extras.sync(self, progress)
+        except Exception as e:
+            print(f"[peregrine] extras not added yet: {e}")
+            report["extras"] = {"error": repr(e)}
+        try:
+            self._fetch_pending_mods(progress)
+        except Exception as e:
+            print(f"[peregrine] mods not fetched: {e}")
+        try:
+            report["client"] = client_mod.sync(self, cfg.get("ingame_menu", True), progress)
+        except Exception as e:
+            print(f"[peregrine] in-game menu not added yet: {e}")
+            report["client"] = repr(e)
+        return report
+
+    def prepare(self, progress=None):
+        cfg = config.load()
+        if self.data.get("memory_mb"):
+            cfg["max_memory_mb"] = self.data["memory_mb"]
+        try:
+            self._sync_game_settings()  # before the fast settings, so the player's own choices count
+        except (OSError, ValueError) as e:
+            print(f"[peregrine] game settings not brought over: {e}")
+        self._prepare_performance(progress)
+        if self.data["loader"] == "fabric" or self.data.get("extra_files"):
+            try:
+                extras.sync(self, progress)
+            except Exception as e:  # never let the extras stop the game from starting
+                print(f"[peregrine] extras not updated: {e}")
+        self._share_client_settings()
+        try:
+            self._fetch_pending_mods(progress)
+        except Exception as e:
+            print(f"[peregrine] mods not fetched: {e}")
+        prof = self.profile()
+        info = game.install(prof, progress)
+        try:
+            client_mod.sync(self, cfg.get("ingame_menu", True), progress)
+        except Exception as e:  # never let the extra mod stop the game from starting
+            print(f"[peregrine] in-game menu not updated: {e}")
+        java = game.find_java(prof, cfg.get("java_path", ""), progress)
+        return cfg, prof, info, java
+
+    def launch(self, account: dict, progress=None, join: str = None) -> subprocess.Popen:
+        cfg, prof, info, java = self.prepare(progress)
+        account = auth.refresh(account, cfg.get("client_id", ""))
+        if account.get("type") == "msa":
+            auth.add_account(account)  # store refreshed tokens
+        self.game_dir.mkdir(parents=True, exist_ok=True)
+        (self.game_dir / "quickPlay").mkdir(exist_ok=True)
+        cmd = game.build_command(prof, info, java, account, self.game_dir, cfg, join=join)
+        if progress:
+            progress(1, 1, "Starting Minecraft")
+        extra = {}
+        if game.WINDOWS:
+            # Its own process group (so closing the launcher doesn't close the game),
+            # and no black console window next to it.
+            extra["creationflags"] = subprocess.CREATE_NEW_PROCESS_GROUP | subprocess.CREATE_NO_WINDOW
+        else:
+            extra["start_new_session"] = True
+        return subprocess.Popen(cmd, cwd=self.game_dir, env=game.launch_env(cfg),
+                                stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+                                text=True, errors="replace", encoding="utf-8", **extra)
+
+
+def create(name: str, mc_version: str, loader: str = "vanilla",
+           performance_mods: bool = False, description: str = "",
+           loader_version: str = None) -> Instance:
+    """performance_mods: performance mode (speed-up mods and fast settings). It needs
+    Fabric, so it's off for an instance the player explicitly made Vanilla."""
+    if performance_mods and loader != "fabric":
+        raise ValueError("Performance mode needs Fabric.")
+    folder = paths.INSTANCES / _slug(name)
+    (folder / "minecraft").mkdir(parents=True)
+    count = sum(1 for _ in paths.INSTANCES.iterdir())
+    data = {"name": name, "description": description, "mc_version": mc_version,
+            "loader": loader, "loader_version": loader_version, "performance": performance_mods,
+            "color": INSTANCE_COLORS[(count - 1) % len(INSTANCE_COLORS)], "memory_mb": 0}
+    _write_json(folder / "instance.json", data)
+    return Instance(folder)
+
+
+def all_instances() -> list:
+    paths.ensure()
+    out = []
+    for folder in sorted(paths.INSTANCES.iterdir()):
+        if (folder / "instance.json").is_file():
+            try:
+                inst = Instance(folder)
+                if all(k in inst.data for k in ("name", "mc_version", "loader")):
+                    out.append(inst)  # skip damaged ones instead of breaking the home page
+            except (OSError, ValueError, KeyError, AttributeError, TypeError):
+                pass
+    return out

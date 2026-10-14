@@ -1,0 +1,22 @@
+{
+  "providers": [
+    {
+      "type": "bitmap",
+      "file": "peregrine-client:font/logo.png",
+      "ascent": 7,
+      "height": 8,
+      "chars": [
+        "\ue100"
+      ]
+    },
+    {
+      "type": "bitmap",
+      "file": "peregrine-client:font/badges.png",
+      "ascent": 7,
+      "height": 8,
+      "chars": [
+        "\ue101\ue102\ue103\ue104"
+      ]
+    }
+  ]
+}

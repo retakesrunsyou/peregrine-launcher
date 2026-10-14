@@ -1,0 +1,258 @@
+package net.peregrine.client.core;
+
+import java.io.Reader;
+import java.io.Writer;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
+import java.util.Map;
+
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
+
+import net.peregrine.client.core.modules.MainMenu;
+
+/**
+ * Saves which modules are on and where HUD items sit, in
+ * config/peregrine-client.json. Uses only old Gson APIs so it works on every
+ * Minecraft version's bundled Gson.
+ */
+public final class Config {
+
+    static final int VERSION = 2;
+
+    private Config() {
+    }
+
+    @SuppressWarnings("deprecation")
+    static void load(Peregrine p) {
+        Path file = p.configPath();
+        if (!Files.isRegularFile(file)) {
+            return;
+        }
+        try (Reader r = Files.newBufferedReader(file, StandardCharsets.UTF_8)) {
+            JsonObject root = new JsonParser().parse(r).getAsJsonObject();
+            if (root.has("accent")) {
+                p.setAccent((int) Long.parseLong(root.get("accent").getAsString(), 16));
+            }
+            if (root.has("menuBackground")) {
+                p.setMenuBackground(root.get("menuBackground").getAsInt());
+            }
+            // Files from before version 2 used the old defaults (most things on, full size);
+            // those switch states are dropped so the new defaults apply once.
+            if (root.has("lastServer") && root.get("lastServer").isJsonObject()) {
+                JsonObject last = root.getAsJsonObject("lastServer");
+                if (last.has("address")) {
+                    p.setLastServer(last.get("address").getAsString(), last.has("name") ? last.get("name").getAsString() : null);
+                }
+            }
+            boolean current = root.has("version") && root.get("version").getAsInt() >= VERSION;
+            JsonObject mods = root.has("modules") ? root.getAsJsonObject("modules") : new JsonObject();
+            splitOldModules(mods);
+            for (Map.Entry<String, JsonElement> e : mods.entrySet()) {
+                Module m = p.module(e.getKey());
+                if (m == null || !e.getValue().isJsonObject()) {
+                    continue;
+                }
+                try {
+                    loadModule(m, e.getValue().getAsJsonObject(), current);
+                } catch (Exception bad) {
+                    // One odd value only resets that one feature, never everything else.
+                    System.err.println("[Peregrine] Couldn't read the settings of " + e.getKey() + ": " + bad);
+                }
+            }
+        } catch (Exception e) {
+            // A broken file shouldn't stop the game; start from defaults instead.
+            System.err.println("[Peregrine] Couldn't read " + file + ", using defaults: " + e);
+        }
+    }
+
+    /** Features that used to be options inside another module are modules of their own now:
+     *  carry over what the player had (clear water and lava were in Fog; the action bar and
+     *  boss bars were in Titles). */
+    public static void splitOldModules(JsonObject mods) {
+        JsonObject fog = mods.has("fog") && mods.get("fog").isJsonObject() ? mods.getAsJsonObject("fog") : null;
+        if (fog != null) {
+            boolean on = fog.has("enabled") && fog.get("enabled").getAsBoolean();
+            JsonObject so = fog.has("settings") && fog.get("settings").isJsonObject() ? fog.getAsJsonObject("settings") : new JsonObject();
+            for (String[] k : new String[][] {{"water", "clear_water"}, {"lava", "clear_lava"}}) {
+                if (!mods.has(k[1]) && so.has(k[0])) {
+                    JsonObject n = new JsonObject();
+                    n.addProperty("enabled", on && !"false".equals(so.get(k[0]).getAsString()));
+                    mods.add(k[1], n);
+                }
+            }
+        }
+        JsonObject st = mods.has("screen_text") && mods.get("screen_text").isJsonObject() ? mods.getAsJsonObject("screen_text") : null;
+        if (st != null && st.has("settings") && st.get("settings").isJsonObject()) {
+            JsonObject so = st.getAsJsonObject("settings");
+            boolean on = st.has("enabled") && st.get("enabled").getAsBoolean();
+            for (String[] k : new String[][] {{"action_bar", "action", "hide_action"}, {"boss_bars", "boss", "hide_boss"}}) {
+                if (!mods.has(k[0]) && (so.has(k[1]) || so.has(k[2]))) {
+                    JsonObject n = new JsonObject();
+                    n.addProperty("enabled", on);
+                    JsonObject ns = new JsonObject();
+                    for (int i = 1; i < 3; i++) {
+                        if (so.has(k[i])) {
+                            ns.add(k[i], so.get(k[i]));
+                        }
+                    }
+                    n.add("settings", ns);
+                    mods.add(k[0], n);
+                }
+            }
+        }
+    }
+
+    private static void loadModule(Module m, JsonObject o, boolean current) {
+        if (o.has("x") && m instanceof HudModule) {
+            ((HudModule) m).fx = o.get("x").getAsFloat();
+            ((HudModule) m).fy = o.get("y").getAsFloat();
+        }
+        if (m instanceof HudModule) {
+            HudModule h = (HudModule) m;
+            if (o.has("scale")) {
+                h.setScaleKeepingCorner(o.get("scale").getAsFloat());
+            }
+            if (o.has("text")) {
+                h.textColor = (int) Long.parseLong(o.get("text").getAsString(), 16);
+            }
+            if (o.has("label")) {
+                h.labelColor = (int) Long.parseLong(o.get("label").getAsString(), 16);
+            }
+            if (o.has("background")) {
+                h.background = o.get("background").getAsBoolean();
+            }
+            if (o.has("backgroundAlpha")) {
+                h.backgroundAlpha = Math.max(0, Math.min(255, o.get("backgroundAlpha").getAsInt()));
+            }
+            if (o.has("shadow")) {
+                h.shadow = o.get("shadow").getAsBoolean();
+            }
+            if (o.has("chroma")) {
+                h.chroma = o.get("chroma").getAsBoolean();
+            }
+            if (o.has("chromaSpeed")) {
+                h.chromaSpeed = Math.max(HudModule.MIN_CHROMA_SPEED,
+                        Math.min(HudModule.MAX_CHROMA_SPEED, o.get("chromaSpeed").getAsFloat()));
+            }
+            if (o.has("outline")) {
+                h.outline = o.get("outline").getAsBoolean();
+            }
+            if (o.has("border")) {
+                h.border = o.get("border").getAsBoolean();
+            }
+            if (o.has("radius")) {
+                h.radius = Math.max(0, Math.min(HudModule.MAX_RADIUS, o.get("radius").getAsInt()));
+            }
+            if (o.has("valueColors")) {
+                h.valueColors = o.get("valueColors").getAsBoolean();
+            }
+        }
+        if (o.has("key")) {
+            m.key = o.get("key").getAsInt();
+        }
+        if (o.has("enabled") && (current || m instanceof MainMenu)) {
+            m.setEnabledQuietly(o.get("enabled").getAsBoolean());
+        }
+        if (o.has("settings") && o.get("settings").isJsonObject()) {
+            JsonObject so = o.getAsJsonObject("settings");
+            for (net.peregrine.client.core.settings.Setting s : m.settings()) {
+                if (so.has(s.id) && so.get(s.id).isJsonPrimitive()) {
+                    s.load(so.get(s.id).getAsString());
+                }
+            }
+        }
+    }
+
+    static void save(Peregrine p) {
+        JsonObject root = new JsonObject();
+        root.addProperty("version", VERSION);
+        root.addProperty("accent", Integer.toHexString(p.accent()));
+        root.addProperty("menuBackground", p.menuBackground());
+        JsonObject mods = new JsonObject();
+        for (Module m : p.modules()) {
+            JsonObject o = new JsonObject();
+            o.addProperty("enabled", m.enabled());
+            if (m.key >= 0) {
+                o.addProperty("key", m.key);
+            }
+            if (m instanceof HudModule) {
+                HudModule h = (HudModule) m;
+                o.addProperty("x", h.fx);
+                o.addProperty("y", h.fy);
+                if (h.scale != HudModule.DEFAULT_SCALE) {
+                    o.addProperty("scale", h.scale);
+                }
+                if (h.textColor != 0) {
+                    o.addProperty("text", Integer.toHexString(h.textColor));
+                }
+                if (h.labelColor != 0) {
+                    o.addProperty("label", Integer.toHexString(h.labelColor));
+                }
+                if (!h.background) {
+                    o.addProperty("background", false);
+                }
+                if (h.backgroundAlpha != HudModule.DEFAULT_BG_ALPHA) {
+                    o.addProperty("backgroundAlpha", h.backgroundAlpha);
+                }
+                if (!h.shadow) {
+                    o.addProperty("shadow", false);
+                }
+                if (h.chroma) {
+                    o.addProperty("chroma", true);
+                    o.addProperty("chromaSpeed", h.chromaSpeed);
+                }
+                if (h.outline) {
+                    o.addProperty("outline", true);
+                }
+                if (h.border) {
+                    o.addProperty("border", true);
+                }
+                if (h.radius != HudModule.DEFAULT_RADIUS) {
+                    o.addProperty("radius", h.radius);
+                }
+                if (h.valueColors) {
+                    o.addProperty("valueColors", true);
+                }
+            }
+            JsonObject so = new JsonObject();
+            for (net.peregrine.client.core.settings.Setting s : m.settings()) {
+                Object v = s.save();
+                if (v instanceof Boolean) {
+                    so.addProperty(s.id, (Boolean) v);
+                } else if (v instanceof Number) {
+                    so.addProperty(s.id, (Number) v);
+                } else if (v instanceof String) {
+                    so.addProperty(s.id, (String) v);
+                }
+            }
+            if (so.entrySet().size() > 0) {
+                o.add("settings", so);
+            }
+            mods.add(m.id, o);
+        }
+        root.add("modules", mods);
+        if (p.lastServerAddress() != null) {
+            JsonObject last = new JsonObject();
+            last.addProperty("address", p.lastServerAddress());
+            last.addProperty("name", p.lastServerName());
+            root.add("lastServer", last);
+        }
+
+        Path file = p.configPath();
+        try {
+            Files.createDirectories(file.getParent());
+            Path tmp = file.resolveSibling(file.getFileName() + ".tmp");
+            try (Writer w = Files.newBufferedWriter(tmp, StandardCharsets.UTF_8)) {
+                new GsonBuilder().setPrettyPrinting().create().toJson(root, w);
+            }
+            Files.move(tmp, file, StandardCopyOption.REPLACE_EXISTING);
+        } catch (Exception e) {
+            System.err.println("[Peregrine] Couldn't save settings: " + e);
+        }
+    }
+}

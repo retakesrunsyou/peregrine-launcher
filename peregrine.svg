@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#2a2150"/>
+      <stop offset="1" stop-color="#0f1118"/>
+    </linearGradient>
+    <linearGradient id="falcon" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffd27a"/>
+      <stop offset="1" stop-color="#f08a24"/>
+    </linearGradient>
+  </defs>
+  <rect width="128" height="128" rx="28" fill="url(#bg)"/>
+  <rect x="2" y="2" width="124" height="124" rx="26" fill="none" stroke="#7c5cff" stroke-opacity="0.32" stroke-width="2"/>
+  <!-- a diving falcon: swept wings and a pointed body -->
+  <path d="M64 104 L54 62 L18 40 L56 48 L64 22 L72 48 L110 40 L74 62 Z" fill="url(#falcon)"/>
+  <path d="M64 22 L68 36 L60 36 Z" fill="#fff1d6"/>
+</svg>
