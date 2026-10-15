@@ -95,6 +95,8 @@ function challengeText(nonce, uuid) {
 
 // Who sent this? Returns the account id (no dashes), or a Response saying why not.
 async function proven(env, body) {
+  if (body.serverId && !body.nonce)
+    return reply({ error: "Update Peregrine to the newest version to share and show your badge." }, 426);
   const uuid = String(body.uuid || "").replace(/-/g, "").toLowerCase();
   if (!UUID.test(uuid)) return reply({ error: "bad account id" }, 400);
   const nonce = String(body.nonce || "");
@@ -125,7 +127,8 @@ export default {
     if (path === "/v1/challenge" && request.method === "POST") {
       const nonce = randomHex(20);
       await env.PROFILES.put(`challenge:${nonce}`, "1", { expirationTtl: 300 });
-      return reply({ nonce });
+      // serverId only so launchers before 1.4.0 get as far as the "please update" message
+      return reply({ nonce, serverId: randomHex(20) });
     }
 
     // 2. Save (or remove) your profile.
