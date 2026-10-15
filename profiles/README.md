@@ -18,9 +18,10 @@ service that your account plays with Peregrine and which cape you picked in game
 account id, the cape and the day; forgotten 60 days after you last play). In game, Peregrine
 asks about the players you can see, so everyone using Peregrine sees the falcon by each
 other's names and each other's capes. Switch it off in Settings → "Show my Peregrine badge
-to others". Nobody can post as someone else: the launcher does Mojang's own
-"join" handshake (the one joining a server uses), and the service asks Mojang whether that
-name really did it. Players' logins never reach this service.
+to others". Nobody can post as someone else: Minecraft gives every account a chat-signing
+key that Mojang signs for that account, and the launcher signs a one-time challenge with it.
+The service checks both signatures itself (it never has to ask Mojang, which blocks
+Cloudflare), and players' logins never reach it.
 
 ## Set it up (once, about 5 minutes)
 
@@ -48,7 +49,7 @@ npx --yes wrangler@3 deploy
 
 ## Check it's working
 
-Open the address in a browser: it should say `{"service":"peregrine-profiles","ok":true}`.
+Open the address in a browser: it should say `{"service":"peregrine-profiles","version":2,"ok":true}`. If it has no `"version":2`, the service is still the old one: update it as above.
 
 ## Tests
 

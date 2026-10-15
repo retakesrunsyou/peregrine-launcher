@@ -148,27 +148,23 @@ public final class Cosmetics extends Module {
         announce(index);
     }
 
-    /** Tells the Peregrine service your new cape, proving it's you with Mojang's join handshake
-     *  (the same one joining a server does). Quietly does nothing offline. */
+    /** Tells the Peregrine service your new cape. It's proven to be you with the chat-signing
+     *  key Minecraft gives your account: Mojang signs that key, and this signs a one-time
+     *  challenge with it. Your login never leaves the game. Quietly does nothing offline. */
     private static void announce(final int index) {
         final net.peregrine.client.core.Platform p = net.peregrine.client.core.Peregrine.get().platform();
         final String token = p.accessToken();
-        final String name = p.playerName();
         final String uuid = key(p.playerUuid());
-        if (SERVICE == null || SERVICE.isEmpty() || token == null || token.length() < 20 || uuid.length() != 32
-                || name == null) {
+        if (SERVICE == null || SERVICE.isEmpty() || token == null || token.length() < 20 || uuid.length() != 32) {
             return;
         }
         Thread t = new Thread(() -> {
             try {
                 String base = SERVICE.replaceAll("/+$", "");
-                String sid = JsonParser.parseString(http("POST", base + "/v1/challenge",
-                        "{\"name\":\"" + name + "\"}")).getAsJsonObject().get("serverId").getAsString();
-                http("POST", "https://sessionserver.mojang.com/session/minecraft/join",
-                        "{\"accessToken\":\"" + token + "\",\"selectedProfile\":\"" + uuid + "\",\"serverId\":\"" + sid + "\"}");
                 String file = FILES[index] == null ? "" : FILES[index];
-                http("PUT", base + "/v1/presence", "{\"name\":\"" + name + "\",\"serverId\":\"" + sid
-                        + "\",\"cape\":\"" + file + "\"}");
+                JsonObject body = prove(base, token, uuid);
+                body.addProperty("cape", file);
+                http("PUT", base + "/v1/presence", body.toString(), null);
                 heard(uuid, file);
             } catch (Exception e) {
                 System.out.println("[Peregrine] cape not shared: " + e.getMessage());
@@ -178,7 +174,42 @@ public final class Cosmetics extends Module {
         t.start();
     }
 
-    private static String http(String method, String url, String body) throws java.io.IOException {
+    /** {uuid, nonce, cert, sig}: what the service checks to know a request is from this account. */
+    static JsonObject prove(String base, String token, String uuid) throws Exception {
+        JsonObject cert = JsonParser.parseString(http("POST", "https://api.minecraftservices.com/player/certificates",
+                "", "Bearer " + token)).getAsJsonObject();
+        JsonObject pair = cert.getAsJsonObject("keyPair");
+        String nonce = JsonParser.parseString(http("POST", base + "/v1/challenge", "{}", null))
+                .getAsJsonObject().get("nonce").getAsString();
+        return proof(uuid, nonce, pair.get("privateKey").getAsString(), pair.get("publicKey").getAsString(),
+                cert.get("expiresAt").getAsString(), cert.get("publicKeySignatureV2").getAsString());
+    }
+
+    /** The signed answer to a challenge, from the parts of Mojang's certificate. */
+    public static JsonObject proof(String uuid, String nonce, String privatePem, String publicPem, String expiresAt,
+                                   String keySig) throws Exception {
+        java.security.PrivateKey priv = java.security.KeyFactory.getInstance("RSA")
+                .generatePrivate(new java.security.spec.PKCS8EncodedKeySpec(pem(privatePem)));
+        java.security.Signature s = java.security.Signature.getInstance("SHA256withRSA");
+        s.initSign(priv);
+        s.update(("peregrine:" + nonce + ":" + uuid).getBytes(StandardCharsets.UTF_8));
+        JsonObject c = new JsonObject();
+        c.addProperty("publicKey", java.util.Base64.getEncoder().encodeToString(pem(publicPem)));
+        c.addProperty("expiresAt", java.time.Instant.parse(expiresAt).toEpochMilli());
+        c.addProperty("keySig", keySig);
+        JsonObject o = new JsonObject();
+        o.addProperty("uuid", uuid);
+        o.addProperty("nonce", nonce);
+        o.add("cert", c);
+        o.addProperty("sig", java.util.Base64.getEncoder().encodeToString(s.sign()));
+        return o;
+    }
+
+    private static byte[] pem(String text) {
+        return java.util.Base64.getMimeDecoder().decode(text.replaceAll("-----[A-Z ]+-----", "").trim());
+    }
+
+    private static String http(String method, String url, String body, String auth) throws java.io.IOException {
         HttpURLConnection c = (HttpURLConnection) new URL(url).openConnection();
         c.setConnectTimeout(8000);
         c.setReadTimeout(15000);
@@ -186,6 +217,9 @@ public final class Cosmetics extends Module {
         c.setDoOutput(true);
         c.setRequestProperty("Content-Type", "application/json");
         c.setRequestProperty("User-Agent", "PeregrineClient");
+        if (auth != null) {
+            c.setRequestProperty("Authorization", auth);
+        }
         c.getOutputStream().write(body.getBytes(StandardCharsets.UTF_8));
         int code = c.getResponseCode();
         if (code >= 300) {

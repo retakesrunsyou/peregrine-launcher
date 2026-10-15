@@ -5,16 +5,20 @@ id, so friends download them from Modrinth themselves, matched to their own Mine
 version) and your in-game mod settings. Nothing is shared until you switch sharing on.
 
 The service lives at PROFILES_URL (a free Cloudflare Worker, see profiles/README.md). To
-save your profile the launcher proves who you are with Mojang's own "join" handshake, the
-one joining a server uses, so nobody can post as you and your login never leaves Mojang.
+save your profile the launcher proves who you are with the chat-signing key Minecraft gives
+every account: Mojang signs that key for your account, and the launcher signs a one-time
+challenge with it. Nobody can post as you, and your login never leaves your computer.
 """
 
+import base64
 import hashlib
 import json
+import re
 import shutil
+from datetime import datetime, timezone
 from pathlib import Path
 
-from . import PROFILES_URL, VERSION, client_mod, modrinth, net, paths
+from . import PROFILES_URL, VERSION, client_mod, modrinth, net, paths, rsasign
 
 # In-game settings that are about you rather than your setup: never shared.
 PRIVATE_MODULES = {"waypoints", "nick_hider", "quick_commands", "anti_afk"}
@@ -107,43 +111,86 @@ def build(inst, include_settings: bool = True) -> dict:
     return out
 
 
-def _prove(account: dict) -> str:
-    """Mojang's join handshake for a one-time id from the service. Returns that id."""
+CERTIFICATES = "https://api.minecraftservices.com/player/certificates"
+
+
+def _millis(stamp: str) -> int:
+    """Mojang's ISO time (sometimes with micro- or nanoseconds) as epoch milliseconds, cut the
+    way Minecraft cuts it."""
+    m = re.match(r"(\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d)(?:\.(\d+))?(Z|[+-]\d\d:?\d\d)?$", stamp.strip())
+    if not m:
+        raise ValueError(f"odd time from Mojang: {stamp}")
+    zone = m.group(3) or "Z"
+    zone = "+00:00" if zone == "Z" else zone
+    when = datetime.fromisoformat(m.group(1) + zone)
+    ms = int((m.group(2) or "0")[:3].ljust(3, "0"))
+    return int(when.astimezone(timezone.utc).timestamp()) * 1000 + ms
+
+
+def _certificate(account: dict) -> dict:
+    """The chat-signing key pair Minecraft gets for this account, with Mojang's signature."""
+    head = {"Authorization": f"Bearer {account['mc_token']}"}
+    r = net.session.post(CERTIFICATES, headers=head, timeout=30)
+    if r.status_code in (400, 415):
+        r = net.session.post(CERTIFICATES, headers=head, json={}, timeout=30)
+    if r.status_code == 401:
+        raise RuntimeError("Your sign-in ran out. Sign in again on the Accounts page.")
+    if r.status_code != 200:
+        raise RuntimeError(f"Mojang didn't hand out your game key ({r.status_code}). Try again in a minute.")
+    return r.json()
+
+
+def _prove(account: dict) -> dict:
+    """Proof that this request comes from this account, for the service to check."""
     if account.get("type") != "msa" or not account.get("mc_token"):
-        raise RuntimeError("Sign in with a Microsoft account to share a profile.")
-    sid = net.session.post(_url("/v1/challenge"), json={"name": account["name"]}, timeout=30)
-    sid.raise_for_status()
-    server_id = sid.json()["serverId"]
-    r = net.session.post("https://sessionserver.mojang.com/session/minecraft/join", timeout=30, json={
-        "accessToken": account["mc_token"], "selectedProfile": account["uuid"].replace("-", ""), "serverId": server_id})
-    if r.status_code not in (200, 204):
-        raise RuntimeError("Mojang didn't accept the sign-in. Sign in again on the Accounts page.")
-    return server_id
+        raise RuntimeError("Sign in with a Microsoft account to use this.")
+    cert = _certificate(account)
+    pair = cert.get("keyPair") or {}
+    sig_v2 = cert.get("publicKeySignatureV2") or ""
+    if not pair.get("privateKey") or not pair.get("publicKey") or not sig_v2:
+        raise RuntimeError("Mojang's answer was missing your game key. Try again in a minute.")
+    uuid = account["uuid"].replace("-", "").lower()
+    c = net.session.post(_url("/v1/challenge"), json={}, timeout=30)
+    if c.status_code != 200:
+        raise RuntimeError(f"The Peregrine service didn't answer ({c.status_code}).")
+    nonce = c.json()["nonce"]
+    sig = rsasign.sign_sha256(pair["privateKey"], f"peregrine:{nonce}:{uuid}".encode())
+    return {"uuid": uuid, "nonce": nonce, "sig": base64.b64encode(sig).decode(),
+            "cert": {"publicKey": base64.b64encode(rsasign.pem_body(pair["publicKey"])).decode(),
+                     "expiresAt": _millis(cert["expiresAt"]), "keySig": sig_v2}}
+
+
+def _error(r, fallback: str) -> str:
+    try:
+        return r.json().get("error") or fallback
+    except ValueError:
+        return fallback
+
+
+def _fresh(account: dict) -> dict:
+    from . import auth, config
+    account = auth.refresh(account, config.load().get("client_id", ""))
+    auth.add_account(account)
+    return account
 
 
 def share(account: dict, inst, include_settings: bool = True) -> dict:
     """Turn sharing on (or update what's shared). Returns what was shared."""
-    from . import auth, config
-    account = auth.refresh(account, config.load().get("client_id", ""))
-    auth.add_account(account)
+    account = _fresh(account)
     profile = build(inst, include_settings)
-    server_id = _prove(account)
-    body = {"name": account["name"], "serverId": server_id, "launcher": VERSION,
-            "profile": {k: v for k, v in profile.items() if k != "skipped"}}
+    body = dict(_prove(account), name=account["name"], launcher=VERSION,
+                profile={k: v for k, v in profile.items() if k != "skipped"})
     r = net.session.put(_url("/v1/profile"), json=body, timeout=30)
     if r.status_code != 200:
-        raise RuntimeError(r.json().get("error", f"Couldn't share ({r.status_code})"))
+        raise RuntimeError(_error(r, f"Couldn't share ({r.status_code})"))
     return profile
 
 
 def unshare(account: dict) -> None:
-    from . import auth, config
-    account = auth.refresh(account, config.load().get("client_id", ""))
-    auth.add_account(account)
-    server_id = _prove(account)
-    r = net.session.delete(_url("/v1/profile"), json={"name": account["name"], "serverId": server_id}, timeout=30)
+    account = _fresh(account)
+    r = net.session.delete(_url("/v1/profile"), json=_prove(account), timeout=30)
     if r.status_code != 200:
-        raise RuntimeError(r.json().get("error", f"Couldn't stop sharing ({r.status_code})"))
+        raise RuntimeError(_error(r, f"Couldn't stop sharing ({r.status_code})"))
 
 
 # ---------------------------------------------------------------------- badges and capes
@@ -181,14 +228,10 @@ def announce(account: dict, force: bool = False) -> str:
     import time
     if not force and last.get("cape") == cape and time.time() - last.get("at", 0) < RESEND_AFTER:
         return "up to date"
-    from . import auth
-    account = auth.refresh(account, cfg.get("client_id", ""))
-    auth.add_account(account)
-    server_id = _prove(account)
-    r = net.session.put(_url("/v1/presence"), json={"name": account["name"], "serverId": server_id, "cape": cape},
-                        timeout=30)
+    account = _fresh(account)
+    r = net.session.put(_url("/v1/presence"), json=dict(_prove(account), cape=cape), timeout=30)
     if r.status_code != 200:
-        raise RuntimeError(r.json().get("error", f"badge not saved ({r.status_code})"))
+        raise RuntimeError(_error(r, f"badge not saved ({r.status_code})"))
     cfg = config.load()
     sent = dict(cfg.get("badge_sent") or {})
     sent[account["uuid"]] = {"cape": cape, "at": time.time()}
@@ -198,30 +241,51 @@ def announce(account: dict, force: bool = False) -> str:
 
 def hide(account: dict) -> None:
     """Switch the badge off: the service forgets this account."""
-    from . import auth, config
+    from . import config
     if not available() or account.get("type") != "msa":
         return
-    cfg = config.load()
-    account = auth.refresh(account, cfg.get("client_id", ""))
-    auth.add_account(account)
-    server_id = _prove(account)
-    r = net.session.delete(_url("/v1/presence"), json={"name": account["name"], "serverId": server_id}, timeout=30)
+    account = _fresh(account)
+    r = net.session.delete(_url("/v1/presence"), json=_prove(account), timeout=30)
     if r.status_code != 200:
-        raise RuntimeError(r.json().get("error", f"couldn't switch the badge off ({r.status_code})"))
+        raise RuntimeError(_error(r, f"couldn't switch the badge off ({r.status_code})"))
     cfg = config.load()
     sent = dict(cfg.get("badge_sent") or {})
     sent.pop(account["uuid"], None)
     config.save(dict(cfg, badge_sent=sent))
 
 
+def player_id(name: str) -> tuple:
+    """(account id, name as Mojang spells it) for a Minecraft name, or for an account id."""
+    name = name.strip()
+    if re.fullmatch(r"[0-9a-fA-F]{32}|[0-9a-fA-F-]{36}", name):
+        return name.replace("-", "").lower(), name
+    if not re.fullmatch(r"[A-Za-z0-9_]{1,16}", name):
+        raise LookupError(f"{name} isn't a Minecraft name.")
+    for url in (f"https://api.mojang.com/users/profiles/minecraft/{name}",
+                f"https://api.minecraftservices.com/minecraft/profile/lookup/name/{name}"):
+        try:
+            r = net.session.get(url, timeout=20)
+        except Exception:
+            continue
+        if r.status_code == 200:
+            p = r.json()
+            return p["id"].replace("-", "").lower(), p.get("name", name)
+        if r.status_code in (204, 404):
+            raise LookupError(f"There's no Minecraft player called {name}.")
+    raise RuntimeError("Couldn't reach Mojang to look that name up. Try again in a minute.")
+
+
 def lookup(name: str) -> dict:
     """A player's shared profile. Raises LookupError if they haven't shared one."""
-    name = name.strip()
-    r = net.session.get(_url(f"/v1/profile/{name}"), timeout=30)
+    uuid, spelled = player_id(name)
+    r = net.session.get(_url(f"/v1/profile/{uuid}"), timeout=30)
     if r.status_code == 404:
-        raise LookupError(f"{name} hasn't shared a Peregrine profile.")
+        raise LookupError(f"{spelled} hasn't shared a Peregrine profile.")
     r.raise_for_status()
-    return r.json()
+    p = r.json()
+    if spelled and not re.fullmatch(r"[0-9a-f]{32}", spelled):
+        p["name"] = spelled  # the name Mojang has now (they may have renamed since sharing)
+    return p
 
 
 def take(profile: dict, inst, mods=(), resourcepacks=(), shaders=(), settings: bool = False, progress=None) -> dict:
