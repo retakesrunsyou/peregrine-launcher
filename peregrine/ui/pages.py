@@ -50,6 +50,7 @@ def scroll(content: QWidget) -> QScrollArea:
     area = QScrollArea()
     area.setWidgetResizable(True)
     area.setFrameShape(QFrame.NoFrame)
+    area.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
     content.setObjectName("scrollBody")
     area.setWidget(content)
     area._smooth = _SmoothWheel(area)

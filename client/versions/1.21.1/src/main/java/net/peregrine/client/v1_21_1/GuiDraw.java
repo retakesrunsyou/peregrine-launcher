@@ -71,4 +71,20 @@ public final class GuiDraw implements Draw {
     public void popScale() {
         g.pose().popPose();
     }
+
+    @Override
+    public void texture(String id, int x, int y, int w, int h, float u0, float v0, float u1, float v1, int argb) {
+        if (w <= 0 || h <= 0 || id == null) {
+            return;
+        }
+        final int N = 4096;  // UVs as fractions of this size
+        net.minecraft.resources.ResourceLocation loc = net.minecraft.resources.ResourceLocation.parse(id);
+        com.mojang.blaze3d.systems.RenderSystem.enableBlend();
+        com.mojang.blaze3d.systems.RenderSystem.defaultBlendFunc();
+        com.mojang.blaze3d.systems.RenderSystem.setShaderColor(((argb >> 16) & 0xFF) / 255f, ((argb >> 8) & 0xFF) / 255f,
+                (argb & 0xFF) / 255f, ((argb >>> 24) & 0xFF) / 255f);
+        g.blit(loc, x, y, w, h, u0 * N, v0 * N, Math.round((u1 - u0) * N), Math.round((v1 - v0) * N), N, N);
+        com.mojang.blaze3d.systems.RenderSystem.setShaderColor(1f, 1f, 1f, 1f);
+        com.mojang.blaze3d.systems.RenderSystem.disableBlend();
+    }
 }

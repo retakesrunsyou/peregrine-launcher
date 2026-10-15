@@ -71,6 +71,13 @@ final class FadeDraw implements Draw {
     }
 
     @Override
+    public void texture(String id, int x, int y, int w, int h, float u0, float v0, float u1, float v1, int argb) {
+        if (visible()) {
+            d.texture(id, x, y, w, h, u0, v0, u1, v1, fade(argb));
+        }
+    }
+
+    @Override
     public void pushScale(int x, int y, float s) {
         d.pushScale(x, y, s);
     }

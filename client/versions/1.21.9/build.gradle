@@ -12,6 +12,9 @@ base {
 // The shared core: every feature lives there, written once for all versions.
 sourceSets {
 	main {
+		resources {
+			srcDir file('../../core/src/main/resources')
+		}
 		java {
 			srcDir file('../../core/src/main/java')
 			// Small differences inside this adapter's range: src/mc-<version>/java when

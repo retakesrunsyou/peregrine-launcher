@@ -71,4 +71,13 @@ public final class GuiDraw implements Draw {
     public void popScale() {
         g.pose().popMatrix();
     }
+
+    @Override
+    public void texture(String id, int x, int y, int w, int h, float u0, float v0, float u1, float v1, int argb) {
+        if (w <= 0 || h <= 0 || id == null) {
+            return;
+        }
+        final int N = 4096;  // UVs as fractions of this size
+        Compat.blit(g, id, x, y, w, h, u0 * N, v0 * N, Math.round((u1 - u0) * N), Math.round((v1 - v0) * N), N, argb);
+    }
 }

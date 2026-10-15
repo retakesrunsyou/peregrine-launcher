@@ -887,4 +887,20 @@ final class GamePlatform implements Platform {
             }
         });
     }
+
+    @Override
+    public String loadImage(java.nio.file.Path png) {
+        return Images.load(png);
+    }
+
+    @Override
+    public String accessToken() {
+        try {
+            Object user = mc().getUser();
+            String t = (String) user.getClass().getMethod("getAccessToken").invoke(user);
+            return t == null || t.length() < 20 ? null : t;
+        } catch (Throwable e) {
+            return null;
+        }
+    }
 }

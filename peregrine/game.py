@@ -501,6 +501,7 @@ def build_command(profile: dict, info: dict, java: str, account: dict,
     if info.get("log_arg"):
         tuned.append(info["log_arg"])
     tuned.append(f"-Dperegrine.config={paths.CLIENT_SETTINGS}")
+    tuned.append(f"-Dperegrine.data={paths.DATA}")  # your skin and main menu picture, for the game's Locker
     from . import PROFILES_URL
     if PROFILES_URL:
         tuned.append(f"-Dperegrine.service={PROFILES_URL}")  # in game: who else plays with Peregrine

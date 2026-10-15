@@ -17,6 +17,15 @@
       "chars": [
         "\ue101\ue102\ue103\ue104"
       ]
+    },
+    {
+      "type": "bitmap",
+      "file": "peregrine-client:font/logo_big.png",
+      "ascent": 7,
+      "height": 8,
+      "chars": [
+        "\ue105"
+      ]
     }
   ]
 }

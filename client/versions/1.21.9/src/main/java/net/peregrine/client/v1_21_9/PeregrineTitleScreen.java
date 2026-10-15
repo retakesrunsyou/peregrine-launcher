@@ -19,7 +19,11 @@ public final class PeregrineTitleScreen extends Screen {
 
     @Override
     public void render(GuiGraphics g, int mouseX, int mouseY, float partialTick) {
-        renderPanorama(g, partialTick);
+        if (!menu.drawsBackground()) {
+            renderPanorama(g, partialTick);
+        } else {
+            g.fill(0, 0, width, height, 0xFF0B0D12);
+        }
         menu.render(new GuiDraw(g), mouseX, mouseY);
     }
 
@@ -36,5 +40,24 @@ public final class PeregrineTitleScreen extends Screen {
     @Override
     public boolean shouldCloseOnEsc() {
         return false;
+    }
+
+    @Override
+    public boolean mouseDragged(net.minecraft.client.input.MouseButtonEvent e, double dragX, double dragY) {
+        return menu.mouseDragged((int) e.x(), (int) e.y()) || super.mouseDragged(e, dragX, dragY);
+    }
+
+    @Override
+    public boolean mouseReleased(net.minecraft.client.input.MouseButtonEvent e) {
+        return menu.mouseReleased((int) e.x(), (int) e.y()) || super.mouseReleased(e);
+    }
+
+    @Override
+    public boolean keyPressed(net.minecraft.client.input.KeyEvent e) {
+        if (e.key() == com.mojang.blaze3d.platform.InputConstants.KEY_ESCAPE
+                && menu.keyPressed(net.peregrine.client.core.Menu.KEY_ESCAPE)) {
+            return true;
+        }
+        return super.keyPressed(e);
     }
 }

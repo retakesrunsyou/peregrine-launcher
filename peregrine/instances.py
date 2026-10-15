@@ -459,6 +459,11 @@ def _announce_later(account: dict) -> None:
 
     def go():
         try:
+            from . import avatars
+            avatars.skin_path(account["uuid"])  # your skin, for your player on the game's main menu
+        except Exception:
+            pass
+        try:
             from . import profiles
             print(f"[peregrine] Peregrine badge: {profiles.announce(account)}")
         except Exception as e:

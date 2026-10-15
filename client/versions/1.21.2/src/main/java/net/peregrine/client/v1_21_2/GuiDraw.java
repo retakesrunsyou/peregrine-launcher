@@ -71,4 +71,15 @@ public final class GuiDraw implements Draw {
     public void popScale() {
         g.pose().popPose();
     }
+
+    @Override
+    public void texture(String id, int x, int y, int w, int h, float u0, float v0, float u1, float v1, int argb) {
+        if (w <= 0 || h <= 0 || id == null) {
+            return;
+        }
+        final int N = 4096;  // UVs as fractions of this size
+        net.minecraft.resources.ResourceLocation loc = net.minecraft.resources.ResourceLocation.parse(id);
+        g.blit(net.minecraft.client.renderer.RenderType::guiTextured, loc, x, y, u0 * N, v0 * N, w, h,
+                Math.round((u1 - u0) * N), Math.round((v1 - v0) * N), N, N, argb);
+    }
 }

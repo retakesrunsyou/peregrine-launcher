@@ -112,6 +112,83 @@ public final class Cosmetics extends Module {
         return e == null ? null : (String) e[0];
     }
 
+    /** The Peregrine cape you wear (index into CAPES, 0 = none). */
+    public static int capeIndex() {
+        Cosmetics m = instance;
+        return m == null || !m.enabled() ? 0 : m.cape.index;
+    }
+
+    /** Puts on a Peregrine cape (from the Locker), saves it, and lets other Peregrine players know. */
+    public static void setCape(int index) {
+        Cosmetics m = instance;
+        if (m == null || index < 0 || index >= CAPES.length) {
+            return;
+        }
+        m.cape.index = index;
+        if (!m.enabled()) {
+            m.setEnabled(true);
+        }
+        net.peregrine.client.core.Peregrine.get().markDirty();
+        announce(index);
+    }
+
+    /** Tells the Peregrine service your new cape, proving it's you with Mojang's join handshake
+     *  (the same one joining a server does). Quietly does nothing offline. */
+    private static void announce(final int index) {
+        final net.peregrine.client.core.Platform p = net.peregrine.client.core.Peregrine.get().platform();
+        final String token = p.accessToken();
+        final String name = p.playerName();
+        final String uuid = key(p.playerUuid());
+        if (SERVICE == null || SERVICE.isEmpty() || token == null || token.length() < 20 || uuid.length() != 32
+                || name == null) {
+            return;
+        }
+        Thread t = new Thread(() -> {
+            try {
+                String base = SERVICE.replaceAll("/+$", "");
+                String sid = JsonParser.parseString(http("POST", base + "/v1/challenge",
+                        "{\"name\":\"" + name + "\"}")).getAsJsonObject().get("serverId").getAsString();
+                http("POST", "https://sessionserver.mojang.com/session/minecraft/join",
+                        "{\"accessToken\":\"" + token + "\",\"selectedProfile\":\"" + uuid + "\",\"serverId\":\"" + sid + "\"}");
+                String file = FILES[index] == null ? "" : FILES[index];
+                http("PUT", base + "/v1/presence", "{\"name\":\"" + name + "\",\"serverId\":\"" + sid
+                        + "\",\"cape\":\"" + file + "\"}");
+                heard(uuid, file);
+            } catch (Exception e) {
+                System.out.println("[Peregrine] cape not shared: " + e.getMessage());
+            }
+        }, "Peregrine cape");
+        t.setDaemon(true);
+        t.start();
+    }
+
+    private static String http(String method, String url, String body) throws java.io.IOException {
+        HttpURLConnection c = (HttpURLConnection) new URL(url).openConnection();
+        c.setConnectTimeout(8000);
+        c.setReadTimeout(15000);
+        c.setRequestMethod(method);
+        c.setDoOutput(true);
+        c.setRequestProperty("Content-Type", "application/json");
+        c.setRequestProperty("User-Agent", "PeregrineClient");
+        c.getOutputStream().write(body.getBytes(StandardCharsets.UTF_8));
+        int code = c.getResponseCode();
+        if (code >= 300) {
+            throw new java.io.IOException(method + " " + url.replaceAll("\\?.*", "") + " answered " + code);
+        }
+        if (code == 204) {
+            return "";
+        }
+        try (InputStream in = c.getInputStream()) {
+            ByteArrayOutputStream b = new ByteArrayOutputStream();
+            byte[] buf = new byte[4096];
+            int n;
+            while ((n = in.read(buf)) > 0 && b.size() < 1 << 16) {
+                b.write(buf, 0, n);
+            }
+            return new String(b.toByteArray(), StandardCharsets.UTF_8);
+        }
+    }
+
     /** For tests: what the service answered. */
     public static void heard(String uuid, String cape) {
         LIVE.put(key(uuid), new Object[] {cape, System.currentTimeMillis()});

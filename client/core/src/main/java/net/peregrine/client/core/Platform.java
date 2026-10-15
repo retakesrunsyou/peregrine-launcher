@@ -68,6 +68,24 @@ public interface Platform {
         return false;
     }
 
+    /**
+     * Loads a PNG file as a texture for Draw.texture. Returns its id, or null if it can't be
+     * read. Called again for the same file, it replaces the old picture.
+     */
+    default String loadImage(java.nio.file.Path png) {
+        return null;
+    }
+
+    /** Your Minecraft session token (for Mojang's own services), or null when offline. */
+    default String accessToken() {
+        return null;
+    }
+
+    /** Whether the main menu can show your player (the adapter places it at TitleMenu.playerBox()). */
+    default boolean supportsPlayerPreview() {
+        return false;
+    }
+
     /** Whether joinServer works here. */
     default boolean supportsJoin() {
         return false;

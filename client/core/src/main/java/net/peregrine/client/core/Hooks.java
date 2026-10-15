@@ -97,6 +97,8 @@ public final class Hooks {
     public static volatile boolean nameLogo;
     /** The Peregrine logo, as a character from the mod's font (assets/minecraft/font/default.json). */
     public static final String LOGO = "\uE100";
+    /** The falcon in high resolution, for drawing it big (the main menu). */
+    public static final String BIG_LOGO = "\uE105";
 
     // ---- Scoreboard (sidebar) size, 1 = Minecraft's
     public static volatile float scoreboardScale = 1f;

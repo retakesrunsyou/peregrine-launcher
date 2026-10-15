@@ -25,6 +25,14 @@ public interface Draw {
     /** Text drawn larger (scale 2 = twice the size), with its top-left at x, y. */
     void textScaled(String s, int x, int y, int argb, float scale, boolean shadow);
 
+    /**
+     * Part of a texture, stretched over x, y, w, h. id is a resource id such as
+     * "peregrine-client:textures/cape/falcon.png" (or one from Platform.loadImage); u0..v1 are
+     * fractions of the texture (0 to 1). argb tints it (0xFFFFFFFF = as it is; lower alpha fades it).
+     */
+    default void texture(String id, int x, int y, int w, int h, float u0, float v0, float u1, float v1, int argb) {
+    }
+
     /** Draw what follows scaled by s around (x, y), until popScale(). Nests. */
     default void pushScale(int x, int y, float s) {
     }

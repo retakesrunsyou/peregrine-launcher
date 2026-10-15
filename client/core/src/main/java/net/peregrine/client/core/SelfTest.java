@@ -120,6 +120,7 @@ public final class SelfTest {
         open("Options button opens options", Platform.Screen.OPTIONS);
         shot("03-options");
         open("Back to the main menu", Platform.Screen.TITLE);
+        lockerSteps();
         clickTitle("clicking Peregrine on the main menu opens the menu", Platform.Screen.PEREGRINE_MENU);
         check("menu draws on the main menu", new Cond() {
             public boolean ok() {
@@ -1189,6 +1190,116 @@ public final class SelfTest {
         });
         waitAck();
         waitFor(label, 60, expect);
+        waitTicks(5);
+    }
+
+    /** The Locker on the main menu: open it, pick a cape and a background, come back. */
+    private static void lockerSteps() {
+        waitTicks(20);
+        shot("01a-title-player");
+        clickPoint("the Locker opens from the main menu", new java.util.concurrent.Callable<int[]>() {
+            public int[] call() {
+                return pc.titleMenu().lockerButtonCenter();
+            }
+        }, new Cond() {
+            public boolean ok() {
+                return pc.titleMenu().lockerOpen();
+            }
+        });
+        waitTicks(25);
+        shot("01b-locker");
+        clickPoint("picking the Ember cape wears it", new java.util.concurrent.Callable<int[]>() {
+            public int[] call() {
+                return pc.titleMenu().lockerCardCenter(0, 3);
+            }
+        }, new Cond() {
+            public boolean ok() {
+                return net.peregrine.client.core.modules.Cosmetics.capeIndex() == 3;
+            }
+        });
+        waitTicks(30);
+        shot("01c-locker-cape-back");
+        clickPoint("the Skins tab opens", new java.util.concurrent.Callable<int[]>() {
+            public int[] call() {
+                return pc.titleMenu().lockerCardCenter(2, 1);
+            }
+        }, new Cond() {
+            public boolean ok() {
+                return pc.titleMenu().lockerCardCenter(3, 0) != null;
+            }
+        });
+        clickPoint("clicking a skin tries it on", new java.util.concurrent.Callable<int[]>() {
+            public int[] call() {
+                return pc.titleMenu().lockerCardCenter(3, 0);
+            }
+        }, new Cond() {
+            public boolean ok() {
+                return pc.titleMenu().tryingSkin() == 0;
+            }
+        });
+        waitTicks(25);
+        shot("01c2-locker-skins");
+        clickPoint("the Backgrounds tab opens", new java.util.concurrent.Callable<int[]>() {
+            public int[] call() {
+                return pc.titleMenu().lockerCardCenter(2, 2);
+            }
+        }, new Cond() {
+            public boolean ok() {
+                return pc.titleMenu().lockerCardCenter(1, 1) != null;
+            }
+        });
+        clickPoint("picking Dusk sets the main menu background", new java.util.concurrent.Callable<int[]>() {
+            public int[] call() {
+                return pc.titleMenu().lockerCardCenter(1, 1);
+            }
+        }, new Cond() {
+            public boolean ok() {
+                return pc.titleMenu().drawsBackground();
+            }
+        });
+        waitTicks(20);
+        shot("01d-locker-backgrounds");
+        clickPoint("Back leaves the Locker", new java.util.concurrent.Callable<int[]>() {
+            public int[] call() {
+                return pc.titleMenu().lockerButtonCenter();
+            }
+        }, new Cond() {
+            public boolean ok() {
+                return !pc.titleMenu().lockerOpen();
+            }
+        });
+        waitTicks(25);
+        shot("01e-title-dusk");
+        run("back to the panorama and the Falcon cape", new Runnable() {
+            public void run() {
+                Module m = pc.module("main_menu");
+                if (m instanceof net.peregrine.client.core.modules.MainMenu) {
+                    ((net.peregrine.client.core.modules.MainMenu) m).background.index = 0;
+                }
+                net.peregrine.client.core.modules.Cosmetics.setCape(1);
+            }
+        });
+        waitTicks(5);
+    }
+
+    /** Clicks wherever where() says, with the real mouse, then waits for expect. */
+    private static void clickPoint(String label, final java.util.concurrent.Callable<int[]> where, Cond expect) {
+        run("click for: " + label, new Runnable() {
+            public void run() {
+                try {
+                    int[] c = where.call();
+                    if (c == null) {
+                        log("FAIL", label + ": nothing to click");
+                        return;
+                    }
+                    request("clickat " + px(c[0]) + " " + px(c[1]));
+                } catch (Exception e) {
+                    log("FAIL", label + ": " + e);
+                }
+            }
+        });
+        waitAck();
+        waitFor(label, 100, expect);
         waitTicks(5);
     }
 

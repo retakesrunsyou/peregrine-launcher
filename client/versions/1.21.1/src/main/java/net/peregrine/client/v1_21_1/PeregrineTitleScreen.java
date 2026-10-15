@@ -18,7 +18,11 @@ public final class PeregrineTitleScreen extends Screen {
 
     @Override
     public void render(GuiGraphics g, int mouseX, int mouseY, float partialTick) {
-        renderPanorama(g, partialTick);
+        if (!menu.drawsBackground()) {
+            renderPanorama(g, partialTick);
+        } else {
+            g.fill(0, 0, width, height, 0xFF0B0D12);
+        }
         menu.render(new GuiDraw(g), mouseX, mouseY);
     }
 
@@ -35,5 +39,24 @@ public final class PeregrineTitleScreen extends Screen {
     @Override
     public boolean shouldCloseOnEsc() {
         return false;
+    }
+
+    @Override
+    public boolean mouseDragged(double mouseX, double mouseY, int button, double dragX, double dragY) {
+        return menu.mouseDragged((int) mouseX, (int) mouseY) || super.mouseDragged(mouseX, mouseY, button, dragX, dragY);
+    }
+
+    @Override
+    public boolean mouseReleased(double mouseX, double mouseY, int button) {
+        return menu.mouseReleased((int) mouseX, (int) mouseY) || super.mouseReleased(mouseX, mouseY, button);
+    }
+
+    @Override
+    public boolean keyPressed(int key, int scanCode, int modifiers) {
+        if (key == com.mojang.blaze3d.platform.InputConstants.KEY_ESCAPE
+                && menu.keyPressed(net.peregrine.client.core.Menu.KEY_ESCAPE)) {
+            return true;
+        }
+        return super.keyPressed(key, scanCode, modifiers);
     }
 }

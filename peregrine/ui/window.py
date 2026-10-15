@@ -25,7 +25,7 @@ from .theme import Theme, avatar_pixmap, icon, logo_pixmap, stylesheet, tint
 class MainWindow(QMainWindow):
     # Pages by name. "content" (one instance's mods) lives under Home in the rail,
     # "accounts" under the profile pill, "browse" under Recent's Mods & packs button.
-    RAIL = [("friends", "s_user", "Friends"), ("profiles", "users", "Profiles"), ("home", "s_home", "Instances"),
+    RAIL = [("friends", "s_user", "Friends"), ("profiles", "users", "Profiles"), ("locker", "s_shirt", "Locker"), ("home", "s_home", "Instances"),
             ("recent", "s_grid", "Recent servers"), ("settings", "s_gear", "Settings")]
     RAIL_OF = {"content": "home", "accounts": None, "browse": "recent"}
 
@@ -140,6 +140,8 @@ class MainWindow(QMainWindow):
         self.settings = SettingsPage()
         self.accounts = AccountsPage(self.skins)
         self.friends = FriendsPage()
+        from .locker_page import LockerPage
+        self.locker = LockerPage(say=lambda t: self.say(t))
         from .profiles_page import ProfilesPage
         self.profiles = ProfilesPage(say=lambda t: self.say(t))
         self.modpacks = ModpacksPage()
@@ -152,7 +154,7 @@ class MainWindow(QMainWindow):
         self.market = MarketPage(self.mods, self.packs, self.modpacks, self.shaders)
         self.pages = {"recent": self.recent, "home": self.home, "content": self.content,
                       "settings": self.settings, "accounts": self.accounts, "friends": self.friends,
-                      "profiles": self.profiles,
+                      "profiles": self.profiles, "locker": self.locker,
                       "browse": self.market}
         for page in self.pages.values():
             self.stack.addWidget(page)
@@ -235,6 +237,8 @@ class MainWindow(QMainWindow):
             self.friends.render()
         if key == "profiles" and changed:
             self.profiles.build()
+        if key == "locker" and changed:
+            self.locker.build()
         rail_key = self.RAIL_OF.get(key, key)
         self.rail.select(rail_key)
 

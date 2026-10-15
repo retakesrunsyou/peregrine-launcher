@@ -19,6 +19,9 @@ play: more FPS, smoother frames and fewer lag spikes, out of the box.
   Continuity, Simple Voice Chat and Iris, kept up to date like the performance mods, plus the MakeUp Ultra Fast shader pack
   ready to switch on (shaders start off). Turn the whole set off in Settings, or one mod off in Content
 - **Recommended mods** in one click: 3D Skin Layers, LambDynamicLights and Wavey Capes
+- **Locker**: try on skins and capes on your turning player, then wear them. Keep a collection of skins (from files, or
+  copied from any player by name) and put one on your Minecraft account with classic or slim arms, switch your official
+  Minecraft capes, pick your Peregrine cape, and choose the game's main menu background (featured ones or your own picture)
 - **Profiles**: share your setup under your Minecraft name (only when you press Share), and look up a friend's to grab their
   mods, resource packs and shaders from Modrinth and, if you like, their in-game mod settings. See [profiles/README.md](profiles/README.md)
 - **Folders** on every instance: Schematics, Screenshots, Worlds, Resource packs, Shaders, Mods and Mod settings, one click away
@@ -52,6 +55,9 @@ drawn in software; real graphics cards usually gain more from Sodium):
 | 1.21.1 | 37-38 FPS (lows 16) | 42-44 FPS (lows 28) | lows +70% |
 
 **In-game menu (Peregrine Client)**
+- **Main menu**: your player turning beside the menu in your cape, a sharp logo, and a background you choose: Minecraft's
+  panorama, Dusk, Aurora, Night sky or your own picture. The **Locker** button slides in your capes, skins and backgrounds:
+  try a skin on and wear it, without leaving the game
 - Press **Right Shift** in game for the Peregrine menu: every mod as a tile with its icon and switch, a filter
   list, search, a Settings tab (accent color and more) and a Keybinds tab to set every key in one place
 - **A keybind for every feature**: set it on the feature's options page, then press it in game to switch it on or off

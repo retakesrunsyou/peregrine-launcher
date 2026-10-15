@@ -27,4 +27,20 @@ public final class Compat {
     public static void releaseTexture(net.minecraft.client.Minecraft mc, String path) {
         mc.getTextureManager().release(net.minecraft.resources.ResourceLocation.withDefaultNamespace(path));
     }
+
+    /** An id for a texture Peregrine makes (pictures from files). */
+    public static Object textureId(String namespace, String path) {
+        return net.minecraft.resources.ResourceLocation.fromNamespaceAndPath(namespace, path);
+    }
+
+    public static void registerTexture(Object id, net.minecraft.client.renderer.texture.AbstractTexture texture) {
+        net.minecraft.client.Minecraft.getInstance().getTextureManager().register((net.minecraft.resources.ResourceLocation) id, texture);
+    }
+
+    /** Draws part of a texture in the menus (u, v and sizes in units of a texSize x texSize texture). */
+    public static void blit(net.minecraft.client.gui.GuiGraphics g, String id, int x, int y, int w, int h, float u, float v,
+                            int uw, int vh, int texSize, int argb) {
+        g.blit(net.minecraft.client.renderer.RenderPipelines.GUI_TEXTURED, net.minecraft.resources.ResourceLocation.parse(id), x, y, u, v, w, h, uw, vh,
+                texSize, texSize, argb);
+    }
 }
