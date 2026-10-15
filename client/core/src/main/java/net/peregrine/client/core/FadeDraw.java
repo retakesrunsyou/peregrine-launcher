@@ -78,6 +78,19 @@ final class FadeDraw implements Draw {
     }
 
     @Override
+    public void textureQuad(String id, float x, float y, float ax, float ay, float bx, float by,
+                            float u0, float v0, float u1, float v1, int argb) {
+        if (visible()) {
+            d.textureQuad(id, x, y, ax, ay, bx, by, u0, v0, u1, v1, fade(argb));
+        }
+    }
+
+    @Override
+    public boolean supportsQuads() {
+        return d.supportsQuads();
+    }
+
+    @Override
     public void pushScale(int x, int y, float s) {
         d.pushScale(x, y, s);
     }

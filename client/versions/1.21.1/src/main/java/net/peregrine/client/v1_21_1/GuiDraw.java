@@ -87,4 +87,22 @@ public final class GuiDraw implements Draw {
         com.mojang.blaze3d.systems.RenderSystem.setShaderColor(1f, 1f, 1f, 1f);
         com.mojang.blaze3d.systems.RenderSystem.disableBlend();
     }
+
+    @Override
+    public boolean supportsQuads() {
+        return true;
+    }
+
+    @Override
+    public void textureQuad(String id, float x, float y, float ax, float ay, float bx, float by,
+                            float u0, float v0, float u1, float v1, int argb) {
+        if (id == null) {
+            return;
+        }
+        final int S = 64;  // a S x S square, stretched onto the shape by the pose
+        g.pose().pushPose();
+        g.pose().last().pose().mul(new org.joml.Matrix4f(ax / S, ay / S, 0f, 0f, bx / S, by / S, 0f, 0f, 0f, 0f, 1f, 0f, x, y, 0f, 1f));
+        texture(id, 0, 0, S, S, u0, v0, u1, v1, argb);
+        g.pose().popPose();
+    }
 }

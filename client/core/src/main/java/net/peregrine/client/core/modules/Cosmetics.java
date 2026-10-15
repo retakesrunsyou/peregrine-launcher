@@ -38,6 +38,22 @@ public final class Cosmetics extends Module {
     public static final String[] CAPES = {"None", "Falcon", "Violet", "Ember", "Starry night", "Pumpkin", "Frost"};
     /** Texture names, under assets/peregrine-client/textures/cape/. */
     public static final String[] FILES = {null, "falcon", "violet", "ember", "starry", "pumpkin", "frost"};
+    /** Animated capes: frames (files name_0.png ...) and how long each shows. */
+    static final java.util.Map<String, Integer> FRAMES = new java.util.HashMap<String, Integer>();
+    static final long FRAME_MS = 125;
+
+    static {
+        FRAMES.put("starry", 24);
+    }
+
+    /** The texture file to show right now for a cape (moving capes change frame as time passes). */
+    public static String frame(String file) {
+        Integer n = file == null ? null : FRAMES.get(file);
+        if (n == null) {
+            return file;
+        }
+        return file + "_" + (System.currentTimeMillis() / FRAME_MS) % n;
+    }
     public static final String REGISTRY =
             "https://raw.githubusercontent.com/retakesrunsyou/peregrine-launcher/main/cosmetics.json";
     static final long REFRESH_MS = 30 * 60_000L;
@@ -81,17 +97,17 @@ public final class Cosmetics extends Module {
             return null;
         }
         if (self) {
-            return FILES[m.cape.index];
+            return frame(FILES[m.cape.index]);
         }
         if (!m.others.value) {
             return null;
         }
         String[] p = players.get(key(uuid));
         if (p != null && p[0] != null) {
-            return p[0];
+            return frame(p[0]);
         }
         String live = live(uuid);
-        return live == null || live.isEmpty() ? null : live;
+        return live == null || live.isEmpty() ? null : frame(live);
     }
 
     /** What the service said about this player: their cape file, "" (Peregrine, no cape) or null. */

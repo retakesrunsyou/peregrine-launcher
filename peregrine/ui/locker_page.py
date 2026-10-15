@@ -98,27 +98,163 @@ def paint_skin(p: QPainter, img: QImage, slim: bool, back: bool, x: float, y: fl
             blit(rect, mirror, px, py, 0.5 if part != "head" else 0.6)
 
 
+# ---------------------------------------------------------------------- the player in 3D
+
+def _boxes(slim: bool, legacy: bool):
+    """The player's boxes: (x0, y0, z0, w, h, d, u, v, grow, mirror, limb) in skin pixels.
+    x to the player's left, y down from the top of the head, z toward you."""
+    aw = 3 if slim else 4
+    out = [(-4, 0, -4, 8, 8, 8, 0, 0, 0, False, None), (-4, 8, -2, 8, 12, 4, 16, 16, 0, False, None),
+           (-4 - aw, 8, -2, aw, 12, 4, 40, 16, 0, False, "r"), (-4, 20, -2, 4, 12, 4, 0, 16, 0, False, None)]
+    if legacy:
+        out += [(4, 8, -2, aw, 12, 4, 40, 16, 0, True, "l"), (0, 20, -2, 4, 12, 4, 0, 16, 0, True, None),
+                (-4, 0, -4, 8, 8, 8, 32, 0, 0.5, False, None)]
+    else:
+        out += [(4, 8, -2, aw, 12, 4, 32, 48, 0, False, "l"), (0, 20, -2, 4, 12, 4, 16, 48, 0, False, None),
+                (-4, 0, -4, 8, 8, 8, 32, 0, 0.5, False, None), (-4, 8, -2, 8, 12, 4, 16, 32, 0.25, False, None),
+                (-4 - aw, 8, -2, aw, 12, 4, 40, 32, 0.25, False, "r"), (4, 8, -2, aw, 12, 4, 48, 48, 0.25, False, "l"),
+                (-4, 20, -2, 4, 12, 4, 0, 32, 0.25, False, None), (0, 20, -2, 4, 12, 4, 0, 48, 0.25, False, None)]
+    return out
+
+
+class _Shaded:
+    """Pieces of a texture, darkened for the sides that face away from the light (cached)."""
+
+    def __init__(self):
+        self.cache = {}
+
+    def get(self, img, key, rect, shade):
+        k = (key, rect, shade)
+        part = self.cache.get(k)
+        if part is None:
+            x, y, w, h = rect
+            part = img.copy(int(x), int(y), max(1, int(w)), max(1, int(h)))
+            if shade < 255:
+                q = QPainter(part)
+                q.setCompositionMode(QPainter.CompositionMode_SourceAtop)
+                q.fillRect(part.rect(), QColor(0, 0, 0, 255 - shade))
+                q.end()
+            if len(self.cache) > 600:
+                self.cache.clear()
+            self.cache[k] = part
+        return part
+
+
+def paint_3d(p: QPainter, shaded: _Shaded, img: QImage, img_key, slim: bool, cape: QImage, cape_key,
+             cx: float, top: float, s: float, yaw_deg: float, pitch_deg: float, t: float):
+    """Draws the player in 3D (straight-on view, like Minecraft's own menus), farthest faces first."""
+    from PySide6.QtGui import QTransform
+    legacy = img.height() == 32
+    tw, th = img.width() / 64.0, img.height() / (32.0 if legacy else 64.0)  # pixels per skin pixel
+    cy, sy = math.cos(math.radians(yaw_deg)), math.sin(math.radians(yaw_deg))
+    cp, sp = math.cos(math.radians(pitch_deg)), math.sin(math.radians(pitch_deg))
+    swing = math.sin(t * 1.6) * 0.06
+
+    def limb(pt, lb):
+        if lb is None:
+            return pt
+        y0, z0, a = lb
+        c, sn = math.cos(a), math.sin(a)
+        y, z = pt[1] - y0, pt[2] - z0
+        return (pt[0], y0 + y * c - z * sn, z0 + y * sn + z * c)
+
+    def rot(pt):
+        x, y, z = pt[0], pt[1] - 16, pt[2]
+        x1 = x * cy + z * sy
+        z1 = -x * sy + z * cy
+        y2 = y * cp - z1 * sp
+        z2 = y * sp + z1 * cp
+        return (cx + x1 * s, top + (y2 + 16) * s, z2)
+
+    faces = []
+
+    def add_box(x0, y0, z0, w, h, d, uvs, grow, mirror, lb, tex, key, ppu, ppv, shades=(255, 235, 205, 205, 245, 170)):
+        x0, y0, z0 = x0 - grow, y0 - grow, z0 - grow
+        bw, bh, bd = w + 2 * grow, h + 2 * grow, d + 2 * grow
+        x1, y1, z1 = x0 + bw, y0 + bh, z0 + bd
+        geo = [((x0, y0, z1), (bw, 0, 0), (0, bh, 0), (0, 0, 1)), ((x1, y0, z0), (-bw, 0, 0), (0, bh, 0), (0, 0, -1)),
+               ((x0, y0, z0), (0, 0, bd), (0, bh, 0), (-1, 0, 0)), ((x1, y0, z1), (0, 0, -bd), (0, bh, 0), (1, 0, 0)),
+               ((x0, y0, z0), (bw, 0, 0), (0, 0, bd), (0, -1, 0)), ((x0, y1, z1), (bw, 0, 0), (0, 0, -bd), (0, 1, 0))]
+        for i, (p0, eu, ev, n) in enumerate(geo):
+            # the face's direction after turning: skip the ones facing away
+            nl = n if lb is None else (n[0], n[1] * math.cos(lb[2]) - n[2] * math.sin(lb[2]),
+                                       n[1] * math.sin(lb[2]) + n[2] * math.cos(lb[2]))
+            nz = nl[1] * sp + (-nl[0] * sy + nl[2] * cy) * cp
+            if nz <= 1e-4:
+                continue
+            if mirror:
+                p0 = (p0[0] + eu[0], p0[1] + eu[1], p0[2] + eu[2])
+                eu = (-eu[0], -eu[1], -eu[2])
+            a = rot(limb(p0, lb))
+            b = rot(limb((p0[0] + eu[0], p0[1] + eu[1], p0[2] + eu[2]), lb))
+            c = rot(limb((p0[0] + ev[0], p0[1] + ev[1], p0[2] + ev[2]), lb))
+            m = rot(limb((p0[0] + eu[0] / 2 + ev[0] / 2, p0[1] + eu[1] / 2 + ev[1] / 2, p0[2] + eu[2] / 2 + ev[2] / 2), lb))
+            ux, uy, uw, uh = uvs[i]
+            shade = int(shades[i] * (0.78 + 0.22 * nz))
+            faces.append((m[2] + grow * 0.01, a, b, c, tex, key, (ux * ppu, uy * ppv, uw * ppu, uh * ppv), shade))
+
+    for (x0, y0, z0, w, h, d, u, v, grow, mirror, lb) in _boxes(slim, legacy):
+        uvs = [(u + d, v + d, w, h), (u + 2 * d + w, v + d, w, h), (u, v + d, d, h), (u + d + w, v + d, d, h),
+               (u + d, v, w, d), (u + d + w, v, w, d)]
+        if mirror:
+            uvs[2], uvs[3] = uvs[3], uvs[2]
+        lbv = None if lb is None else (9.0, 0.0, swing if lb == "r" else -swing)
+        add_box(x0, y0, z0, w, h, d, uvs, grow, mirror, lbv, img, img_key, tw, th)
+    if cape is not None and not cape.isNull():
+        k = cape.width() / 64.0
+        tilt = math.radians(-8 - 3 * math.sin(t * 1.3))
+        # outside first (seen from behind), then the inside, the edges
+        cuv = [(12, 1, 10, 16), (1, 1, 10, 16), (0, 1, 1, 16), (11, 1, 1, 16), (1, 0, 10, 1), (11, 0, 10, 1)]
+        add_box(-5, 8, -3.1, 10, 16, 1, cuv, 0, False, (8.0, -2.6, tilt), cape, cape_key, k, k)
+
+    faces.sort(key=lambda f: f[0])
+    p.save()
+    p.setRenderHint(QPainter.SmoothPixmapTransform, False)
+    for _, a, b, c, tex, key, rect, shade in faces:
+        part = shaded.get(tex, key, rect, shade)
+        pw, ph = part.width(), part.height()
+        g = 0.012  # a hair bigger, so no seams show
+        ax, ay = (b[0] - a[0]), (b[1] - a[1])
+        bx, by = (c[0] - a[0]), (c[1] - a[1])
+        ox, oy = a[0] - (ax + bx) * g, a[1] - (ay + by) * g
+        p.setTransform(QTransform(ax * (1 + 2 * g) / pw, ay * (1 + 2 * g) / pw, bx * (1 + 2 * g) / ph,
+                                  by * (1 + 2 * g) / ph, ox, oy))
+        p.drawImage(0, 0, part)
+    p.restore()
+
+
 class SkinView(QWidget):
-    """The big player in the Locker: idles gently, spins around when clicked."""
+    """The big player in the Locker, in 3D: drag to turn it any way, click to spin it round.
+    Left alone it turns slowly on its own, like a showcase."""
 
     def __init__(self, scale=9):
         super().__init__()
         self.scale = scale
         self.img = None
+        self.img_key = None
         self.slim = False
         self.cape = None
-        self.backdrop = None  # the game's main menu background, behind your player
-        self.angle = 0.0   # 0 = front, 180 = back
+        self.cape_frames = None   # moving capes: their frames
+        self.cape_key = None
+        self.backdrop = None      # the game's main menu background, behind your player
+        self.angle = 25.0         # 0 = facing you, 180 = back
+        self.pitch = -10.0
+        self.velocity = 0.0
+        self.drag_from = None
+        self.dragged = False
+        self.idle_since = time.monotonic()
+        self.last = time.monotonic()
+        self.shaded = _Shaded()
         self.t0 = time.monotonic()
         self.setMinimumSize(16 * 5 + 60, 32 * 5 + 50)
         from PySide6.QtWidgets import QSizePolicy
         self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-        self.setCursor(Qt.PointingHandCursor)
-        self.setToolTip("Click to turn around")
-        self.timer = QTimer(self, interval=33)
-        self.timer.timeout.connect(self.update)
+        self.setCursor(Qt.OpenHandCursor)
+        self.setToolTip("Drag to turn · click to spin")
+        self.timer = QTimer(self, interval=16)
+        self.timer.timeout.connect(self._tick)
         self.timer.start()
-        self.anim = QVariantAnimation(self, duration=650, easingCurve=QEasingCurve.InOutCubic)
+        self.anim = QVariantAnimation(self, duration=700, easingCurve=QEasingCurve.OutCubic)
         self.anim.valueChanged.connect(self._turn)
 
     def sizeHint(self):
@@ -128,18 +264,37 @@ class SkinView(QWidget):
         self.angle = float(v)
         self.update()
 
+    def _tick(self):
+        now = time.monotonic()
+        dt = min(0.05, now - self.last)
+        self.last = now
+        if self.drag_from is None and self.anim.state() != QVariantAnimation.Running and animations_on():
+            if abs(self.velocity) > 5:
+                self.angle += self.velocity * dt
+                self.velocity *= 0.04 ** dt
+            elif now - self.idle_since > 3:
+                self.angle += 14 * dt  # a slow showcase turn
+        self.update()
+
     def set_skin(self, data: bytes, slim: bool):
         img = QImage.fromData(data, "PNG") if data else None
         self.img = img.convertToFormat(QImage.Format_ARGB32) if img is not None and not img.isNull() else None
+        self.img_key = hash(data) if data else None
         self.slim = slim
         self.update()
 
-    def set_cape(self, data_or_path):
+    def set_cape(self, data_or_path, frames=None):
         self.cape = None
-        if data_or_path:
+        self.cape_frames = None
+        if frames:
+            imgs = [QImage(str(f)) for f in frames]
+            self.cape_frames = [i.convertToFormat(QImage.Format_ARGB32) for i in imgs if not i.isNull()] or None
+            self.cape_key = str(frames[0])
+        elif data_or_path:
             img = QImage(str(data_or_path)) if not isinstance(data_or_path, (bytes, bytearray)) \
                 else QImage.fromData(data_or_path, "PNG")
-            self.cape = img if not img.isNull() else None
+            self.cape = img.convertToFormat(QImage.Format_ARGB32) if not img.isNull() else None
+            self.cape_key = str(data_or_path)[:200] if not isinstance(data_or_path, (bytes, bytearray)) else hash(data_or_path)
         self.update()
 
     def set_backdrop(self, path):
@@ -149,7 +304,13 @@ class SkinView(QWidget):
         self.update()
 
     def show_back(self, back=True):
-        end = 180.0 if back else 0.0
+        """Turns round to the back (to show off a cape) or the front."""
+        base = math.floor((self.angle + 180) / 360) * 360
+        end = base + (180.0 if back else 0.0)
+        if abs(end - self.angle) > 180:
+            end += -360 if end > self.angle else 360
+        self.velocity = 0
+        self.idle_since = time.monotonic()
         if not animations_on():
             self._turn(end)
             return
@@ -159,12 +320,38 @@ class SkinView(QWidget):
         self.anim.start()
 
     def mousePressEvent(self, e):
-        self.show_back(self.angle < 90)
+        self.anim.stop()
+        self.drag_from = e.position()
+        self.dragged = False
+        self.velocity = 0
+        self.setCursor(Qt.ClosedHandCursor)
+
+    def mouseMoveEvent(self, e):
+        if self.drag_from is None:
+            return
+        d = e.position() - self.drag_from
+        if abs(d.x()) + abs(d.y()) > 2:
+            self.dragged = True
+        self.angle += d.x() * 0.9
+        self.pitch = max(-35.0, min(25.0, self.pitch - d.y() * 0.4))
+        self.velocity = d.x() * 0.9 * 40
+        self.drag_from = e.position()
+        self.idle_since = time.monotonic()
+        self.update()
+
+    def mouseReleaseEvent(self, e):
+        self.drag_from = None
+        self.setCursor(Qt.OpenHandCursor)
+        self.idle_since = time.monotonic()
+        if not self.dragged:  # a click: spin round
+            a = self.angle % 360
+            self.show_back(not (90 < a < 270))
 
     def hideEvent(self, e):
         self.timer.stop()
 
     def showEvent(self, e):
+        self.last = time.monotonic()
         self.timer.start()
 
     def paintEvent(self, _):
@@ -186,7 +373,7 @@ class SkinView(QWidget):
             p.restore()
         # a soft spotlight and a shadow on the floor
         glow = QColor(Theme.accent)
-        glow.setAlpha(36)
+        glow.setAlpha(40)
         from PySide6.QtGui import QRadialGradient
         rg = QRadialGradient(w / 2, h * 0.45, w * 0.6)
         rg.setColorAt(0, glow)
@@ -194,23 +381,22 @@ class SkinView(QWidget):
         g2.setAlpha(0)
         rg.setColorAt(1, g2)
         p.fillRect(self.rect(), rg)
-        s = max(3.0, min((w - 40) / 18.0, (h - 50) / 32.0, float(self.scale)))
-        sx = abs(math.cos(math.radians(self.angle)))
+        s = max(3.0, min((w - 40) / 20.0, (h - 50) / 34.0, float(self.scale)))
+        top = (h - 32 * s) / 2 - 6
         p.setPen(Qt.NoPen)
-        p.setBrush(QColor(0, 0, 0, 70))
-        foot = (h - 32 * s) / 2 - 10 + 32 * s
-        p.drawEllipse(QRectF(w / 2 - 9 * s * max(0.5, sx), foot - 6, 18 * s * max(0.5, sx), 12))
+        p.setBrush(QColor(0, 0, 0, 80))
+        p.drawEllipse(QRectF(w / 2 - 8 * s, top + 32 * s - 4, 16 * s, 10))
         if self.img is None:
             p.setPen(QColor(Theme.p["faint"]))
             p.drawText(self.rect(), Qt.AlignCenter, "Pick a skin")
             return
-        bob = math.sin(t * 2.0) * 1.5 if animations_on() else 0
-        back = self.angle > 90
-        p.save()
-        p.translate(w / 2, 0)
-        p.scale(max(0.02, sx), 1)
-        paint_skin(p, self.img, self.slim, back, -8 * s, (h - 32 * s) / 2 - 10 + bob, s, self.cape)
-        p.restore()
+        cape, cape_key = self.cape, self.cape_key
+        if self.cape_frames:
+            i = int(t / 0.125) % len(self.cape_frames)
+            cape, cape_key = self.cape_frames[i], f"{self.cape_key}#{i}"
+        bob = math.sin(t * 2.0) * 1.2 if animations_on() else 0
+        paint_3d(p, self.shaded, self.img, self.img_key, self.slim, cape, cape_key, w / 2, top + bob, s,
+                 self.angle, self.pitch, t)
         p.end()
 
 
@@ -228,6 +414,17 @@ class _Card(QWidget):
         self.hover = 0.0
         self.anim = QVariantAnimation(self, duration=160, easingCurve=QEasingCurve.OutCubic)
         self.anim.valueChanged.connect(self._set)
+        self.shown_t = 1.0  # 0..1 as the card pops in
+
+    def appear(self, delay_ms):
+        """Pops in: rises and fades into place (cards arrive one after another)."""
+        if not animations_on():
+            return
+        self.shown_t = 0.0
+        a = QVariantAnimation(self, duration=380, startValue=0.0, endValue=1.0, easingCurve=QEasingCurve.OutBack)
+        a.valueChanged.connect(lambda v: (setattr(self, "shown_t", float(v)), self.update()))
+        self._appear = a
+        QTimer.singleShot(delay_ms, a.start)
 
     def _set(self, v):
         self.hover = float(v)
@@ -261,6 +458,9 @@ class _Card(QWidget):
     def paintEvent(self, _):
         p = QPainter(self)
         p.setRenderHint(QPainter.Antialiasing)
+        if self.shown_t < 1.0:
+            p.setOpacity(max(0.0, min(1.0, self.shown_t)))
+            p.translate(0, (1.0 - self.shown_t) * 16)
         lift = 3 * self.hover
         r = QRectF(self.rect()).adjusted(2, 2 - lift + 3, -2, -2 - lift)
         path = QPainterPath()
@@ -301,9 +501,19 @@ class SkinCard(_Card):
 
 
 class CapeCard(_Card):
-    def __init__(self, title, sub, image):
+    def __init__(self, title, sub, image, frames=None):
         super().__init__(title, sub)
         self.img = image
+        self.frames = [QImage(str(f)) for f in frames] if frames else None
+        if self.frames:
+            self._t0 = time.monotonic()
+            self._timer = QTimer(self, interval=125)
+            self._timer.timeout.connect(self._next)
+            self._timer.start()
+
+    def _next(self):
+        self.img = self.frames[int((time.monotonic() - self._t0) / 0.125) % len(self.frames)]
+        self.update()
 
     def picture(self, p, r):
         if self.img is None or self.img.isNull():
@@ -397,8 +607,18 @@ class LockerPage(QWidget):
         lv = QVBoxLayout(left)
         lv.setContentsMargins(18, 16, 18, 18)
         lv.setSpacing(10)
-        self.view = SkinView(8)
+        self.view = SkinView(12)
         lv.addWidget(self.view, 1)
+        turn = QHBoxLayout()
+        turn.setSpacing(6)
+        turn.addStretch()
+        for label, back in (("Front", False), ("Back", True)):
+            b = PillButton(label, None, "ghost")
+            b.setFixedHeight(34)
+            b.clicked.connect(lambda _=False, back=back: self.view.show_back(back))
+            turn.addWidget(b)
+        turn.addStretch()
+        lv.addLayout(turn)
         self.pick_name = QLabel("", objectName="pillTitle", alignment=Qt.AlignCenter)
         lv.addWidget(self.pick_name)
         self.arms = Segmented([("classic", "Classic arms"), ("slim", "Slim arms")], "classic")
@@ -425,8 +645,9 @@ class LockerPage(QWidget):
     def build(self):
         """Called when the page opens: refresh what your account wears."""
         self.view.set_backdrop(locker.background_asset(locker.menu_background()))
-        self.view.set_cape(locker.cape_asset(locker.peregrine_cape()))
-        self.render()
+        worn = locker.peregrine_cape()
+        self.view.set_cape(locker.cape_asset(worn), locker.cape_frames(worn))
+        self.render(pop=True)
         acct = auth.active_account()
         if acct and acct.get("type") == "msa":
             self.status.setText("Checking your account…")
@@ -464,7 +685,7 @@ class LockerPage(QWidget):
     def show_tab(self, key):
         self.tab = key
         self.tabs.set(key)
-        self.render()
+        self.render(pop=True)
 
     def _grid(self, title, cards):
         if title:
@@ -478,12 +699,15 @@ class LockerPage(QWidget):
         for i, c in enumerate(cards):
             g.addWidget(c, i // cols, i % cols)
             self.cards.append(c)
+            if getattr(self, "_pop", False):
+                c.appear(40 * (len(self.cards) - 1))
         g.setColumnStretch(cols, 1)
         self.grid_col.addWidget(holder)
         from .modern import fade_in
         fade_in(holder, 220, 0)
 
-    def render(self):
+    def render(self, pop=False):
+        self._pop = pop
         clear(self.grid_col)
         self.cards = []
         if self.tab == "skins":
@@ -541,7 +765,8 @@ class LockerPage(QWidget):
             worn = locker.peregrine_cape()
             for i, name in enumerate(locker.CAPE_NAMES):
                 path = locker.cape_asset(i)
-                c = CapeCard(name, "Peregrine", QImage(str(path)) if path else None)
+                c = CapeCard(name, "Moving" if locker.cape_frames(i) else "Peregrine",
+                             QImage(str(path)) if path else None, locker.cape_frames(i))
                 c.worn = i == worn
                 c.key = ("pcape", i)
                 c.clicked.connect(lambda c=c: self.pick(c.key))
@@ -596,7 +821,7 @@ class LockerPage(QWidget):
             self.wear.setText("SAVE TO MY SKINS")
             self.view.show_back(False)
         elif kind == "pcape":
-            self.view.set_cape(locker.cape_asset(what))
+            self.view.set_cape(locker.cape_asset(what), locker.cape_frames(what))
             self.pick_name.setText(locker.CAPE_NAMES[what] + " cape" if what else "No Peregrine cape")
             self.wear.setText("WEAR THIS CAPE")
             self.view.show_back(bool(what))

@@ -258,6 +258,21 @@ def peregrine_cape() -> int:
         return 1
 
 
+ANIMATED = {"starry": 24}
+
+
+def cape_frames(index: int):
+    """The frames of a moving cape (in order), or None for a still one."""
+    import sys
+    name = CAPE_FILES[index] if 0 <= index < len(CAPE_FILES) else ""
+    n = ANIMATED.get(name)
+    if not n:
+        return None
+    base = Path(getattr(sys, "_MEIPASS", Path(__file__).resolve().parent.parent))
+    frames = [base / "assets" / "capes" / name / f"{name}_{i}.png" for i in range(n)]
+    return frames if all(f.is_file() for f in frames) else None
+
+
 def _client_settings() -> dict:
     try:
         return json.loads(paths.CLIENT_SETTINGS.read_text())

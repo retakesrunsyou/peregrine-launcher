@@ -33,6 +33,19 @@ public interface Draw {
     default void texture(String id, int x, int y, int w, int h, float u0, float v0, float u1, float v1, int argb) {
     }
 
+    /**
+     * Part of a texture drawn onto a slanted four-sided shape (for 3D): its corner at x, y, the
+     * texture's u running along (ax, ay) and v along (bx, by). argb tints it.
+     */
+    default void textureQuad(String id, float x, float y, float ax, float ay, float bx, float by,
+                             float u0, float v0, float u1, float v1, int argb) {
+    }
+
+    /** Whether textureQuad draws anything here. */
+    default boolean supportsQuads() {
+        return false;
+    }
+
     /** Draw what follows scaled by s around (x, y), until popScale(). Nests. */
     default void pushScale(int x, int y, float s) {
     }

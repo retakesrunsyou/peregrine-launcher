@@ -80,4 +80,22 @@ public final class GuiDraw implements Draw {
         final int N = 4096;  // UVs as fractions of this size
         Compat.blit(g, id, x, y, w, h, u0 * N, v0 * N, Math.round((u1 - u0) * N), Math.round((v1 - v0) * N), N, argb);
     }
+
+    @Override
+    public boolean supportsQuads() {
+        return true;
+    }
+
+    @Override
+    public void textureQuad(String id, float x, float y, float ax, float ay, float bx, float by,
+                            float u0, float v0, float u1, float v1, int argb) {
+        if (id == null) {
+            return;
+        }
+        final int S = 64;  // a S x S square, stretched onto the shape by the pose
+        g.pose().pushMatrix();
+        g.pose().mul(new org.joml.Matrix3x2f(ax / S, ay / S, bx / S, by / S, x, y));
+        texture(id, 0, 0, S, S, u0, v0, u1, v1, argb);
+        g.pose().popMatrix();
+    }
 }

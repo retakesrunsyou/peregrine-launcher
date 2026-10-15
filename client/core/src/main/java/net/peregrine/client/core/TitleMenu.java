@@ -223,7 +223,7 @@ public final class TitleMenu {
         if (Math.abs(target - lockerT) < 0.002f) {
             lockerT = target;
         }
-        tabT = Math.min(1f, tabT + dt * 6f);
+        tabT = Math.min(1f, tabT + dt * 2.2f);
         float e = lockerT * lockerT * (3 - 2 * lockerT);  // smoothstep
 
         drawBackground(base, sw, sh, now);
@@ -391,9 +391,13 @@ public final class TitleMenu {
         net.peregrine.client.core.modules.MainMenu menuMod = mainMenu();
         int worn = net.peregrine.client.core.modules.Cosmetics.capeIndex();
         int bg = menuMod == null ? 0 : menuMod.background.index;
-        float fade = tabT;
+        int order = 0;
+        float pulse = 0.5f + 0.5f * (float) Math.sin(System.currentTimeMillis() / 380.0);
         for (int[] c : cards) {
             int kind = c[0], i = c[1], x = c[2], y = c[3], w = c[4], h = c[5];
+            // cards arrive one after another, each rising into place
+            float fade = kind == 2 ? 1f : Math.max(0f, Math.min(1f, (tabT * 1.8f - order++ * 0.09f) / 0.55f));
+            fade = 1f - (1f - fade) * (1f - fade) * (1f - fade);
             boolean hover = mx >= x && mx < x + w && my >= y && my < y + h;
             if (kind == 2) {
                 tabGlow[i] = ease(tabGlow[i], hover || lockerTab == i, dt);
@@ -403,8 +407,11 @@ public final class TitleMenu {
                 d.text(label, x + 8, y + 4, on ? Theme.onColor(a) : Theme.mix(Theme.MUTED, Theme.TEXT, tabGlow[i]), false);
                 continue;
             }
+            if (fade <= 0.01f) {
+                continue;
+            }
             Draw cd = fade < 1f ? new FadeDraw(d, fade) : d;
-            int dy = Math.round((1f - fade) * 8);
+            int dy = Math.round((1f - fade) * 14);
             if (kind == 3) {
                 java.util.List<LockerSkins.Skin> list = skins.list(p);
                 if (i >= list.size()) {
@@ -439,7 +446,8 @@ public final class TitleMenu {
             int cy = y + dy - lift;
             cd.shadow(x, cy, w, h);
             cd.roundRect(x, cy, w, h, 4, Theme.mix(0xC01B1E25, 0xE02A2E38, g));
-            if (picked) {
+            if (picked) {  // what you wear: a ring that breathes
+                cd.roundOutline(x - 1, cy - 1, w + 2, h + 2, 5, Theme.withAlpha(a, Math.round(0x30 + 0x50 * pulse)));
                 cd.roundOutline(x, cy, w, h, 4, a);
                 cd.roundOutline(x + 1, cy + 1, w - 2, h - 2, 3, Theme.withAlpha(a, 0x70));
             } else if (g > 0) {
@@ -451,7 +459,7 @@ public final class TitleMenu {
                 int px = x + (w - pw) / 2, py = cy + 8;
                 if (file != null) {
                     // the outside of the cape: 10x16 pixels at (1, 1) of its 64x32 layout
-                    cd.texture("peregrine-client:textures/cape/" + file + ".png", px, py, pw, ph,
+                    cd.texture("peregrine-client:textures/cape/" + net.peregrine.client.core.modules.Cosmetics.frame(file) + ".png", px, py, pw, ph,
                             1f / 64, 1f / 32, 11f / 64, 17f / 32, 0xFFFFFFFF);
                 } else {
                     cd.roundOutline(px, py, pw, ph, 2, 0x40FFFFFF);
@@ -785,6 +793,7 @@ public final class TitleMenu {
         }
         if (panel[2] > 0 && lockerButton.contains(mx, my)) {
             lockerOpen = true;
+            tabT = 0f;
             return true;
         }
         for (Button b : buttons) {
