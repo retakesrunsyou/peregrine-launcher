@@ -267,8 +267,25 @@ def install_java(component: str, progress=None) -> Optional[Path]:
     return java
 
 
+_JAVA_MAJOR = {}
+
+
 def java_major(java: str) -> int:
-    """The major version of a java executable (8, 17, 21, 25...), or 0 if it won't run."""
+    """The major version of a java executable (8, 17, 21, 25...), or 0 if it won't run.
+    Remembered per file, so a launch doesn't start Java just to ask."""
+    try:
+        stamp = (str(java), os.stat(java).st_mtime_ns)
+    except OSError:
+        stamp = None
+    if stamp in _JAVA_MAJOR:
+        return _JAVA_MAJOR[stamp]
+    major = _java_major(java)
+    if stamp and major:
+        _JAVA_MAJOR[stamp] = major
+    return major
+
+
+def _java_major(java: str) -> int:
     import subprocess
     try:
         out = subprocess.run([java, "-version"], capture_output=True, text=True, timeout=20,
@@ -493,11 +510,16 @@ def build_command(profile: dict, info: dict, java: str, account: dict,
         # One file per Java version (a snapshot from another Java can't be used),
         # and Java's notes about it stay out of the game log.
         have = java_major(java) or major
-        cds = paths.CACHE / "cds" / f"{profile['id']}-java{have}.jsa"
+        coh = have >= 25 and cfg.get("compact_objects", True)
+        cds = paths.CACHE / "cds" / f"{profile['id']}-java{have}{'-coh' if coh else ''}.jsa"
         cds.parent.mkdir(parents=True, exist_ok=True)
         tuned += ["-XX:+AutoCreateSharedArchive", f"-XX:SharedArchiveFile={cds}", "-Xlog:cds*=off"]
         if have >= 25:
             tuned.append("-Xlog:aot*=off")
+    if (java_major(java) or major) >= 25 and cfg.get("compact_objects", True):
+        # Java 25's smaller object headers: every object takes less memory, so the game
+        # fits more in the CPU's cache and the garbage collector has less to do.
+        tuned.append("-XX:+UseCompactObjectHeaders")
     if info.get("log_arg"):
         tuned.append(info["log_arg"])
     tuned.append(f"-Dperegrine.config={paths.CLIENT_SETTINGS}")
@@ -505,6 +527,10 @@ def build_command(profile: dict, info: dict, java: str, account: dict,
     from . import PROFILES_URL
     if PROFILES_URL:
         tuned.append(f"-Dperegrine.service={PROFILES_URL}")  # in game: who else plays with Peregrine
+    from . import UPDATE_REPO
+    tuned.append(f"-Dperegrine.version={VERSION}")
+    if UPDATE_REPO and cfg.get("check_updates", True):
+        tuned.append(f"-Dperegrine.updates={UPDATE_REPO}")  # in game: "a new Peregrine is out"
     tuned += cfg.get("extra_jvm_args", "").split()
 
     cmd = [java] + tuned + jvm + [profile["mainClass"]] + game

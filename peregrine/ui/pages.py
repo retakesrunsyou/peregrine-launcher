@@ -788,6 +788,12 @@ class SettingsPage(QWidget):
         perf.row("Faster game startup", self._check(cfg, "fast_start"),
                  "Java remembers what it loaded last time so later launches start quicker. "
                  "Minecraft 1.20.5 and newer.")
+        perf.row("Smaller Java objects", self._check(cfg, "compact_objects"),
+                 "On Java 25 (Minecraft 26.1 and newer) every object takes less memory: "
+                 "more fits in the CPU's cache and memory cleanup pauses less.")
+        if game.WINDOWS:
+            perf.row("Give the game priority", self._check(cfg, "game_priority"),
+                     "Windows gives Minecraft the CPU before background apps, for steadier FPS.")
         self.body.addWidget(perf)
 
         # ---- java

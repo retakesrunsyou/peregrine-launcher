@@ -74,6 +74,46 @@ def get_json_cached(url: str, cache: Path, max_age: float, **kwargs):
     return data
 
 
+_HASHES = None
+_HASH_LOCK = __import__("threading").Lock()
+
+
+def _hash_cache_file() -> Path:
+    from . import paths
+    return paths.CACHE / "hashes.json"
+
+
+def checked_sha1(path: Path) -> str:
+    """sha1_of, remembered while the file stays the same (size and modified time), so
+    launches don't read every library again."""
+    global _HASHES
+    import json
+    st = path.stat()
+    key = str(path)
+    stamp = [st.st_size, st.st_mtime_ns]
+    with _HASH_LOCK:
+        if _HASHES is None:
+            try:
+                _HASHES = json.loads(_hash_cache_file().read_text())
+            except (OSError, ValueError):
+                _HASHES = {}
+        known = _HASHES.get(key)
+        if known and known[:2] == stamp:
+            return known[2]
+    digest = sha1_of(path)
+    with _HASH_LOCK:
+        _HASHES[key] = stamp + [digest]
+        try:
+            f = _hash_cache_file()
+            f.parent.mkdir(parents=True, exist_ok=True)
+            tmp = f.with_suffix(".tmp")
+            tmp.write_text(json.dumps(_HASHES))
+            os.replace(tmp, f)
+        except OSError:
+            pass
+    return digest
+
+
 def sha1_of(path: Path) -> str:
     h = hashlib.sha1()
     with open(path, "rb") as f:
@@ -97,7 +137,7 @@ class Download:
         # here. This keeps launches fast instead of re-hashing thousands of files.
         if self.size is not None:
             return self.path.stat().st_size == self.size
-        return self.sha1 is None or sha1_of(self.path) == self.sha1
+        return self.sha1 is None or checked_sha1(self.path) == self.sha1
 
 
 def fetch(d: Download, retries: int = 3) -> None:

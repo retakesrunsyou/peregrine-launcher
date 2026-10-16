@@ -39,7 +39,9 @@ play: more FPS, smoother frames and fewer lag spikes, out of the box.
 - If a performance mod ever crashes the game, it's switched off for that instance automatically
 - Tuned **Java settings**: memory and garbage collection to cut lag spikes (optional low-pause
   mode), a JIT compiler allowed to optimise Minecraft's biggest methods, huge memory pages, and a
-  shader cache that survives between launches
+  shader cache that survives between launches. On Java 25 (Minecraft 26.1+) **smaller Java objects**
+  (compact object headers) for less memory use and fewer cleanup pauses; on Windows the game gets
+  **CPU priority** over background apps. Launches skip re-checking files that haven't changed
 - **Graphics driver boost** for AMD, Intel and NVIDIA, and dedicated-GPU mode for laptops
 - Uses **Feral GameMode** automatically if you have it
 
@@ -57,7 +59,9 @@ drawn in software; real graphics cards usually gain more from Sodium):
 **In-game menu (Peregrine Client)**
 - **Main menu**: your player turning beside the menu in your cape, a sharp logo, and a background you choose: Minecraft's
   panorama, Dusk, Aurora, Night sky or your own picture. The **Locker** button slides in your capes, skins and backgrounds:
-  try a skin on and wear it, without leaving the game
+  try a skin on and wear it, without leaving the game. **Adjust** your own picture like the HUD editor: drag it,
+  resize it from the corners or with the scroll wheel, snap it to the middle or the edges, show the whole
+  picture, darken it, and switch its slow drift on or off
 - Press **Right Shift** in game for the Peregrine menu: every mod as a tile with its icon and switch, a filter
   list, search, a Settings tab (accent color and more) and a Keybinds tab to set every key in one place
 - **A keybind for every feature**: set it on the feature's options page, then press it in game to switch it on or off
@@ -130,7 +134,8 @@ drawn in software; real graphics cards usually gain more from Sodium):
 - **System tray**: when you press Play the launcher tucks into the tray and comes back when the game closes. Click the tray icon to
   open it, or right-click for Play (your last instance) and **Quit**. Closing the window keeps it in the tray (change both in Settings)
 - **Fit my screen** fills your screen but leaves the taskbar usable
-- Opens instantly, works offline for anything already downloaded, and updates itself
+- Opens instantly, works offline for anything already downloaded, and updates itself. When a new Peregrine is
+  out, a card slides in on the main menu and in game so you know to restart the launcher
 
 You need your own copy of Minecraft: Java Edition. Sign in with the Microsoft
 account that owns it.

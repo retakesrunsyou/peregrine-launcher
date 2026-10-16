@@ -52,6 +52,11 @@ public final class PeregrineTitleScreen extends Screen {
     }
 
     @Override
+    public boolean mouseScrolled(double mouseX, double mouseY, double scrollX, double scrollY) {
+        return menu.mouseScrolled((int) mouseX, (int) mouseY, scrollY) || super.mouseScrolled(mouseX, mouseY, scrollX, scrollY);
+    }
+
+    @Override
     public boolean keyPressed(int key, int scanCode, int modifiers) {
         if (key == com.mojang.blaze3d.platform.InputConstants.KEY_ESCAPE
                 && menu.keyPressed(net.peregrine.client.core.Menu.KEY_ESCAPE)) {

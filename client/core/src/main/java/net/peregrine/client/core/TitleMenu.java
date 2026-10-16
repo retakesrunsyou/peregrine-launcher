@@ -13,13 +13,14 @@ package net.peregrine.client.core;
  */
 public final class TitleMenu {
 
-    public static final String CLIENT_VERSION = "1.4.0";
+    public static final String CLIENT_VERSION = "1.4.1";
 
     static final int H = 20, GAP = 4, SMALL_H = 15;
 
     /** A menu button: label, icon, what it opens. Shared with the pause menu. */
     static final class Button {
-        final String label, icon;
+        String label;
+        final String icon;
         final Platform.Screen action;
         final boolean primary;
         int x, y, w, h;
@@ -131,6 +132,8 @@ public final class TitleMenu {
     private int pressX;
 
     // ---- backgrounds
+    final BackgroundEditor editor = new BackgroundEditor(this);
+    private float adjustGlow;
     private String customId;
     private long customStamp = -1;
     private int customW = 16, customH = 9;
@@ -205,6 +208,7 @@ public final class TitleMenu {
     /** Call when the main menu screen is created, so it fades in. */
     public void shown() {
         shownAt = System.currentTimeMillis();
+        UpdateNotice.atTitle();
     }
 
     public void render(Draw raw, int mx, int my) {
@@ -225,18 +229,33 @@ public final class TitleMenu {
         }
         tabT = Math.min(1f, tabT + dt * 2.2f);
         float e = lockerT * lockerT * (3 - 2 * lockerT);  // smoothstep
+        net.peregrine.client.core.modules.MainMenu mm = mainMenu();
+        editor.update(mm, dt);
+        float ed = editor.openness();  // the picture editor hides the menu while it's open
 
         drawBackground(base, sw, sh, now);
 
         // Darken behind the buttons: one smooth fade from the left (no visible steps).
-        base.rect(0, 0, sw, sh, Theme.withAlpha(0, 0x38 + Math.round(0x40 * e)));
-        int fadeW = Math.max(1, sw * 11 / 20);
-        for (int x = 0; x < fadeW; x += 2) {
-            float k = 1f - x / (float) fadeW;
-            int alpha = Math.round(0x70 * k * k * (1f - e));
-            if (alpha > 0) {
-                base.rect(x, 0, 2, sh, Theme.withAlpha(0, alpha));
+        float shade = 1f - ed;
+        if (shade > 0.001f) {
+            base.rect(0, 0, sw, sh, Theme.withAlpha(0, Math.round((0x38 + 0x40 * e) * shade)));
+            int fadeW = Math.max(1, sw * 11 / 20);
+            for (int x = 0; x < fadeW; x += 2) {
+                float k = 1f - x / (float) fadeW;
+                int alpha = Math.round(0x70 * k * k * (1f - e) * shade);
+                if (alpha > 0) {
+                    base.rect(x, 0, 2, sh, Theme.withAlpha(0, alpha));
+                }
             }
+        }
+        Draw editorLayer = base;
+        if (ed > 0.999f) {
+            editor.render(editorLayer, p, mm, mx, my, dt, a);
+            UpdateNotice.render(raw, p, mx, my, a);
+            return;
+        }
+        if (ed > 0.001f) {
+            base = new FadeDraw(base, 1f - ed);
         }
 
         layout(p, base);
@@ -269,7 +288,14 @@ public final class TitleMenu {
             String ver = versionLine(p);
             vd.text(ver, sw - 6 - vd.width(ver), sh - 20, Theme.FAINT, true);
             vd.text(COPYRIGHT, sw - 6 - vd.width(COPYRIGHT), sh - 10, Theme.FAINT, true);
+            String up = UpdateNotice.available();
+            if (up != null) {  // a quiet reminder under the card once it has slid away
+                String note = "Update " + up + " ready \u00B7 restart the launcher";
+                vd.text(note, sw - 6 - vd.width(note), sh - 30, Theme.withAlpha(a, 0xD0), true);
+            }
         }
+        editor.render(editorLayer, p, mm, mx, my, dt, a);
+        UpdateNotice.render(raw, p, mx, my, a);
     }
 
     private void drawHome(Draw d, Platform p, int mx, int my, float dt, int a, int sw, int sh) {
@@ -344,6 +370,14 @@ public final class TitleMenu {
             grid(3, Math.min(skins.list(p).size(), skinGlow.length), 58, 92, 0, gx, y0, gw, gh);
         } else {
             grid(1, net.peregrine.client.core.modules.MainMenu.BACKGROUNDS.length, 150, 0, 14, gx, y0, gw, gh);
+            if (customBackground() != null) {  // an "Adjust" button on your picture's card
+                for (int[] c : new java.util.ArrayList<int[]>(cards)) {
+                    if (c[0] == 1 && c[1] == net.peregrine.client.core.modules.MainMenu.CUSTOM) {
+                        int bw = (d == null ? 36 : d.width("Adjust")) + 22;
+                        cards.add(new int[] {4, c[1], c[2] + c[4] - bw - 7, c[3] + 7, bw, 14});
+                    }
+                }
+            }
         }
     }
 
@@ -412,6 +446,16 @@ public final class TitleMenu {
             }
             Draw cd = fade < 1f ? new FadeDraw(d, fade) : d;
             int dy = Math.round((1f - fade) * 14);
+            if (kind == 4) {
+                adjustGlow = ease(adjustGlow, hover, dt);
+                int by = y + dy - Math.round(bgGlow[i] * 2);
+                cd.roundRect(x, by, w, h, 3, Theme.mix(0xD0101217, a, adjustGlow));
+                cd.roundOutline(x, by, w, h, 3, Theme.withAlpha(a, 0x90 + Math.round(0x6F * adjustGlow)));
+                int fg = Theme.mix(Theme.TEXT, Theme.onColor(a), adjustGlow);
+                MenuIcons.draw(cd, "resize", x + 4, by + 3, fg);
+                cd.text("Adjust", x + 16, by + 3, fg, false);
+                continue;
+            }
             if (kind == 3) {
                 java.util.List<LockerSkins.Skin> list = skins.list(p);
                 if (i >= list.size()) {
@@ -551,6 +595,9 @@ public final class TitleMenu {
 
     /** Turning your player by dragging it. */
     public boolean mouseDragged(int mx, int my) {
+        if (editor.isOpen()) {
+            return editor.mouseDragged(pc, mainMenu(), mx, my);
+        }
         if (pressedPlayer) {
             preview.drag(mx);
             return true;
@@ -559,6 +606,9 @@ public final class TitleMenu {
     }
 
     public boolean mouseReleased(int mx, int my) {
+        if (editor.isOpen()) {
+            return editor.mouseReleased(pc);
+        }
         if (!pressedPlayer) {
             return false;
         }
@@ -571,7 +621,28 @@ public final class TitleMenu {
     }
 
     /** Esc in the Locker goes back to the menu. */
+    public boolean mouseScrolled(int mx, int my, double amount) {
+        return editor.isOpen() && editor.mouseScrolled(pc, mainMenu(), mx, my, amount);
+    }
+
+    /** For the self-test: the picture editor. */
+    public boolean editingBackground() {
+        return editor.isOpen();
+    }
+
+    public int[] editorButton(int i) {
+        return editor.barButton(i);
+    }
+
+    public int[] editorCorner(int i) {
+        return editor.corner(i);
+    }
+
     public boolean keyPressed(int key) {
+        if (key == Menu.KEY_ESCAPE && editor.isOpen()) {
+            editor.close(pc);
+            return true;
+        }
         if (key == Menu.KEY_ESCAPE && lockerOpen) {
             lockerOpen = false;
             trying = -1;
@@ -669,6 +740,37 @@ public final class TitleMenu {
         return new float[] {(1f - uw) / 2, 0f, (1f + uw) / 2, 1f};
     }
 
+    /**
+     * Where a tw x th picture goes: zoom 1 just covers the screen; cx, cy is where its middle
+     * sits, as a fraction of the screen. Returns {x, y, w, h}.
+     */
+    public static float[] placement(int tw, int th, int sw, int sh, float zoom, float cx, float cy) {
+        float s = Math.max(sw / (float) Math.max(1, tw), sh / (float) Math.max(1, th)) * zoom;
+        float w = tw * s, h = th * s;
+        return new float[] {cx * sw - w / 2, cy * sh - h / 2, w, h};
+    }
+
+    /** Draws the part of a picture placed at r that's on screen (nothing outside it). */
+    static void drawPlaced(Draw d, String id, float[] r, int sw, int sh, int tint) {
+        float x0 = Math.max(0, r[0]), y0 = Math.max(0, r[1]);
+        float x1 = Math.min(sw, r[0] + r[2]), y1 = Math.min(sh, r[1] + r[3]);
+        if (x1 - x0 < 0.5f || y1 - y0 < 0.5f) {
+            return;
+        }
+        int ix0 = Math.round(x0), iy0 = Math.round(y0), ix1 = Math.round(x1), iy1 = Math.round(y1);
+        d.texture(id, ix0, iy0, ix1 - ix0, iy1 - iy0, (ix0 - r[0]) / r[2], (iy0 - r[1]) / r[3],
+                (ix1 - r[0]) / r[2], (iy1 - r[1]) / r[3], tint);
+    }
+
+    /** Your picture's size in pixels (16 x 9 until it's loaded). */
+    int[] customSize() {
+        return new int[] {customW, customH};
+    }
+
+    String customTexture() {
+        return customBackground();
+    }
+
     private void drawBackground(Draw d, int sw, int sh, long now) {
         net.peregrine.client.core.modules.MainMenu m = mainMenu();
         if (m == null || m.background.index == 0) {
@@ -679,14 +781,31 @@ public final class TitleMenu {
             return;
         }
         boolean custom = m.background.index == net.peregrine.client.core.modules.MainMenu.CUSTOM;
-        float[] uv = cover(custom ? customW : 16, custom ? customH : 9, sw, sh);
-        // a slow drift so the picture feels alive (like the panorama turning)
-        float zoom = 0.04f;
-        float t = (now % 120000L) / 120000f * (float) (Math.PI * 2);
-        float du = (uv[2] - uv[0]) * zoom, dv = (uv[3] - uv[1]) * zoom;
-        float ox = (float) Math.sin(t) * du / 2, oy = (float) Math.cos(t * 0.7f) * dv / 2;
-        d.texture(id, 0, 0, sw, sh, uv[0] + du / 2 + ox, uv[1] + dv / 2 + oy, uv[2] - du / 2 + ox, uv[3] - dv / 2 + oy,
-                0xFFFFFFFF);
+        int tw = custom ? customW : 16, th = custom ? customH : 9;
+        float zoom = custom ? editor.zoom(m) : 1f, cx = custom ? editor.cx(m) : 0.5f, cy = custom ? editor.cy(m) : 0.5f;
+        float[] r = placement(tw, th, sw, sh, zoom, cx, cy);
+        boolean editing = editor.active();
+        if (m.drift.value && !editing) {
+            // a slow drift so the picture feels alive (like the panorama turning)
+            float t = (now % 120000L) / 120000f * (float) (Math.PI * 2);
+            float grow = 1.04f;
+            float gw = r[2] * (grow - 1f), gh = r[3] * (grow - 1f);
+            r = new float[] {r[0] - gw / 2 + (float) Math.sin(t) * gw / 2, r[1] - gh / 2 + (float) Math.cos(t * 0.7f) * gh / 2,
+                    r[2] + gw, r[3] + gh};
+        }
+        if (r[0] > 0.5f || r[1] > 0.5f || r[0] + r[2] < sw - 0.5f || r[1] + r[3] < sh - 0.5f) {
+            // the picture doesn't reach the edges: a dark, softened copy fills in behind it
+            d.rect(0, 0, sw, sh, 0xFF0B0D11);
+            float[] behind = placement(tw, th, sw, sh, 1.15f, 0.5f, 0.5f);
+            drawPlaced(d, id, behind, sw, sh, 0xFF3A3D45);
+            d.rect(0, 0, sw, sh, 0x50000000);
+            d.shadow(Math.round(r[0]), Math.round(r[1]), Math.round(r[2]), Math.round(r[3]));
+        }
+        drawPlaced(d, id, r, sw, sh, 0xFFFFFFFF);
+        if (m.dim.value > 0) {
+            d.rect(0, 0, sw, sh, Theme.withAlpha(0, Math.round(m.dim.value / 100f * 255)));
+        }
+        editor.lastPlacement = r;
     }
 
     private void drawCard(Draw d, Platform p, int mx, int my, float dt, int a) {
@@ -723,6 +842,12 @@ public final class TitleMenu {
         if (button != 0) {
             return false;
         }
+        if (UpdateNotice.click(mx, my)) {
+            return true;
+        }
+        if (editor.isOpen()) {
+            return editor.mouseClicked(pc, mainMenu(), mx, my);
+        }
         Platform p = pc.platform();
         layout(p, null);
         int[] box = playerBox();
@@ -752,6 +877,17 @@ public final class TitleMenu {
                     });
                 }
                 return true;
+            }
+            for (int[] c : cards) {
+                if (c[0] == 4 && mx >= c[2] && mx < c[2] + c[4] && my >= c[3] && my < c[3] + c[5]) {
+                    net.peregrine.client.core.modules.MainMenu m = mainMenu();
+                    if (m != null) {
+                        m.background.index = net.peregrine.client.core.modules.MainMenu.CUSTOM;
+                        pc.markDirty();
+                        editor.open();
+                    }
+                    return true;
+                }
             }
             for (int[] c : cards) {
                 if (mx >= c[2] && mx < c[2] + c[4] && my >= c[3] && my < c[3] + c[5]) {

@@ -275,24 +275,29 @@ public final class NowPlaying {
 
     // ------------------------------------------------------------ Windows (media session, via PowerShell)
 
-    private static final String PS =
+    // PowerShell names ignore case ($p and $P are the same variable), so every name here is distinct.
+    static final String PS =
             "$ErrorActionPreference='SilentlyContinue';"
+            + "[Console]::OutputEncoding=[Text.Encoding]::UTF8;"
             + "Add-Type -AssemblyName System.Runtime.WindowsRuntime;"
-            + "$at=([System.WindowsRuntimeSystemExtensions].GetMethods()|?{$_.Name -eq 'AsTask' -and $_.GetParameters().Count -eq 1 -and $_.GetParameters()[0].ParameterType.Name -eq 'IAsyncOperation`1'})[0];"
-            + "function A($o,$t){$k=$at.MakeGenericMethod($t).Invoke($null,@($o));$k.Wait(-1)|Out-Null;$k.Result};"
-            + "$M=[Windows.Media.Control.GlobalSystemMediaTransportControlsSessionManager,Windows.Media.Control,ContentType=WindowsRuntime];"
-            + "$P=[Windows.Media.Control.GlobalSystemMediaTransportControlsSessionMediaProperties,Windows.Media.Control,ContentType=WindowsRuntime];"
-            + "$S=[Windows.Storage.Streams.IRandomAccessStreamWithContentType,Windows.Storage.Streams,ContentType=WindowsRuntime];"
-            + "$m=A ($M::RequestAsync()) $M;$last='';$art=[IO.Path]::Combine($env:TEMP,'peregrine-cover.img');"
-            + "while($true){$s=$m.GetCurrentSession();"
-            + "if($s){$p=A ($s.TryGetMediaPropertiesAsync()) $P;$tl=$s.GetTimelineProperties();$pb=$s.GetPlaybackInfo();"
-            + "$key=$p.Title+'|'+$p.Artist;"
-            + "if($key -ne $last -and $p.Thumbnail){$last=$key;try{$st=A ($p.Thumbnail.OpenReadAsync()) $S;"
-            + "$r=[IO.WindowsRuntimeStreamExtensions]::AsStreamForRead($st);$f=[IO.File]::Create($art);$r.CopyTo($f);$f.Close();$r.Close()}catch{}};"
-            + "$o=@{t=$p.Title;a=$p.Artist;app=$s.SourceAppUserModelId;len=[long]$tl.EndTime.TotalMilliseconds;"
-            + "pos=[long]$tl.Position.TotalMilliseconds;at=[long]([DateTimeOffset]::Now-$tl.LastUpdatedTime).TotalMilliseconds;"
-            + "playing=($pb.PlaybackStatus -eq 4);art=$art;key=$last};"
-            + "[Console]::Out.WriteLine(($o|ConvertTo-Json -Compress))}else{[Console]::Out.WriteLine('{}')};"
+            + "$asTask=([System.WindowsRuntimeSystemExtensions].GetMethods()|?{$_.Name -eq 'AsTask' -and $_.GetParameters().Count -eq 1 -and $_.GetParameters()[0].ParameterType.Name -eq 'IAsyncOperation`1'})[0];"
+            + "function Await($op,$type){$task=$asTask.MakeGenericMethod($type).Invoke($null,@($op));$task.Wait(-1)|Out-Null;$task.Result};"
+            + "$TManager=[Windows.Media.Control.GlobalSystemMediaTransportControlsSessionManager,Windows.Media.Control,ContentType=WindowsRuntime];"
+            + "$TProps=[Windows.Media.Control.GlobalSystemMediaTransportControlsSessionMediaProperties,Windows.Media.Control,ContentType=WindowsRuntime];"
+            + "$TStream=[Windows.Storage.Streams.IRandomAccessStreamWithContentType,Windows.Storage.Streams,ContentType=WindowsRuntime];"
+            + "$TInput=[Windows.Storage.Streams.IInputStream,Windows.Storage.Streams,ContentType=WindowsRuntime];"
+            + "$asStream=[IO.WindowsRuntimeStreamExtensions].GetMethod('AsStreamForRead',[type[]]@($TInput));"
+            + "$manager=Await ($TManager::RequestAsync()) $TManager;$lastKey='';$coverFile=[IO.Path]::Combine($env:TEMP,'peregrine-cover.img');"
+            + "while($true){$session=$manager.GetCurrentSession();"
+            + "if($session){$info=Await ($session.TryGetMediaPropertiesAsync()) $TProps;$timeline=$session.GetTimelineProperties();$playback=$session.GetPlaybackInfo();"
+            + "$songKey=$info.Title+'|'+$info.Artist;"
+            + "if($songKey -ne $lastKey){$lastKey=$songKey;$coverKey='';if($info.Thumbnail){try{$stream=Await ($info.Thumbnail.OpenReadAsync()) $TStream;"
+            // PowerShell can't pass the cover stream to AsStreamForRead itself, so it's called through reflection
+            + "$netStream=$asStream.Invoke($null,@($stream));$file=[IO.File]::Create($coverFile);$netStream.CopyTo($file);$file.Close();$netStream.Close();$coverKey=$songKey}catch{}}};"
+            + "$out=@{t=$info.Title;a=$info.Artist;app=$session.SourceAppUserModelId;len=[long]$timeline.EndTime.TotalMilliseconds;"
+            + "pos=[long]$timeline.Position.TotalMilliseconds;at=[long]([DateTimeOffset]::Now-$timeline.LastUpdatedTime).TotalMilliseconds;"
+            + "playing=($playback.PlaybackStatus -eq 4);art=$coverFile;key=$coverKey};"
+            + "[Console]::Out.WriteLine(($out|ConvertTo-Json -Compress))}else{[Console]::Out.WriteLine('{}')};"
             + "[Console]::Out.Flush();Start-Sleep -Milliseconds 1200}";
     private static BufferedReader windowsOut;
 

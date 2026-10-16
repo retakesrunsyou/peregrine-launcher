@@ -414,6 +414,9 @@ class Instance:
             # Its own process group (so closing the launcher doesn't close the game),
             # and no black console window next to it.
             extra["creationflags"] = subprocess.CREATE_NEW_PROCESS_GROUP | subprocess.CREATE_NO_WINDOW
+            if cfg.get("game_priority", True):
+                # Above normal: the game gets the CPU before background apps (not before Windows itself).
+                extra["creationflags"] |= getattr(subprocess, "ABOVE_NORMAL_PRIORITY_CLASS", 0x00008000)
         else:
             extra["start_new_session"] = True
         return subprocess.Popen(cmd, cwd=self.game_dir, env=game.launch_env(cfg),

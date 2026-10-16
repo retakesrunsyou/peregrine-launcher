@@ -496,6 +496,7 @@ public final class Peregrine {
             }
         }
         renderToast(d);
+        UpdateNotice.render(d, platform, -1, -1, accent);
     }
 
     /** While F3 is open: Peregrine's own debug panel, if Better F3 is on. Returns true if it drew. */

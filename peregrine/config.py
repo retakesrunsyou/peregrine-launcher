@@ -38,6 +38,8 @@ DEFAULTS = {
     "driver_boost": True,     # threaded OpenGL for Mesa / NVIDIA
     "dedicated_gpu": False,   # laptops with two GPUs
     "fast_start": True,       # Java class snapshot for quicker game startup
+    "compact_objects": True,  # Java 25+: smaller objects (less memory, fewer GC pauses)
+    "game_priority": True,    # Windows: the game gets the CPU before background apps
     # Extras
     "discord": True,          # show what you're playing on Discord
     "show_badge": True,       # other Peregrine players see the falcon by your name and your cape

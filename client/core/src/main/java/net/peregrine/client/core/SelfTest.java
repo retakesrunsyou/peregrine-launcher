@@ -1259,6 +1259,7 @@ public final class SelfTest {
         });
         waitTicks(20);
         shot("01d-locker-backgrounds");
+        backgroundEditorSteps();
         clickPoint("Back leaves the Locker", new java.util.concurrent.Callable<int[]>() {
             public int[] call() {
                 return pc.titleMenu().lockerButtonCenter();
@@ -1274,12 +1275,103 @@ public final class SelfTest {
             public void run() {
                 Module m = pc.module("main_menu");
                 if (m instanceof net.peregrine.client.core.modules.MainMenu) {
-                    ((net.peregrine.client.core.modules.MainMenu) m).background.index = 0;
+                    net.peregrine.client.core.modules.MainMenu mm = (net.peregrine.client.core.modules.MainMenu) m;
+                    mm.background.index = 0;
+                    mm.zoom.reset();
+                    mm.posX.reset();
+                    mm.posY.reset();
                 }
                 net.peregrine.client.core.modules.Cosmetics.setCape(1);
             }
         });
         waitTicks(5);
+        run("pretend a new Peregrine is out", new Runnable() {
+            public void run() {
+                UpdateNotice.pretend("9.9.9");
+            }
+        });
+        waitTicks(30);
+        check("the update card slides in", new Cond() {
+            public boolean ok() {
+                return UpdateNotice.showing();
+            }
+        });
+        shot("01j-update-notice");
+    }
+
+    private static net.peregrine.client.core.modules.MainMenu mainMenuModule() {
+        return (net.peregrine.client.core.modules.MainMenu) pc.module("main_menu");
+    }
+
+    /** Your picture as the background: the editor moves it, resizes it and fits it. */
+    private static void backgroundEditorSteps() {
+        final float[] before = new float[3];
+        clickPoint("Adjust opens the picture editor", new java.util.concurrent.Callable<int[]>() {
+            public int[] call() {
+                return pc.titleMenu().lockerCardCenter(4, net.peregrine.client.core.modules.MainMenu.CUSTOM);
+            }
+        }, new Cond() {
+            public boolean ok() {
+                return pc.titleMenu().editingBackground();
+            }
+        });
+        waitTicks(25);
+        shot("01f-bg-editor");
+        run("drag the bottom-right corner in", new Runnable() {
+            public void run() {
+                before[0] = mainMenuModule().zoom.value;
+                int[] c = pc.titleMenu().editorCorner(3);
+                request("drag " + px(c[0]) + " " + px(c[1]) + " " + px(c[0] - 90) + " " + px(c[1] - 60));
+            }
+        });
+        waitAck();
+        waitFor("dragging a corner makes the picture smaller", 60, new Cond() {
+            public boolean ok() {
+                return mainMenuModule().zoom.value < before[0] - 0.05f;
+            }
+        });
+        waitTicks(10);
+        shot("01g-bg-editor-resized");
+        run("drag the picture", new Runnable() {
+            public void run() {
+                before[1] = mainMenuModule().posX.value;
+                before[2] = mainMenuModule().posY.value;
+                int sw = p.screenWidth(), sh = p.screenHeight();
+                request("drag " + px(sw / 2 - 30) + " " + px(sh / 2) + " " + px(sw / 2 + 30) + " " + px(sh / 2 + 25));
+            }
+        });
+        waitAck();
+        waitFor("dragging moves the picture", 60, new Cond() {
+            public boolean ok() {
+                return Math.abs(mainMenuModule().posX.value - before[1]) > 0.02f
+                        && Math.abs(mainMenuModule().posY.value - before[2]) > 0.02f;
+            }
+        });
+        waitTicks(10);
+        shot("01h-bg-editor-moved");
+        clickPoint("Whole picture shows all of it, in the middle", new java.util.concurrent.Callable<int[]>() {
+            public int[] call() {
+                return pc.titleMenu().editorButton(1);
+            }
+        }, new Cond() {
+            public boolean ok() {
+                net.peregrine.client.core.modules.MainMenu m = mainMenuModule();
+                return m.zoom.value < 0.99f && Math.abs(m.posX.value - 0.5f) < 0.01f && Math.abs(m.posY.value - 0.5f) < 0.01f;
+            }
+        });
+        waitTicks(25);
+        shot("01i-bg-whole");
+        clickPoint("Done closes the editor", new java.util.concurrent.Callable<int[]>() {
+            public int[] call() {
+                return pc.titleMenu().editorButton(4);
+            }
+        }, new Cond() {
+            public boolean ok() {
+                return !pc.titleMenu().editingBackground();
+            }
+        });
+        waitTicks(25);
+        shot("01i2-locker-after-editor");
     }
 
     /** Clicks wherever where() says, with the real mouse, then waits for expect. */
