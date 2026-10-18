@@ -102,3 +102,21 @@ def remove(account: dict, xuid: str) -> None:
     r = net.session.delete(f"{SOCIAL}/xuid({xuid})", headers=_headers(account, "2"), timeout=20)
     if r.status_code not in (200, 204):
         raise FriendsError(f"Couldn't remove them ({r.status_code}).")
+
+
+def save_snapshot(people: list) -> None:
+    """Your friends and who's online, for the game's Friends page (the launcher keeps it fresh
+    while it runs, the game reads it)."""
+    import json
+    import time
+    from . import paths
+    keep = [{k: p.get(k) for k in ("gamertag", "online", "status", "minecraft", "picture")} for p in people
+            if p.get("friend") or p.get("following")]
+    f = paths.DATA / "client" / "friends.json"
+    try:
+        f.parent.mkdir(parents=True, exist_ok=True)
+        tmp = f.with_suffix(".tmp")
+        tmp.write_text(json.dumps({"updated": int(time.time()), "friends": keep}))
+        tmp.replace(f)
+    except OSError:
+        pass

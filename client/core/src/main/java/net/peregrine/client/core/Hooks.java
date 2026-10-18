@@ -7,6 +7,12 @@ package net.peregrine.client.core;
  */
 public final class Hooks {
 
+    /** A schematic is placed and showing (its outlines are drawn with the ore outlines). */
+    public static volatile boolean schematicOn;
+    /** Frames the schematic outlines were drawn (for the self-test). */
+    public static volatile int schematicHits;
+
+
     private Hooks() {
     }
 

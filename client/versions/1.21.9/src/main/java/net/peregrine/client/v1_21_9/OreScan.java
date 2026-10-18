@@ -59,6 +59,13 @@ public final class OreScan {
         return s.isAir() || !s.canOcclude();
     }
 
+    /** Ore veins (when ore outlines are on) and the placed schematic's outlines. */
+    public static List<Vein> all() {
+        List<Vein> out = new ArrayList<Vein>(veins());
+        out.addAll(SchemShapes.veins());
+        return out;
+    }
+
     public static List<Vein> veins() {
         Minecraft mc = Minecraft.getInstance();
         if (!Hooks.oreOutlines || mc.level == null || mc.player == null) {

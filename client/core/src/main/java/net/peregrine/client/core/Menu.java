@@ -27,12 +27,13 @@ public final class Menu {
     public static final int KEY_ENTER = 257;
     public static final int KEY_BACKSPACE = 259;
 
-    private static final int TITLE_H = 28;
-    private static final int TABBAR_H = 18;
-    private static final int FOOTER_H = 0;
-    private static final int SIDE_W = 96;
+    private static final int TITLE_H = 30;
+    private static final int TABBAR_H = 16;
+    private static final int SIDE_W = 124;
     private static final int TILE_GAP = 6;
-    /** The three views along the top: the mods grid, client settings, every keybind. */
+    private static final int SIDE_ROW = 15;
+
+    /** The old tab names, still understood by the self-test ("view:Settings"...). */
     private static final String[] VIEWS = {"Mods", "Settings", "Keybinds"};
     private static final int CARD_H = 50;
     private static final int GAP = 5;
@@ -67,7 +68,15 @@ public final class Menu {
     private int cols = 2;
     private int tileW = 80, tileH = 76;
     private long listShownAt;
-    private int view;             // 0 mods, 1 settings, 2 keybinds
+    private int view;             // 0 modules, 1 settings, 2 keybinds, 3 a panel (mods, shaders, packs, locker, friends)
+    private String section = "cat:all";  // what's chosen in the sidebar
+    private String expanded = "modules"; // the sidebar group that's open (one at a time)
+    private final Map<String, Float> expand = new java.util.HashMap<String, Float>();
+    private final Map<String, Float> sideGlow = new java.util.HashMap<String, Float>();
+    private final Map<String, MenuPanel> panels = new java.util.HashMap<String, MenuPanel>();
+    private final List<Hit> sideHits = new ArrayList<Hit>();
+    private float sideSlide = -1;
+    private int sideX, sideY, sideW, sideH;
     private boolean onlyOn;       // the ≡ button: show only what's switched on
     private int tabsY, tabX0, tabW, menuBtnX;
 
@@ -132,6 +141,153 @@ public final class Menu {
         page = null;
         draggingSlider = null;
         hits.clear();
+        sideSlide = -1;
+        MenuPanel pn = panel();
+        if (pn != null) {
+            pn.shown();
+            pn.searchChanged("");
+        }
+    }
+
+    // ------------------------------------------------------------ the sidebar
+
+    /** One line of the sidebar: a group (with children that drop down) or a page. */
+    private static final class Node {
+        final String id, label, icon;
+        final Node[] kids;
+
+        Node(String id, String label, String icon, Node... kids) {
+            this.id = id;
+            this.label = label;
+            this.icon = icon;
+            this.kids = kids;
+        }
+    }
+
+    private static final Node[] SIDEBAR = {
+        new Node("modules", "Modules", "grid",
+                new Node("cat:HUD", "HUD", "hud"), new Node("cat:UTILITY", "Utility", "wrench"),
+                new Node("cat:VISUALS", "Visuals", "eye"), new Node("cat:PERFORMANCE", "Performance", "bolt")),
+        new Node("mods", "Mods", "puzzle", new Node("mods:installed", "Installed", null), new Node("mods:browse", "Browse", null)),
+        new Node("shaders", "Shaders", "sun", new Node("shaders:installed", "Installed", null), new Node("shaders:browse", "Browse", null)),
+        new Node("packs", "Resource packs", "layers", new Node("packs:installed", "Installed", null), new Node("packs:browse", "Browse", null)),
+        new Node("schematics", "Schematics", "blueprint"),
+        new Node("locker", "Locker", "shirt"),
+        new Node("friends", "Friends", "people"),
+        new Node("voice", "Voice chat", "mic"),
+        null,  // a divider
+        new Node("keybinds", "Keybinds", "keyboard"),
+        new Node("settings", "Settings", "gear"),
+    };
+
+    /** The page shown for a sidebar choice (null for modules, settings and keybinds). */
+    private MenuPanel panel() {
+        if (view != 3) {
+            return null;
+        }
+        MenuPanel pn = panels.get(section);
+        if (pn == null) {
+            if (section.equals("locker")) {
+                pn = new LockerPanel(pc, this);
+            } else if (section.equals("friends")) {
+                pn = new FriendsPanel(pc, this);
+            } else if (section.equals("schematics")) {
+                pn = new SchematicsPanel(pc, this);
+            } else if (section.equals("voice")) {
+                pn = new VoicePanel(pc, this);
+            } else {
+                String[] parts = section.split(":");
+                Library.Kind kind = parts[0].equals("mods") ? Library.Kind.MODS
+                        : parts[0].equals("shaders") ? Library.Kind.SHADERS : Library.Kind.PACKS;
+                pn = new LibraryPanel(pc, this, kind, parts.length > 1 && parts[1].equals("browse"));
+            }
+            panels.put(section, pn);
+            pn.shown();
+        }
+        return pn;
+    }
+
+    /** Chooses something in the sidebar. */
+    void choose(String id) {
+        if (page != null) {
+            closePage();
+        }
+        boolean changed = !id.equals(section);
+        section = id;
+        if (id.startsWith("cat:")) {
+            String c = id.substring(4);
+            tab = c.equals("all") ? null : Module.Category.valueOf(c);
+            view = 0;
+            expanded = "modules";
+        } else if (id.equals("settings")) {
+            view = 1;
+        } else if (id.equals("keybinds")) {
+            view = 2;
+        } else {
+            view = 3;
+            int colon = id.indexOf(':');
+            if (colon > 0) {
+                expanded = id.substring(0, colon);
+            }
+        }
+        scroll = 0;
+        smoothScroll = 0;
+        hits.clear();
+        if (changed) {
+            listShownAt = System.currentTimeMillis();
+            search = "";
+            MenuPanel pn = panel();
+            if (pn != null) {
+                pn.shown();
+                pn.searchChanged("");
+            }
+        }
+    }
+
+    /** A group's header was clicked: open it (choosing its first page), or fold it away again. */
+    private void toggleGroup(Node n) {
+        if (n.id.equals("modules") && section.startsWith("cat:") && !section.equals("cat:all")) {
+            choose("cat:all");  // from HUD (or another category) to all of them
+            expanded = n.id;
+            return;
+        }
+        boolean inside = n.id.equals("modules") && section.equals("cat:all");
+        for (Node k : n.kids) {
+            inside |= k.id.equals(section);
+        }
+        if (inside && n.id.equals(expanded)) {  // clicked again: fold it away
+            expanded = "";
+            return;
+        }
+        if (!inside) {
+            choose(n.id.equals("modules") ? "cat:all" : n.kids[0].id);
+        }
+        expanded = n.id;
+    }
+
+    // ---- for the menu's pages (MenuPanel)
+
+    void clipArea(Draw d, int x, int y, int w, int h) {
+        d.popScale();
+        d.clip(s(x), s(y), s(w), s(h));
+        d.pushScale(0, 0, k);
+    }
+
+    void unclipArea(Draw d) {
+        d.popScale();
+        d.unclip();
+        d.pushScale(0, 0, k);
+    }
+
+    void scrollbar(Draw d, int top, int viewH, int scrollNow, int max, float smooth, int a) {
+        if (max <= 0) {
+            return;
+        }
+        int track = viewH - 4;
+        int barH = Math.max(14, track * viewH / (viewH + max));
+        int barY = top + 2 + Math.round((track - barH) * (smooth / max));
+        d.roundRect(px + pw - 7, top + 2, 3, track, 1, 0x14FFFFFF);
+        d.roundRect(px + pw - 7, barY, 3, barH, 1, Theme.withAlpha(a, 0xB0));
     }
 
     /** Opens a feature's settings page (the gear on its row, or right-click). */
@@ -167,6 +323,16 @@ public final class Menu {
         return search;
     }
 
+    String section() {
+        return section;
+    }
+
+    /** Modrinth results showing on a Browse page (for the self-test). */
+    int browseResults() {
+        MenuPanel pn = panel();
+        return pn instanceof LibraryPanel ? ((LibraryPanel) pn).resultCount() : -1;
+    }
+
     HudEditor editor() {
         return editor;
     }
@@ -180,9 +346,23 @@ public final class Menu {
         if (what.equals("edit")) {
             return editW > 0 ? new int[] {s(editX + editW / 2), s(editY + editH / 2)} : null;
         }
-        if (what.startsWith("view:")) {
-            int i = java.util.Arrays.asList(VIEWS).indexOf(what.substring(5));
-            return i < 0 ? null : new int[] {s(tabX0 + i * (tabW + 4) + tabW / 2), s(tabsY + TABBAR_H / 2)};
+        if (what.startsWith("view:") || what.startsWith("side:")) {
+            String id = what.startsWith("side:") ? what.substring(5)
+                    : what.equals("view:Settings") ? "settings" : what.equals("view:Keybinds") ? "keybinds" : "modules";
+            for (Hit h : sideHits) {
+                if (h.id.equals(id)) {
+                    return new int[] {s(h.x + h.w / 2), s(h.y + h.h / 2)};
+                }
+            }
+            return null;
+        }
+        if (what.startsWith("panel:") && panel() != null) {
+            for (MenuPanel.Spot sp : panel().spots) {
+                if (sp.id.equals(what.substring(6))) {
+                    return new int[] {s(sp.x + sp.w / 2), s(sp.y + sp.h / 2)};
+                }
+            }
+            return null;
         }
         if (page != null || view != 0) {
             for (Hit h : hits) {
@@ -202,7 +382,7 @@ public final class Menu {
             if (mods.get(i).id.equals(what)) {  // its switch
                 int[] tg = toggleAt(c);
                 int y = tg[1] + 5;
-                return y > listY && y < listY + listH ? new int[] {s(tg[0] + 12), s(y)} : null;
+                return y > listY && y < listY + listH ? new int[] {s(tg[0] + 9), s(y)} : null;
             }
         }
         return null;
@@ -259,31 +439,33 @@ public final class Menu {
     private void layout(Platform p) {
         int sw = Math.round(p.screenWidth() / k);
         int sh = Math.round(p.screenHeight() / k);
-        pw = Math.min(sw - 16, clamp(Math.round(sw * 0.72f), 330, 540));
-        ph = Math.min(sh - 16, clamp(Math.round(sh * 0.80f), 210, 330));
+        pw = Math.min(sw - 16, clamp(Math.round(sw * 0.74f), 340, 560));
+        ph = Math.min(sh - 16, clamp(Math.round(sh * 0.82f), 220, 340));
         px = (sw - pw) / 2;
         py = (sh - ph) / 2;
-        tabsY = py + TITLE_H + 4;
-        int bodyY = tabsY + TABBAR_H + 6;
-        listX = px + SIDE_W + 14;
-        listY = bodyY;
-        listW = pw - SIDE_W - 24;
-        listH = py + ph - 8 - bodyY;
-        cols = Math.max(2, (listW + TILE_GAP) / (78 + TILE_GAP));
-        tileW = (listW - TILE_GAP * (cols - 1)) / cols;
-        tileH = clamp(Math.round(tileW * 0.9f), 64, 86);
-        searchW = clamp(Math.round(pw * 0.24f), 80, 130);
-        searchX = px + pw - 6 - searchW;
-        searchY = tabsY;
+        closeX = px + pw - 23;
+        closeY = py + 7;
+        searchW = clamp(Math.round(pw * 0.27f), 90, 150);
+        searchX = closeX - 6 - searchW;
+        searchY = py + 7;
+        tabsY = searchY;
         menuBtnX = searchX - 4 - TABBAR_H;
-        tabX0 = px + 6;
-        tabW = Math.min(96, (menuBtnX - 6 - tabX0 - 4 * (VIEWS.length - 1)) / VIEWS.length);
-        closeX = px + pw - 22;
-        closeY = py + 6;
+        int bodyY = py + TITLE_H + 6;
         editW = SIDE_W;
         editH = 17;
-        editX = px + 6;
+        editX = px + 8;
         editY = py + ph - 8 - editH;
+        sideX = px + 8;
+        sideY = bodyY;
+        sideW = SIDE_W;
+        sideH = editY - 6 - bodyY;
+        listX = px + 8 + SIDE_W + 12;
+        listY = bodyY;
+        listW = px + pw - 12 - listX;
+        listH = py + ph - 8 - bodyY;
+        cols = Math.max(2, (listW + TILE_GAP) / (104 + TILE_GAP));
+        tileW = (listW - TILE_GAP * (cols - 1)) / cols;
+        tileH = 60;
     }
 
     /** Tile i of the grid: x, y, width (menu pixels, scrolled). */
@@ -292,9 +474,9 @@ public final class Menu {
         return new int[] {listX + col * (tileW + TILE_GAP), listY + row * (tileH + TILE_GAP) - Math.round(smoothScroll), tileW};
     }
 
-    /** A tile's switch: x, y (24 x 11), centred along its bottom. */
+    /** A tile's switch: x, y (18 x 10), in its top right corner. */
     private int[] toggleAt(int[] c) {
-        return new int[] {c[0] + (c[2] - 24) / 2, c[1] + tileH - 17};
+        return new int[] {c[0] + c[2] - 25, c[1] + 8};
     }
 
     private int tabY(int i) {
@@ -331,97 +513,72 @@ public final class Menu {
 
     private void renderMenu(Draw d, int mx, int my, Platform p, float t, float dt, long now) {
         if (t < 1f) {
-            // Ease up into place as it fades in.
+            // Rise into place as it fades in.
             float e = 1f - (1f - t) * (1f - t);
-            int lift = Math.round((1f - e) * 10);
+            int lift = Math.round((1f - e) * 12);
             py += lift;
             listY += lift;
             searchY += lift;
             closeY += lift;
             editY += lift;
             tabsY += lift;
+            sideY += lift;
         }
         int a = pc.accent();
 
-        // Window: one dark panel, a slightly lighter title strip, a thin accent line on top
-        d.shadow(px, py, pw, ph);
-        d.roundRect(px, py, pw, ph, pc.menuBg(Theme.PANEL));
-        d.roundOutline(px, py, pw, ph, Theme.HAIRLINE);
-        d.rect(px + 2, py, pw - 4, 1, Theme.withAlpha(a, 0xE0));
-        d.rect(px + 1, py + 1, pw - 2, TITLE_H - 1, pc.menuBg(Theme.TITLE_BAR));
+        // The window: frosted glass with the accent glowing along its top edge, the falcon faint in the corner
+        Glass.window(d, px, py, pw, ph, pc.menuBg(Glass.GLASS), a);
+        Glass.falcon(d, px + pw - 92, py + ph - 96, 9f, 0x0CFFFFFF);
+        d.rect(px + 10, py + TITLE_H, pw - 20, 1, 0x18FFFFFF);
 
-        // Title: logo and name; a boxed × on the right
+        // Title: the falcon, "Peregrine", and where you are
         int ty = py + (TITLE_H - 8) / 2;
-        d.textScaled(Hooks.LOGO, px + 8, ty - 3, 0xFFFFFFFF, 1.5f, false);
-        d.text("§lPEREGRINE", px + 25, ty, Theme.TEXT, false);
-        d.text("CLIENT", px + 25 + d.width("§lPEREGRINE") + 4, ty, a, false);
+        d.textScaled(Hooks.LOGO, px + 9, ty - 4, 0xFFFFFFFF, 1.6f, false);
+        d.textScaled("Peregrine", px + 27, ty - 1, Theme.TEXT, 1.25f, true);
+        String crumb = crumb();
+        int cx0 = px + 27 + Math.round(d.width("Peregrine") * 1.25f) + 6;
+        int room = (view == 0 ? menuBtnX : searchX) - 8 - cx0;
+        if (room > 20) {
+            d.text("/", cx0, ty + 1, Theme.FAINT, false);
+            d.text(d.trim(crumb, room - 10), cx0 + 9, ty + 1, a, false);
+        }
         boolean closeHover = in(mx, my, closeX, closeY, 16, 16);
-        d.roundRect(closeX, closeY, 16, 16, closeHover ? Theme.withAlpha(Theme.BAD, 0xC0) : Theme.FIELD);
-        d.roundOutline(closeX, closeY, 16, 16, closeHover ? Theme.BAD : Theme.HAIRLINE);
-        int xc = closeHover ? 0xFFFFFFFF : Theme.MUTED;
-        for (int i = 0; i < 7; i++) {  // a small drawn ×, crisp at any GUI scale
-            d.rect(closeX + 4 + i, closeY + 4 + i, 1, 1, xc);
-            d.rect(closeX + 10 - i, closeY + 4 + i, 1, 1, xc);
+        float cg = sideGlowOf("close", closeHover, dt);
+        d.roundRect(closeX, closeY, 16, 16, 8, Theme.mix(0x30FFFFFF, Theme.withAlpha(Theme.BAD, 0xD0), cg));
+        int xc = Theme.mix(Theme.MUTED, 0xFFFFFFFF, cg);
+        for (int i = 0; i < 6; i++) {  // a small drawn ×, crisp at any GUI scale
+            d.rect(closeX + 5 + i, closeY + 5 + i, 1, 1, xc);
+            d.rect(closeX + 10 - i, closeY + 5 + i, 1, 1, xc);
         }
 
-        // Tabs along the top, then the ≡ button and search on the right
-        for (int i = 0; i < VIEWS.length; i++) {
-            int x = tabX0 + i * (tabW + 4);
-            boolean on = view == i;
-            boolean hover = in(mx, my, x, tabsY, tabW, TABBAR_H);
-            d.roundRect(x, tabsY, tabW, TABBAR_H, on ? a : hover ? Theme.CARD_HOVER : Theme.CARD);
-            if (!on) {
-                d.roundOutline(x, tabsY, tabW, TABBAR_H, Theme.HAIRLINE);
-            }
-            d.text(VIEWS[i], x + (tabW - d.width(VIEWS[i])) / 2, tabsY + 5, on ? 0xFF15171C : hover ? Theme.TEXT : Theme.MUTED, false);
-        }
-        boolean mh = in(mx, my, menuBtnX, tabsY, TABBAR_H, TABBAR_H);
-        d.roundRect(menuBtnX, tabsY, TABBAR_H, TABBAR_H, onlyOn ? Theme.withAlpha(a, 0x50) : mh ? Theme.CARD_HOVER : Theme.CARD);
-        d.roundOutline(menuBtnX, tabsY, TABBAR_H, TABBAR_H, onlyOn ? a : Theme.HAIRLINE);
-        for (int i = 0; i < 3; i++) {  // ≡ : show only what's on
-            d.rect(menuBtnX + 5, tabsY + 5 + i * 3, 8, 1, onlyOn ? a : mh ? Theme.TEXT : Theme.MUTED);
-        }
-        boolean searching = !search.isEmpty();
-        d.roundRect(searchX, searchY, searchW, TABBAR_H, Theme.FIELD);
-        d.roundOutline(searchX, searchY, searchW, TABBAR_H, searching ? Theme.withAlpha(a, 0xC0) : Theme.HAIRLINE);
-        boolean caret = (now / 500) % 2 == 0;
-        String shown = searching ? search + (caret ? "_" : "") : "Search...";
-        magnifier(d, searchX + 6, searchY + 6, searching ? a : Theme.FAINT);
-        d.text(d.trim(shown, searchW - 22), searchX + 16, searchY + 5, searching ? Theme.TEXT : Theme.FAINT, false);
-
-        // Sidebar: "Filter", the categories with their icons, Edit HUD at the bottom
-        int sideTop = listY;
-        d.roundRect(px + 6, sideTop, SIDE_W, py + ph - 8 - sideTop, pc.menuBg(Theme.SIDEBAR));
-        String filter = "Filter";
-        d.text(filter, px + 6 + (SIDE_W - d.width(filter)) / 2, sideTop + 4, Theme.MUTED, false);
-        int chosen = 0;
-        for (int i = 0; i < TABS.length; i++) {
-            if (TABS[i] == tab) {
-                chosen = i;
-            }
-        }
-        float target = tabY(chosen);
-        tabSlide = tabSlide < 0 ? target : tabSlide + (target - tabSlide) * Math.min(1f, dt * 16f);
+        // Search (it searches whatever page you're on), and ≡ (only what's on) for the modules
+        MenuPanel pn = page == null ? panel() : null;
+        boolean searchable = pn == null || !pn.placeholder().isEmpty();
         if (view == 0) {
-            d.roundRect(px + 10, Math.round(tabSlide), SIDE_W - 8, TAB_H, a);
-        }
-        for (int i = 0; i < TABS.length; i++) {
-            int y = tabY(i);
-            boolean on = view == 0 && TABS[i] == tab;
-            boolean hover = in(mx, my, px + 10, y, SIDE_W - 8, TAB_H);
-            if (!on && hover) {
-                d.roundRect(px + 10, y, SIDE_W - 8, TAB_H, Theme.ROW_HOVER);
+            boolean mh = in(mx, my, menuBtnX, tabsY, TABBAR_H, TABBAR_H);
+            float mg = sideGlowOf("onlyon", mh || onlyOn, dt);
+            d.roundRect(menuBtnX, tabsY, TABBAR_H, TABBAR_H, 8, onlyOn ? Theme.withAlpha(a, 0x60) : Theme.mix(0x20FFFFFF, 0x38FFFFFF, mg));
+            for (int i = 0; i < 3; i++) {
+                d.rect(menuBtnX + 5, tabsY + 4 + i * 3, 6, 1, onlyOn ? a : Theme.mix(Theme.MUTED, Theme.TEXT, mg));
             }
-            String label = TABS[i] == null ? "All" : TABS[i].label;
-            int c = on ? 0xFF15171C : hover ? Theme.TEXT : Theme.MUTED;
-            categoryIcon(d, TABS[i], px + 15, y + 5, c);
-            d.text(d.trim(label, SIDE_W - 30), px + 28, y + 5, c, false);
         }
+        if (searchable) {
+            boolean searching = !search.isEmpty();
+            d.roundRect(searchX, searchY, searchW, TABBAR_H, 8, 0x50000000);
+            d.roundOutline(searchX, searchY, searchW, TABBAR_H, 8, searching ? Theme.withAlpha(a, 0xC0) : 0x22FFFFFF);
+            boolean caret = (now / 500) % 2 == 0;
+            String shown = searching ? search + (caret ? "_" : "") : pn != null ? pn.placeholder() : "Search modules...";
+            MenuIcons.draw(d, "search", searchX + 5, searchY + 4, searching ? a : Theme.FAINT);
+            d.text(d.trim(shown, searchW - 22), searchX + 17, searchY + 4, searching ? Theme.TEXT : Theme.FAINT, false);
+        }
+
+        drawSidebar(d, mx, my, dt, a);
         boolean editHover = in(mx, my, editX, editY, editW, editH);
-        d.roundRect(editX, editY, editW, editH, editHover ? a : Theme.CARD);
-        d.roundOutline(editX, editY, editW, editH, editHover ? a : Theme.HAIRLINE);
+        float eg = sideGlowOf("edit", editHover, dt);
+        Glass.pill(d, editX, editY, editW, editH, true, eg, a);
+        MenuIcons.draw(d, "hud", editX + 8, editY + 4, Theme.onColor(a));
         String edit = "Edit HUD";
-        d.text(edit, editX + (editW - d.width(edit)) / 2, editY + 5, editHover ? 0xFF15171C : Theme.TEXT, false);
+        d.text(edit, editX + (editW - d.width(edit)) / 2 + 5, editY + 5, Theme.onColor(a), false);
 
         if (page != null) {
             renderPage(d, mx, my, p, dt, now, a);
@@ -435,8 +592,17 @@ public final class Menu {
             renderKeybindView(d, mx, my, dt, now, a);
             return;
         }
+        if (pn != null) {
+            // pages slide in a little from the right when chosen
+            float st = FadeDraw.progress(listShownAt, 220);
+            float se = 1f - (1f - st) * (1f - st);
+            int off = Math.round((1f - se) * 10);
+            Draw pd = st < 1f ? new FadeDraw(d, 0.2f + 0.8f * st) : d;
+            pn.render(pd, mx, my, listX + off, listY, listW, listH, dt, now, a);
+            return;
+        }
 
-        // Mod tiles
+        // Module cards
         List<Module> mods = visible();
         int rows = (mods.size() + cols - 1) / cols;
         maxScroll = Math.max(0, rows * (tileH + TILE_GAP) - TILE_GAP - listH);
@@ -447,9 +613,7 @@ public final class Menu {
         }
 
         // Clipping works in screen pixels on every version, so step out of the scale for it.
-        d.popScale();
-        d.clip(s(listX), s(listY), s(listW), s(listH));
-        d.pushScale(0, 0, k);
+        clipArea(d, listX - 2, listY, listW + 4, listH);
         boolean mouseInList = in(mx, my, listX, listY, listW, listH);
         for (int i = 0; i < mods.size(); i++) {
             Module m = mods.get(i);
@@ -458,46 +622,56 @@ public final class Menu {
             if (cy + tileH < listY || cy > listY + listH) {
                 continue;
             }
-            // Tiles fade in one after another when the menu (or a new category) opens.
-            float appear = 0.15f + 0.85f * FadeDraw.progress(listShownAt + Math.min(i, 16) * 12L, 170);
-            Draw cd = appear < 1f ? new FadeDraw(d, appear) : d;
-            if (appear < 1f) {
-                cy += Math.round((1f - appear) * 4);
+            // Cards pop in one after another when the menu (or a new category) opens.
+            float raw = FadeDraw.progress(listShownAt + Math.min(i, 18) * 14L, 240);
+            float appear = Math.max(0f, Math.min(1f, raw * 1.4f));
+            Draw cd = appear < 1f ? new FadeDraw(d, 0.05f + 0.95f * appear) : d;
+            if (raw < 1f) {
+                cy += Math.round((1f - Glass.backOut(raw)) * 8);
                 c = new int[] {cx, cy, cw};
             }
             boolean hover = mouseInList && in(mx, my, cx, cy, cw, tileH);
             float g = ease(rowGlow, m, hover ? 1f : 0f, dt * 10f);
             float on = animate(m, dt);
-            cd.roundRect(cx, cy, cw, tileH, Theme.mix(Theme.CARD, Theme.CARD_HOVER, g));
-            cd.roundOutline(cx, cy, cw, tileH, Theme.mix(Theme.withAlpha(0xFFFFFF, 0x30), a, g * 0.9f));
-            cd.rect(cx + 2, cy + 1, cw - 4, 1, Theme.withAlpha(0xFFFFFF, 0x10 + Math.round(0x10 * g)));  // top sheen
-
-            boolean warn = hover && m.warning() != null;
-            String title = cd.trim(m.name, cw - 10);
-            cd.text(title, cx + (cw - d.width(title)) / 2, cy + 7, warn ? Theme.OK : Theme.TEXT, false);
-            if (m.key >= 0) {  // its keybind, as a small key cap in the corner
-                String kn = Keys.name(m.key);
-                int kw = d.width(kn) + 6;
-                cd.roundRect(cx + cw - 4 - kw, cy + tileH - 30, kw, 10, Theme.FIELD);
-                cd.text(kn, cx + cw - 1 - kw, cy + tileH - 29, Theme.MUTED, false);
+            cy -= Math.round(g * 1.5f);
+            c = new int[] {cx, cy, cw};
+            Glass.pane(cd, cx, cy, cw, tileH, 5, Theme.mix(Glass.PANE, Glass.PANE_HOVER, g));
+            if (on > 0.01f) {  // switched on: a warm wash of the accent
+                cd.roundRect(cx + 1, cy + 1, cw - 2, tileH - 2, 4, Theme.withAlpha(a, Math.round(0x16 * on)));
             }
-            // The icon: a Minecraft item that fits the feature, drawn twice the size
-            int iconY = cy + 18 + (tileH - 18 - 20 - 32) / 2;
+            if (g > 0.01f) {
+                cd.roundOutline(cx, cy, cw, tileH, 5, Theme.withAlpha(a, Math.round(0xA0 * g)));
+            }
+            // the icon in a soft round light
+            int ix = cx + 7, iy = cy + 7;
+            cd.roundRect(ix, iy, 24, 24, 12, Theme.mix(0x24FFFFFF, Theme.withAlpha(a, 0x50), on));
             Object stack = p.icon(Icons.of(m));
             if (stack != null) {
-                cd.pushScale(cx + cw / 2 - 16, iconY, 2f);
-                cd.item(stack, 0, 0);
-                cd.popScale();
+                cd.item(stack, ix + 4, iy + 4);
             } else {
-                cd.roundRect(cx + cw / 2 - 12, iconY + 4, 24, 24, Theme.withAlpha(a, 0x40));
-                categoryIcon(cd, m.category, cx + cw / 2 - 4, iconY + 12, Theme.TEXT);
+                categoryIcon(cd, m.category, ix + 8, iy + 8, Theme.TEXT);
             }
             int[] tg = toggleAt(c);
-            switchKnob(cd, tg[0], tg[1], on, a, hover && in(mx, my, tg[0] - 2, tg[1] - 2, 28, 15));
+            Glass.toggle(cd, tg[0], tg[1], on, a, hover && in(mx, my, tg[0] - 3, tg[1] - 3, 24, 16));
+            boolean warn = hover && m.warning() != null;
+            String title = cd.trim(m.name, cw - 14);
+            cd.text(title, cx + 8, cy + tileH - 23, warn ? Theme.OK : Theme.TEXT, false);
+            String sub = warn ? cd.trim(m.warning(), cw - 14) : m.category.label;
+            if (m.key >= 0 && !warn) {
+                sub = Keys.name(m.key);
+                int kw = cd.width(sub) + 6;
+                cd.roundRect(cx + 7, cy + tileH - 13, kw, 10, 3, 0x40000000);
+                cd.text(sub, cx + 10, cy + tileH - 12, Theme.MUTED, false);
+            } else {
+                cd.text(sub, cx + 8, cy + tileH - 12, warn ? Theme.withAlpha(Theme.OK, 0xC0) : Theme.FAINT, false);
+            }
+            // a line of light along the bottom that fills in when it's on
+            int lw = Math.round((cw - 12) * on);
+            if (lw > 0) {
+                cd.rect(cx + 6, cy + tileH - 2, lw, 1, Theme.withAlpha(a, 0xE0));
+            }
         }
-        d.popScale();
-        d.unclip();
-        d.pushScale(0, 0, k);
+        unclipArea(d);
 
         if (mods.isEmpty()) {
             String none = onlyOn && search.isEmpty() ? "Nothing switched on here" : "Nothing matches \"" + d.trim(search, listW - 80) + "\"";
@@ -506,6 +680,165 @@ public final class Menu {
             d.text(hint, listX + (listW - d.width(hint)) / 2, listY + listH / 2 + 4, Theme.FAINT, false);
         }
         scrollbar(d, listY, listH, in(mx, my, listX, listY, listW + 8, listH), a);
+    }
+
+    /** Where you are, for the title: "Modules / HUD", "Mods / Browse"... */
+    private String crumb() {
+        if (page != null) {
+            return page.name;
+        }
+        for (Node n : SIDEBAR) {
+            if (n == null) {
+                continue;
+            }
+            if (n.id.equals(section) || (n.id.equals("modules") && section.equals("cat:all"))) {
+                return n.label;
+            }
+            for (Node c : n.kids) {
+                if (c.id.equals(section)) {
+                    return n.label + " / " + c.label;
+                }
+            }
+        }
+        return "";
+    }
+
+    private float sideGlowOf(String id, boolean on, float dt) {
+        Float g = sideGlow.get(id);
+        float v = Glass.ease(g == null ? 0f : g, on, dt);
+        sideGlow.put(id, v);
+        return v;
+    }
+
+    /** One drawn line of the sidebar, kept until the selection pill is under it. */
+    private static final class Row {
+        final Node n;
+        final int y;
+        final float alpha, open;
+        final boolean kid;
+
+        Row(Node n, int y, float alpha, float open, boolean kid) {
+            this.n = n;
+            this.y = y;
+            this.alpha = alpha;
+            this.open = open;
+            this.kid = kid;
+        }
+    }
+
+    private final List<Row> rows = new ArrayList<Row>();
+
+    /** The sidebar: groups that drop down (Modules, Mods, Shaders, Resource packs) and single pages. */
+    private void drawSidebar(Draw d, int mx, int my, float dt, int a) {
+        sideHits.clear();
+        rows.clear();
+        Glass.pane(d, sideX, sideY, sideW, sideH, 5, pc.menuBg(0x50080A0E));
+        int lines = 0, dividers = 0;
+        for (Node n : SIDEBAR) {
+            if (n == null) {
+                dividers++;
+            } else {
+                lines += 1 + (n.id.equals(expanded) ? n.kids.length : 0);
+            }
+        }
+        int rowH = Math.max(11, Math.min(SIDE_ROW, (sideH - 8 - dividers * 7) / Math.max(1, lines)));
+        int ty = (rowH - 8) / 2 + 1;
+        int y = sideY + 4;
+        float selY = -1;
+        boolean selKid = false;
+        for (Node n : SIDEBAR) {
+            if (n == null) {
+                d.rect(sideX + 8, y + 3, sideW - 16, 1, 0x18FFFFFF);
+                y += 7;
+                continue;
+            }
+            float ex = 0f;
+            if (n.kids.length > 0) {
+                Float e = expand.get(n.id);
+                float target = n.id.equals(expanded) ? 1f : 0f;
+                ex = e == null ? target : e + (target - e) * Math.min(1f, dt * 14f);
+                if (Math.abs(target - ex) < 0.01f) {
+                    ex = target;
+                }
+                expand.put(n.id, ex);
+            }
+            if (n.id.equals(section) || (n.id.equals("modules") && section.equals("cat:all"))) {
+                selY = y;
+            }
+            sideHits.add(new Hit(n.id, sideX + 3, y, sideW - 6, rowH, null));
+            rows.add(new Row(n, y, 1f, ex, false));
+            y += rowH;
+            if (ex > 0.01f) {
+                int kidsTop = y;
+                for (Node c : n.kids) {
+                    if (c.id.equals(section)) {
+                        selY = y;
+                        selKid = true;
+                    }
+                    if (ex > 0.9f) {
+                        sideHits.add(new Hit(c.id, sideX + 14, y, sideW - 17, rowH - 2, null));
+                    }
+                    rows.add(new Row(c, y, Math.max(0f, Math.min(1f, ex * 1.3f - 0.3f)), 0f, true));
+                    y += Math.round((rowH - 1) * ex);
+                }
+                // a thin line of the accent joining the group's pages
+                d.rect(sideX + 10, kidsTop, 1, Math.max(0, y - kidsTop - 3), Theme.withAlpha(a, Math.round(0x60 * ex)));
+            }
+        }
+        // hover washes, under everything else
+        for (Row r : rows) {
+            boolean selected = isSelected(r.n);
+            int rx = r.kid ? sideX + 14 : sideX + 3, rw = r.kid ? sideW - 17 : sideW - 6, rh = r.kid ? rowH - 2 : rowH;
+            float g = sideGlowOf("n:" + r.n.id, r.alpha > 0.9f && in(mx, my, rx, r.y, rw, rh), dt);
+            if (!selected && g > 0.01f) {
+                d.roundRect(rx, r.y, rw, rh, 4, Theme.withAlpha(0xFFFFFF, Math.round(0x16 * g * r.alpha)));
+            }
+        }
+        // the selection: an accent pill gliding from one choice to the next
+        if (selY >= 0) {
+            sideSlide = sideSlide < 0 ? selY : sideSlide + (selY - sideSlide) * Math.min(1f, dt * 16f);
+            int sx = selKid ? sideX + 14 : sideX + 3, sw = selKid ? sideW - 17 : sideW - 6, sh = selKid ? rowH - 2 : rowH;
+            d.roundRect(sx, Math.round(sideSlide), sw, sh, 4, a);
+            d.rect(sx + 4, Math.round(sideSlide), sw - 8, 1, 0x50FFFFFF);
+        }
+        // icons and names on top
+        for (Row r : rows) {
+            if (r.alpha <= 0.01f) {
+                continue;
+            }
+            Draw rd = r.alpha < 1f ? new FadeDraw(d, r.alpha) : d;
+            boolean selected = isSelected(r.n);
+            boolean inside = false;
+            for (Node c : r.n.kids) {
+                inside |= c.id.equals(section);
+            }
+            Float gl = sideGlow.get("n:" + r.n.id);
+            float g = gl == null ? 0f : gl;
+            if (r.kid) {
+                int kc = selected ? Theme.onColor(a) : Theme.mix(Theme.FAINT, Theme.TEXT, g);
+                if (r.n.icon != null) {
+                    MenuIcons.draw(rd, r.n.icon, sideX + 18, r.y + ty - 2, kc);
+                } else {
+                    rd.rect(sideX + 20, r.y + ty + 2, 2, 2, kc);
+                }
+                rd.text(rd.trim(r.n.label, sideW - 50), sideX + 31, r.y + ty - 1, kc, false);
+                if (r.n.id.startsWith("cat:")) {  // how many are on
+                    String cnt = String.valueOf(count(Module.Category.valueOf(r.n.id.substring(4)), true));
+                    rd.text(cnt, sideX + sideW - 8 - rd.width(cnt), r.y + ty - 1, selected ? Theme.onColor(a) : Theme.FAINT, false);
+                }
+            } else {
+                int col = selected ? Theme.onColor(a) : inside ? Theme.TEXT : Theme.mix(Theme.MUTED, Theme.TEXT, g);
+                MenuIcons.draw(rd, r.n.icon, sideX + 8, r.y + ty - 1, col);
+                rd.text(rd.trim(r.n.label, sideW - 36), sideX + 21, r.y + ty, col, false);
+                if (r.n.kids.length > 0) {
+                    Glass.chevron(rd, sideX + sideW - 12, r.y + ty + 1, r.open, selected ? col : Theme.withAlpha(col, 0xB0));
+                }
+            }
+        }
+    }
+
+    private boolean isSelected(Node n) {
+        return n.id.equals(section) || (n.id.equals("modules") && section.equals("cat:all"));
     }
 
     private void scrollbar(Draw d, int top, int viewH, boolean active, int a) {
@@ -524,27 +857,12 @@ public final class Menu {
      * on is the accent color with a tick. 24 x 11.
      */
     private static void switchKnob(Draw d, int x, int y, float on, int accent, boolean hover) {
-        int track = Theme.mix(hover ? 0xFF4A505E : 0xFF3A3F4B, accent, on);
-        d.roundRect(x, y, 24, 11, track);
+        int track = Theme.mix(hover ? 0x60FFFFFF : 0x38FFFFFF, accent, on);
+        d.roundRect(x, y, 24, 11, 5, track);
         int kx = x + 1 + Math.round(on * 13);
-        d.rect(kx + 1, y + 1, 8, 9, 0xFFFFFFFF);
-        d.rect(kx, y + 2, 10, 7, 0xFFFFFFFF);
-        int gc = on > 0.5f ? accent : 0xFF4A505E;
-        if (on > 0.5f) {  // ✓
-            d.rect(kx + 2, y + 5, 1, 1, gc);
-            d.rect(kx + 3, y + 6, 1, 1, gc);
-            d.rect(kx + 4, y + 7, 1, 1, gc);
-            d.rect(kx + 5, y + 6, 1, 1, gc);
-            d.rect(kx + 6, y + 5, 1, 1, gc);
-            d.rect(kx + 7, y + 4, 1, 1, gc);
-            d.rect(kx + 2, y + 6, 1, 1, gc);
-            d.rect(kx + 4, y + 6, 1, 1, gc);
-            d.rect(kx + 6, y + 4, 1, 1, gc);
-        } else {  // ×
-            for (int i = 0; i < 5; i++) {
-                d.rect(kx + 3 + i, y + 3 + i, 1, 1, gc);
-                d.rect(kx + 7 - i, y + 3 + i, 1, 1, gc);
-            }
+        d.roundRect(kx, y + 1, 9, 9, 4, on > 0.5f ? 0xFFFFFFFF : 0xFFC9CDD6);
+        if (on > 0.05f) {
+            d.roundOutline(x - 1, y - 1, 26, 13, 6, Theme.withAlpha(accent, Math.round(0x50 * on)));
         }
     }
 
@@ -1214,41 +1532,22 @@ public final class Menu {
             p.openScreen(p.inWorld() ? Platform.Screen.NONE : Platform.Screen.TITLE);
             return true;
         }
-        for (int i = 0; i < VIEWS.length; i++) {
-            if (in(mx, my, tabX0 + i * (tabW + 4), tabsY, tabW, TABBAR_H)) {
-                if (page != null) {
-                    closePage();
+        for (Hit h : new ArrayList<Hit>(sideHits)) {
+            if (in(mx, my, h.x, h.y, h.w, h.h)) {
+                Node n = node(h.id);
+                if (n != null && n.kids.length > 0) {
+                    toggleGroup(n);
+                } else {
+                    choose(h.id);
                 }
-                if (view != i) {
-                    listShownAt = System.currentTimeMillis();
-                }
-                view = i;
-                scroll = 0;
-                smoothScroll = 0;
-                hits.clear();
                 return true;
             }
         }
-        if (in(mx, my, menuBtnX, tabsY, TABBAR_H, TABBAR_H)) {
+        if (view == 0 && in(mx, my, menuBtnX, tabsY, TABBAR_H, TABBAR_H)) {
             onlyOn = !onlyOn;
             listShownAt = System.currentTimeMillis();
             scroll = 0;
             return true;
-        }
-        for (int i = 0; i < TABS.length; i++) {
-            if (in(mx, my, px + 10, tabY(i), SIDE_W - 8, TAB_H)) {
-                if (page != null) {
-                    closePage();
-                }
-                if (tab != TABS[i] || view != 0) {
-                    listShownAt = System.currentTimeMillis();
-                }
-                tab = TABS[i];
-                view = 0;
-                scroll = 0;
-                smoothScroll = 0;
-                return true;
-            }
         }
         if (in(mx, my, editX, editY, editW, editH)) {
             editingHud = true;
@@ -1257,6 +1556,13 @@ public final class Menu {
         }
         if (page != null) {
             pageClicked(mx, my);
+            return true;
+        }
+        if (view == 3) {
+            MenuPanel pn = panel();
+            if (pn != null) {
+                pn.click(mx, my, button);
+            }
             return true;
         }
         if (view != 0) {
@@ -1315,7 +1621,20 @@ public final class Menu {
         }
     }
 
+    private static Node node(String id) {
+        for (Node n : SIDEBAR) {
+            if (n != null && n.id.equals(id)) {
+                return n;
+            }
+        }
+        return null;
+    }
+
     public boolean mouseDragged(int screenMx, int screenMy) {
+        MenuPanel pn = editingHud ? null : panel();
+        if (pn instanceof LockerPanel && ((LockerPanel) pn).dragged(Math.round(screenMx / k))) {
+            return true;
+        }
         if (draggingSlider != null && !editingHud) {
             slideTo(draggingSlider, Math.round(screenMx / k));
             return true;
@@ -1324,6 +1643,10 @@ public final class Menu {
     }
 
     public boolean mouseReleased() {
+        MenuPanel pn = editingHud ? null : panel();
+        if (pn instanceof LockerPanel && ((LockerPanel) pn).released(Math.round(lastMx / k))) {
+            return true;
+        }
         if (draggingSlider != null) {
             draggingSlider = null;
             pc.markDirty();
@@ -1336,6 +1659,11 @@ public final class Menu {
     public boolean mouseScrolled(double amount) {
         if (editingHud) {
             return editor.mouseScrolled(amount, lastMx, lastMy);
+        }
+        MenuPanel pn = page == null ? panel() : null;
+        if (pn != null) {
+            pn.scrolled(amount);
+            return true;
         }
         scroll -= (int) Math.round(amount * (CARD_H + GAP) * 0.6);
         scroll = clamp(scroll, 0, maxScroll);
@@ -1389,10 +1717,18 @@ public final class Menu {
             }
             return false;
         }
+        MenuPanel own = panel();
+        if (own != null && own.key(key)) {
+            return true;
+        }
         if (key == KEY_BACKSPACE && !search.isEmpty()) {
             search = search.substring(0, search.length() - 1);
             scroll = 0;
             smoothScroll = 0;
+            MenuPanel pn = panel();
+            if (pn != null) {
+                pn.searchChanged(search);
+            }
             return true;
         }
         if (key == KEY_ENTER) {
@@ -1427,9 +1763,20 @@ public final class Menu {
         if (page != null) {  // typing goes back to the list to search
             closePage();
         }
+        MenuPanel pn = panel();
+        if (pn != null && pn.typed(c)) {
+            return true;
+        }
+        if (pn != null) {  // a page with its own search (Browse searches Modrinth)
+            if (pn.placeholder().isEmpty()) {
+                return false;
+            }
+            search += c;
+            pn.searchChanged(search);
+            return true;
+        }
         if (view != 0) {
-            view = 0;
-            listShownAt = System.currentTimeMillis();
+            choose("cat:all");
         }
         search += c;
         scroll = 0;

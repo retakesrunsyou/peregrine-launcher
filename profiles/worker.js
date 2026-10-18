@@ -117,6 +117,118 @@ async function proven(env, body) {
   return uuid;
 }
 
+// ------------------------------------------------------------------ voice parties
+//
+// A party is a small voice room (up to 8 players) named by a 6-letter code. Each player joins
+// with a WebSocket, proves who they are the same way as for profiles (their Minecraft chat key),
+// and then their voice is passed on to everyone else in the room. Nothing is stored or recorded.
+
+const PARTY = /^[A-Z0-9]{6}$/;
+const MAX_PARTY = 8;
+
+export class VoiceRoom {
+  constructor(state, env) {
+    this.state = state;
+    this.env = env;
+  }
+
+  /** Who sent this hello: their account id, or a Response saying why not. */
+  verify(body) {
+    return proven(this.env, body);
+  }
+
+  members() {
+    const out = [];
+    for (const ws of this.state.getWebSockets()) {
+      const m = ws.deserializeAttachment();
+      if (m && m.uuid) out.push(m);
+    }
+    return out;
+  }
+
+  broadcast(msg, except) {
+    for (const ws of this.state.getWebSockets()) {
+      const m = ws.deserializeAttachment();
+      if (ws === except || !m || !m.uuid) continue;
+      try { ws.send(msg); } catch {}
+    }
+  }
+
+  sendMembers() {
+    const list = this.members().map((m) => ({ id: m.id, uuid: m.uuid, name: m.name, muted: !!m.muted }));
+    this.broadcast(JSON.stringify({ type: "members", members: list }));
+  }
+
+  async fetch(request) {
+    if (request.headers.get("Upgrade") !== "websocket") return reply({ error: "a WebSocket, please" }, 426);
+    if (this.state.getWebSockets().length >= MAX_PARTY + 2) return reply({ error: "This party is full" }, 409);
+    const pair = new WebSocketPair();
+    this.state.acceptWebSocket(pair[1]);
+    pair[1].serializeAttachment({});
+    return new Response(null, { status: 101, webSocket: pair[0] });
+  }
+
+  async webSocketMessage(ws, msg) {
+    const me = ws.deserializeAttachment() || {};
+    if (typeof msg !== "string") {
+      // voice: [1 byte kind][data...] -> everyone else gets [kind][sender id][data...]
+      if (!me.uuid) return;
+      const data = new Uint8Array(msg);
+      if (data.length < 2 || data.length > 4096) return;
+      const out = new Uint8Array(data.length + 1);
+      out[0] = data[0];
+      out[1] = me.id;
+      out.set(data.subarray(1), 2);
+      this.broadcast(out.buffer, ws);
+      return;
+    }
+    let body;
+    try { body = JSON.parse(msg); } catch { return; }
+    if (body.type === "hello" && !me.uuid) {
+      const who = await this.verify(body);
+      if (who instanceof Response) {
+        const why = await who.json().catch(() => ({}));
+        ws.send(JSON.stringify({ type: "denied", error: why.error || "not allowed" }));
+        ws.close(4001, "not allowed");
+        return;
+      }
+      const others = this.members();
+      if (others.length >= MAX_PARTY) {
+        ws.send(JSON.stringify({ type: "denied", error: "This party is full (8 players)" }));
+        ws.close(4002, "full");
+        return;
+      }
+      for (const ws2 of this.state.getWebSockets()) {  // the same player joining again: drop the old one
+        const m = ws2.deserializeAttachment();
+        if (ws2 !== ws && m && m.uuid === who) { try { ws2.close(4003, "joined again"); } catch {} }
+      }
+      const used = new Set(others.filter((m) => m.uuid !== who).map((m) => m.id));
+      let id = 1;
+      while (used.has(id)) id++;
+      const name = NAME.test(body.name || "") ? body.name : "Player";
+      ws.serializeAttachment({ id, uuid: who, name, muted: false });
+      ws.send(JSON.stringify({ type: "welcome", id }));
+      this.sendMembers();
+      return;
+    }
+    if (body.type === "muted" && me.uuid) {
+      me.muted = !!body.muted;
+      ws.serializeAttachment(me);
+      this.sendMembers();
+    }
+  }
+
+  async webSocketClose(ws) {
+    ws.serializeAttachment({});
+    this.sendMembers();
+  }
+
+  async webSocketError(ws) {
+    ws.serializeAttachment({});
+    this.sendMembers();
+  }
+}
+
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
@@ -201,7 +313,15 @@ export default {
                : reply({ error: "not shared" }, 404);
     }
 
-    if (path === "" || path === "/v1") return reply({ service: "peregrine-profiles", version: 2, ok: true });
+    // 6. Voice parties: a WebSocket to the party's room.
+    const party = path.match(/^\/v1\/voice\/([A-Za-z0-9]{6})$/);
+    if (party && request.method === "GET") {
+      if (!env.VOICE) return reply({ error: "Voice isn't set up on this service yet" }, 501);
+      const code = party[1].toUpperCase();
+      return env.VOICE.get(env.VOICE.idFromName(code)).fetch(request);
+    }
+
+    if (path === "" || path === "/v1") return reply({ service: "peregrine-profiles", version: 3, voice: !!env.VOICE, ok: true });
     return reply({ error: "not found" }, 404);
   },
 };

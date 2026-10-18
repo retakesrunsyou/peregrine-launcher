@@ -49,6 +49,10 @@ final class Icons {
         put("bundle", "item_count");
         put("spyglass", "zoom", "static_fov");
         put("glowstone", "fullbright");
+        put("elytra", "flight_boost");
+        put("barrel", "inventory_hud");
+        put("structure_block", "schematic");
+        put("note_block", "voice");
         put("sugar", "toggle_sprint");
         put("leather_boots", "toggle_sneak");
         put("ender_eye", "freelook");

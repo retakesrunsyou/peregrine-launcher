@@ -321,6 +321,21 @@ def _history_file() -> Path:
     return paths.DATA / "recent-servers.json"
 
 
+def folder_moved(old, new) -> None:
+    """An instance's folder was renamed: keep its servers in the history."""
+    try:
+        history = json.loads(_history_file().read_text())
+    except (OSError, ValueError):
+        return
+    changed = False
+    for h in history if isinstance(history, list) else []:
+        if h.get("folder") == str(Path(old)):
+            h["folder"] = str(Path(new))
+            changed = True
+    if changed:
+        _history_file().write_text(json.dumps(history, indent=1))
+
+
 def recent_servers(instances) -> list:
     """Servers played recently, newest first, one per address:
     [{address, name, icon, last_played, inst}].

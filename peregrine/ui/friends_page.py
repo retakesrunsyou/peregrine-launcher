@@ -149,6 +149,7 @@ class FriendsPage(QWidget):
     def _loaded(self, people):
         self.loading = False
         self.people, self.error = people, ""
+        friends.save_snapshot(people)
         self.render()
         self.counts.emit(sum(1 for p in people if p["online"]), len(people))
 

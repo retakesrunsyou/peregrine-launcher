@@ -11,3 +11,4 @@ venv/
 # These are here just in case one ever gets copied in by accident:
 accounts.json
 config.json
+tests/preview/out/

@@ -343,6 +343,7 @@ class InstanceSettingsDialog(Sheet):
         d["color"] = self.color
         d["memory_mb"] = int(self.memory.currentData() or 0)
         self.inst.save()
+        self.inst.match_folder()  # the folder follows the name
         new_mc = self.mc.currentText().strip()
         if new_mc and new_mc != self.inst.data["mc_version"]:
             if self.inst.data["loader"] == "fabric":

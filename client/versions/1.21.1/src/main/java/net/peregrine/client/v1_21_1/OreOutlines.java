@@ -19,7 +19,7 @@ final class OreOutlines {
     }
 
     static void draw(PoseStack pose, MultiBufferSource buffers, Camera camera) {
-        java.util.List<OreScan.Vein> ores = OreScan.veins();
+        java.util.List<OreScan.Vein> ores = OreScan.all();
         Minecraft mc = Minecraft.getInstance();
         if (ores.isEmpty() || mc.level == null) {
             return;

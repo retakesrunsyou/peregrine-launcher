@@ -941,4 +941,91 @@ final class GamePlatform implements Platform {
             return null;
         }
     }
+
+    // ---- flight boost, inventory HUD, packs from the menu
+
+    @Override
+    public int gameMode() {
+        if (mc().gameMode == null || player() == null) {
+            return -1;
+        }
+        return mc().gameMode.getPlayerMode().getId();
+    }
+
+    @Override
+    public boolean flying() {
+        return player() != null && player().getAbilities().flying;
+    }
+
+    @Override
+    public float flySpeed() {
+        return player() == null ? 0.05f : player().getAbilities().getFlyingSpeed();
+    }
+
+    @Override
+    public void setFlySpeed(float speed) {
+        if (player() != null) {
+            player().getAbilities().setFlyingSpeed(speed);
+        }
+    }
+
+    @Override
+    public List<Object> inventory() {
+        List<Object> out = new ArrayList<>();
+        if (player() == null) {
+            return out;
+        }
+        var inv = player().getInventory();
+        for (int i = 0; i < 36; i++) {
+            ItemStack stack = inv.getItem(i);
+            out.add(stack.isEmpty() ? null : stack);
+        }
+        return out;
+    }
+
+    @Override
+    public int[] stackInfo(Object o) {
+        ItemStack stack = (ItemStack) o;
+        return new int[] {stack.getCount(), stack.isDamageableItem() ? stack.getDamageValue() : 0,
+                stack.isDamageableItem() ? stack.getMaxDamage() : 0};
+    }
+
+    @Override
+    public java.nio.file.Path gameDir() {
+        return mc().gameDirectory.toPath();
+    }
+
+    @Override
+    public List<String> selectedPackIds() {
+        return new ArrayList<>(mc().getResourcePackRepository().getSelectedIds());
+    }
+
+    @Override
+    public void setSelectedPacks(List<String> ids) {
+        var repo = mc().getResourcePackRepository();
+        repo.reload();
+        List<String> keep = new ArrayList<>();
+        for (String id : ids) {
+            if (repo.getAvailableIds().contains(id)) {
+                keep.add(id);
+            }
+        }
+        repo.setSelected(keep);
+        mc().options.updateResourcePacks(repo);
+    }
+
+    @Override
+    public String blockStateAt(int x, int y, int z) {
+        var level = mc().level;
+        if (level == null) {
+            return null;
+        }
+        net.minecraft.core.BlockPos pos = new net.minecraft.core.BlockPos(x, y, z);
+        if (!level.isLoaded(pos)) {
+            return null;
+        }
+        String s = level.getBlockState(pos).toString();  // "Block{minecraft:stone}[...]"
+        int a = s.indexOf('{'), b = s.indexOf('}');
+        return a >= 0 && b > a ? s.substring(a + 1, b) + s.substring(b + 1) : s;
+    }
 }

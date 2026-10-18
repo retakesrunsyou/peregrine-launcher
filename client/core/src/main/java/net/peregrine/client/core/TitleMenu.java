@@ -13,7 +13,7 @@ package net.peregrine.client.core;
  */
 public final class TitleMenu {
 
-    public static final String CLIENT_VERSION = "1.4.1";
+    public static final String CLIENT_VERSION = "1.5.0";
 
     static final int H = 20, GAP = 4, SMALL_H = 15;
 
@@ -147,56 +147,67 @@ public final class TitleMenu {
         this.pc = pc;
     }
 
+    // ---- the home layout: the falcon in the middle, three big tiles, a row of round buttons
+    static final int TILE_H = 58, ROUND = 20;
+    private int centerX, logoY, dockY, roundY, tileW;
+    private final float[] tileLift = new float[3];
+
     private void layout(Platform p, Draw d) {
         int sw = p.screenWidth();
         int sh = p.screenHeight();
-        int w = Math.max(150, Math.min(190, sw * 2 / 5));
-        left = Math.max(14, Math.round(sw * 0.07f));
-        int total = 46 + buttons.length * (H + GAP);
-        top = Math.max(8, (sh - total) / 2 - 8);
-        for (int i = 0; i < buttons.length; i++) {
-            buttons[i].place(left, top + 46 + i * (H + GAP), w, H);
-        }
-        if (d != null) {  // (a click keeps where they were drawn)
-            // labels if they fit next to the version and copyright lines, icons alone if not
-            int full = 0;
-            for (Button b : small) {
-                full += 23 + d.width(b.label) + 8 + 5;
-            }
-            int text = Math.max(d.width(versionLine(p)), d.width(COPYRIGHT));
-            compact = left + full + 8 > sw - 6 - text;
-            int sx = left;
-            for (Button b : small) {
-                int bw = compact ? 21 : 23 + d.width(b.label) + 8;
-                b.place(sx, sh - SMALL_H - 8, bw, SMALL_H);
-                sx += bw + 5;
-            }
-        }
         net.peregrine.client.core.modules.MainMenu mm = mainMenu();
-        if (mm == null || mm.player.value) {
-            int pw = Math.max(92, Math.min(124, sw / 5));
-            int ph = Math.min(pw * 2 + 30, sh - 110);
+        // the player and the Locker on the right, if there's room
+        int pw = Math.max(92, Math.min(124, sw / 5));
+        int ph = Math.min(pw * 2 + 30, sh - 110);
+        boolean player = (mm == null || mm.player.value) && ph >= 110 && sw >= 400;
+        int room = player ? sw - pw - 18 - 10 : sw;
+        centerX = room / 2 + (player ? 4 : 0);
+        tileW = Math.max(64, Math.min(104, (Math.min(room, 420) - 28 - 16) / 3));
+        int total = 74 + 14 + TILE_H + 12 + ROUND;
+        logoY = Math.max(6, (sh - total) / 2 - 10);
+        dockY = logoY + 74 + 14;
+        roundY = dockY + TILE_H + 12;
+        left = Math.max(8, centerX - (tileW * 3 + 16) / 2);
+        top = logoY;
+        for (int i = 0; i < 3; i++) {
+            buttons[i].place(left + i * (tileW + 8), dockY, tileW, TILE_H);
+        }
+        Button[] round = roundButtons();
+        int rw = round.length * ROUND + (round.length - 1) * 8;
+        int rx = centerX - rw / 2;
+        for (Button b : round) {
+            b.place(rx, roundY, ROUND, ROUND);
+            rx += ROUND + 8;
+        }
+        compact = true;
+        if (player) {
             panel[0] = sw - pw - 18;
             panel[1] = Math.max(14, (sh - ph) / 2 - 22);
             panel[2] = pw;
             panel[3] = ph;
             lockerButton.place(panel[0] + 8, panel[1] + ph - 26, pw - 16, H - 2);
-            if (ph < 110 || panel[0] < left + w + 24) {
-                panel[2] = 0;  // no room: just the menu
-            }
         } else {
             panel[2] = 0;
         }
         String last = pc.lastServerName();
         if (last != null && p.supportsJoin()) {
             int cw = Math.min(170, Math.max(130, sw / 3));
-            card[0] = sw - cw - 10;
-            card[1] = sh - 36 - 22;
+            card[0] = 8;
+            card[1] = sh - 36 - 8;
             card[2] = cw;
             card[3] = 36;
         } else {
             card[2] = 0;
         }
+    }
+
+    private static int lockerLeft(int sw) {
+        return Math.max(14, Math.round(sw * 0.06f));
+    }
+
+    /** The round buttons under the tiles: Options, Realms, Language, Accessibility, Quit. */
+    private Button[] roundButtons() {
+        return new Button[] {buttons[3], small[0], small[1], small[2], buttons[4]};
     }
 
     /** The game window's title: "Peregrine Client 1.2.0 - Minecraft 1.21.1 - Singleplayer". */
@@ -235,16 +246,25 @@ public final class TitleMenu {
 
         drawBackground(base, sw, sh, now);
 
-        // Darken behind the buttons: one smooth fade from the left (no visible steps).
+        // A vignette: the world darkens towards the edges and the bottom, so the middle glows
         float shade = 1f - ed;
         if (shade > 0.001f) {
-            base.rect(0, 0, sw, sh, Theme.withAlpha(0, Math.round((0x38 + 0x40 * e) * shade)));
-            int fadeW = Math.max(1, sw * 11 / 20);
-            for (int x = 0; x < fadeW; x += 2) {
-                float k = 1f - x / (float) fadeW;
-                int alpha = Math.round(0x70 * k * k * (1f - e) * shade);
+            base.rect(0, 0, sw, sh, Theme.withAlpha(0, Math.round((0x28 + 0x40 * e) * shade)));
+            for (int y = 0; y < sh; y += 2) {
+                float v = y / (float) sh;
+                float k = v > 0.55f ? (v - 0.55f) / 0.45f : v < 0.18f ? (0.18f - v) / 0.18f * 0.6f : 0f;
+                int alpha = Math.round(0x80 * k * k * (1f - e) * shade);
+                if (alpha > 0) {
+                    base.rect(0, y, sw, 2, Theme.withAlpha(0, alpha));
+                }
+            }
+            int edge = Math.max(1, sw / 6);
+            for (int x = 0; x < edge; x += 2) {
+                float k = 1f - x / (float) edge;
+                int alpha = Math.round(0x50 * k * k * (1f - e) * shade);
                 if (alpha > 0) {
                     base.rect(x, 0, 2, sh, Theme.withAlpha(0, alpha));
+                    base.rect(sw - x - 2, 0, 2, sh, Theme.withAlpha(0, alpha));
                 }
             }
         }
@@ -299,27 +319,68 @@ public final class TitleMenu {
     }
 
     private void drawHome(Draw d, Platform p, int mx, int my, float dt, int a, int sw, int sh) {
-        // Header: the falcon (sharp at any size), "Peregrine", your head and name.
-        int hy = top;
-        d.textScaled(Hooks.BIG_LOGO, left, hy, 0xFFFFFFFF, 4f, false);
-        d.textScaled("Peregrine", left + 38, hy + 1, Theme.TEXT, 2f, true);
-        int[] face = SkinFaces.get(p.playerUuid());
-        int ny = hy + 21;
-        int nx = left + 38;
-        if (face != null) {
-            SkinFaces.draw(d, face, nx, ny, 8);
-            nx += 11;
-        }
-        d.text(p.playerName(), nx, ny, Theme.MUTED, true);
+        long now = System.currentTimeMillis();
+        float in = shownAt < 0 ? 1f : FadeDraw.progress(shownAt, 700);
 
-        for (Button b : buttons) {
-            b.draw(d, mx, my, dt, a, false);
+        // The falcon, dropping in, with a slow breathing glow behind it
+        float drop = Glass.backOut(Math.min(1f, in * 1.2f));
+        int ly = logoY + Math.round((1f - drop) * -16);
+        float breathe = 0.5f + 0.5f * (float) Math.sin(now / 900.0);
+        for (int i = 0; i < 7; i++) {
+            int r = 12 + i * 5 + Math.round(breathe * 3);
+            d.roundRect(centerX - r, ly + 20 - r, r * 2, r * 2, r, Theme.withAlpha(a, Math.round((0x0C - i) * (0.6f + 0.4f * breathe))));
         }
-        for (Button b : small) {
-            if (compact) {
-                b.drawIcon(d, mx, my, dt, a);
-            } else {
-                b.draw(d, mx, my, dt, a, true);
+        d.textScaled(Hooks.BIG_LOGO, centerX - 20, ly, 0xFFFFFFFF, 4.4f, false);
+        String word = "PEREGRINE";
+        float ws = 2f;
+        int ww = Math.round(d.width(word) * ws);
+        d.textScaled(word, centerX - ww / 2, ly + 44, Theme.TEXT, ws, true);
+        // welcome back, with your head
+        String hi = "Welcome back, " + p.playerName();
+        int[] face = SkinFaces.get(p.playerUuid());
+        int hw = d.width(hi) + (face != null ? 11 : 0);
+        int hx = centerX - hw / 2;
+        if (face != null) {
+            SkinFaces.draw(d, face, hx, ly + 63, 8);
+            hx += 11;
+        }
+        d.text(hi, hx, ly + 63, Theme.MUTED, true);
+
+        // The three tiles rise in one after another
+        for (int i = 0; i < 3; i++) {
+            Button b = buttons[i];
+            float ti = shownAt < 0 ? 1f : FadeDraw.progress(shownAt + 120 + i * 70L, 380);
+            float e = Glass.backOut(ti);
+            boolean hover = b.contains(mx, my);
+            b.glow = Glass.ease(b.glow, hover, dt);
+            tileLift[i] += ((hover ? 1f : 0f) - tileLift[i]) * Math.min(1f, dt * 12f);
+            int ty = b.y + Math.round((1f - e) * 14) - Math.round(tileLift[i] * 3);
+            Draw td = ti < 1f ? new FadeDraw(d, Math.max(0.02f, Math.min(1f, ti * 1.5f))) : d;
+            drawTile(td, b, b.x, ty, b.w, b.h, b.glow, a, i == 0, now);
+        }
+        // Round buttons, popping in
+        Button[] round = roundButtons();
+        for (int i = 0; i < round.length; i++) {
+            Button b = round[i];
+            float ti = shownAt < 0 ? 1f : FadeDraw.progress(shownAt + 330 + i * 45L, 300);
+            boolean hover = b.contains(mx, my);
+            b.glow = Glass.ease(b.glow, hover, dt);
+            Draw rd = ti < 1f ? new FadeDraw(d, Math.max(0.02f, Math.min(1f, ti * 1.5f))) : d;
+            float sc = Glass.backOut(ti);
+            int cx = b.x + ROUND / 2, cy = b.y + ROUND / 2 - Math.round(b.glow * 2);
+            int r = Math.max(2, Math.round(ROUND / 2f * sc));
+            boolean quit = b.action == Platform.Screen.QUIT;
+            int hot = quit ? Theme.BAD : a;
+            rd.roundRect(cx - r, cy - r, r * 2, r * 2, r, Theme.mix(Glass.PANE, Theme.withAlpha(hot, 0xC0), b.glow * 0.85f));
+            rd.roundOutline(cx - r, cy - r, r * 2, r * 2, r, Theme.mix(Glass.EDGE, hot, b.glow));
+            MenuIcons.draw(rd, b.icon, cx - 4, cy - 4, Theme.mix(0xFFD3D6DE, 0xFFFFFFFF, b.glow));
+            if (b.glow > 0.05f) {  // its name floats up under it
+                String label = b.label;
+                int lw = rd.width(label) + 10;
+                int lx = cx - lw / 2, lyy = b.y + ROUND + 4 + Math.round((1f - b.glow) * 3);
+                Draw gd = new FadeDraw(rd, b.glow);
+                gd.roundRect(lx, lyy, lw, 12, 6, 0xE00C0E13);
+                gd.text(label, lx + 5, lyy + 2, Theme.TEXT, false);
             }
         }
         if (card[2] > 0) {
@@ -327,19 +388,60 @@ public final class TitleMenu {
         }
         if (panel[2] > 0) {
             int x = panel[0], y = panel[1], w = panel[2], h = panel[3];
-            d.shadow(x, y, w, h);
-            d.roundRect(x, y, w, h, 4, 0x9C15171D);
-            d.roundOutline(x, y, w, h, 4, 0x22FFFFFF);
-            // a soft spotlight behind the player
+            float pi = shownAt < 0 ? 1f : FadeDraw.progress(shownAt + 200, 450);
+            int slide = Math.round((1f - Glass.backOut(pi)) * 20);
+            Draw pd = pi < 1f ? new FadeDraw(d, Math.max(0.02f, pi)) : d;
+            pd.pushScale(slide, 0, 1f);
+            pd.shadow(x, y, w, h);
+            Glass.pane(pd, x, y, w, h, 6, 0x9C0E1117);
+            // a spotlight under the player
             for (int i = 0; i < 6; i++) {
-                int r = (6 - i) * 7;
-                d.roundRect(x + w / 2 - r, y + h / 2 - r - 8, r * 2, r * 2, r, Theme.withAlpha(a, 0x07));
+                int rw = w - 24 - i * 6;
+                pd.roundRect(x + (w - rw) / 2, y + h - 48 + i, rw, 3, 1, Theme.withAlpha(a, 0x10 + i * 4));
             }
             String cape = net.peregrine.client.core.modules.Cosmetics.CAPES[
                     net.peregrine.client.core.modules.Cosmetics.capeIndex()];
             String line = "Cape: " + cape;
-            d.text(d.trim(line, w - 8), x + (w - Math.min(w - 8, d.width(line))) / 2, y + h - 38, Theme.MUTED, false);
-            lockerButton.draw(d, mx, my, dt, a, false);
+            pd.text(pd.trim(line, w - 8), x + (w - Math.min(w - 8, pd.width(line))) / 2, y + h - 38, Theme.MUTED, false);
+            lockerButton.glow = Glass.ease(lockerButton.glow, lockerButton.contains(mx - slide, my), dt);
+            Glass.pill(pd, lockerButton.x, lockerButton.y, lockerButton.w, lockerButton.h, true, lockerButton.glow, a);
+            MenuIcons.draw(pd, "shirt", lockerButton.x + 8, lockerButton.y + (lockerButton.h - 9) / 2, Theme.onColor(a));
+            pd.text("Locker", lockerButton.x + (lockerButton.w - pd.width("Locker")) / 2 + 5, lockerButton.y + (lockerButton.h - 8) / 2 + 1,
+                    Theme.onColor(a), false);
+            pd.popScale();
+        }
+    }
+
+    /** A big glass tile: its icon large in the middle, its name under it; the first is filled with the accent. */
+    private static void drawTile(Draw d, Button b, int x, int y, int w, int h, float g, int a, boolean primary, long now) {
+        d.shadow(x, y, w, h);
+        if (primary) {
+            d.roundRect(x, y, w, h, 7, Theme.mix(a, Theme.mix(a, 0xFFFFFFFF, 0.15f), g));
+            for (int i = 7; i < h / 2; i++) {  // light from the top of the tile
+                d.rect(x + 1, y + i, w - 2, 1, Theme.withAlpha(0xFFFFFF, Math.round(0x1A * (1f - i / (h / 2f)))));
+            }
+            d.rect(x + 7, y, w - 14, 1, 0x60FFFFFF);
+            if (g > 0.01f) {
+                d.roundOutline(x - 1, y - 1, w + 2, h + 2, 8, Theme.withAlpha(a, Math.round(0x90 * g)));
+            }
+        } else {
+            Glass.pane(d, x, y, w, h, 7, Theme.mix(Glass.PANE, Glass.PANE_HOVER, g));
+            if (g > 0.01f) {
+                d.roundOutline(x, y, w, h, 7, Theme.withAlpha(a, Math.round(0xC0 * g)));
+            }
+        }
+        int fg = primary ? Theme.onColor(a) : Theme.mix(0xFFD3D6DE, 0xFFFFFFFF, g);
+        // the icon, twice the size, bobbing a little while hovered
+        int bob = Math.round((float) Math.sin(now / 160.0) * g * 1.5f);
+        d.pushScale(x + w / 2 - 9, y + 11 + bob, 2f);
+        MenuIcons.draw(d, b.icon, 0, 0, fg);
+        d.popScale();
+        String label = b.label.equals("Peregrine modules") ? "Modules" : b.label;
+        label = d.trim(label, w - 8);
+        d.text(label, x + (w - d.width(label)) / 2, y + h - 17, fg, !primary);
+        if (!primary && g > 0.01f) {  // a line of the accent grows under the name
+            int lw = Math.round((w - 24) * g);
+            d.rect(x + (w - lw) / 2, y + h - 5, lw, 1, a);
         }
     }
 
@@ -347,7 +449,7 @@ public final class TitleMenu {
 
     private void layoutLocker(Platform p, Draw d, int sw, int sh) {
         cards.clear();
-        int lx = left;
+        int lx = lockerLeft(sw);
         backButton.place(lx, 12, 60, 18);
         int pw = Math.max(90, Math.min(130, sw / 5));
         int ph = Math.min(sh - 96, pw * 2);
@@ -414,7 +516,7 @@ public final class TitleMenu {
         int[] lpw = lockerPlayer;
         wearButton.place(lpw[0], lpw[1] + lpw[3] + 18, lpw[2], H - 2);
         backButton.draw(d, mx, my, dt, a, true);
-        d.textScaled("Locker", left + 70, 13, Theme.TEXT, 1.6f, true);
+        d.textScaled("Locker", lockerLeft(p.screenWidth()) + 70, 13, Theme.TEXT, 1.6f, true);
         int[] lp = lockerPlayer;
         d.shadow(lp[0], lp[1], lp[2], lp[3]);
         d.roundRect(lp[0], lp[1], lp[2], lp[3], 4, 0x9C15171D);

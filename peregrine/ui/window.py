@@ -486,6 +486,7 @@ class MainWindow(QMainWindow):
 
     def _start(self, task, inst, done):
         self.game_task, self.game_inst = task, inst
+        instances.RUNNING.add(str(inst.folder))
         self.home.set_state(inst.folder, "busy")
         task.progress.connect(self.on_progress)
         task.done.connect(done)
@@ -707,6 +708,7 @@ class MainWindow(QMainWindow):
         self.joining = None
         self.recent.refresh()  # what you just played comes first
         if self.game_inst:
+            instances.RUNNING.discard(str(self.game_inst.folder))
             self.home.set_state(self.game_inst.folder, "")
             # Show what Play and installs added (Peregrine Client, Fabric API, mods).
             if self.stack.currentWidget() is self.content and self.content.inst is not None \
@@ -910,6 +912,10 @@ def main():
     install_crash_handler(app)
     cfg = config.load()
     Theme.set(cfg["theme"], cfg["accent"])
+    try:
+        instances.name_folders()  # folders named like their instances (they were codes before 1.5)
+    except Exception as e:
+        print(f"[peregrine] couldn't rename instance folders: {e}")
     win = MainWindow()
     win.make_tray()
     if "--tray" in sys.argv and win.tray is not None:

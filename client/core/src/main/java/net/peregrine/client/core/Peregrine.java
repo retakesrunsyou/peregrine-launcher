@@ -90,6 +90,10 @@ public final class Peregrine {
         modules.add(new ToggleSprint());
         modules.add(new Zoom());
         modules.add(new Fullbright());
+        modules.add(new net.peregrine.client.core.modules.FlightBoost());
+        modules.add(new net.peregrine.client.core.modules.SchematicHud());
+        modules.add(new net.peregrine.client.core.modules.VoiceHud());
+        modules.add(new net.peregrine.client.core.modules.InventoryHud());
         modules.add(new ClockHud());
         modules.add(new PingHud());
         modules.add(new ServerHud());
@@ -465,6 +469,11 @@ public final class Peregrine {
         }
         pollKeys();
         announce();
+        if (platform.inWorld()) {
+            Schematics.restore(platform);
+        }
+        Schematics.Placement placed = Schematics.current();
+        Hooks.schematicOn = placed != null && placed.visible && platform.inWorld();
         if (platform.inWorld()) {
             rememberServer();
             for (Module m : modules) {

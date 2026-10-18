@@ -24,13 +24,13 @@ public abstract class OreOutlineMixin {
     @Inject(method = "renderBlockOutline", at = @At("RETURN"))
     private void peregrine$ores(Camera camera, MultiBufferSource.BufferSource buffers, PoseStack pose, boolean translucent,
                                 CallbackInfo ci) {
-        if (translucent || !Hooks.oreOutlines) {
+        if (translucent || !(Hooks.oreOutlines || Hooks.schematicOn)) {
             return;
         }
         Vec3 cam = camera.getPosition();
         VertexConsumer lines = buffers.getBuffer(RenderType.lines());
         Minecraft mc = Minecraft.getInstance();
-        java.util.List<OreScan.Vein> ores = OreScan.veins();
+        java.util.List<OreScan.Vein> ores = OreScan.all();
         if (ores.isEmpty() || mc.level == null) {
             return;
         }

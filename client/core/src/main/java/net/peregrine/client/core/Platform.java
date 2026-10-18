@@ -437,4 +437,57 @@ public interface Platform {
             this.infinite = infinite;
         }
     }
+
+    // ---- flight boost
+
+    /** 0 survival, 1 creative, 2 adventure, 3 spectator, -1 not in a world. */
+    default int gameMode() {
+        return -1;
+    }
+
+    default boolean flying() {
+        return false;
+    }
+
+    /** Minecraft's flying speed (0.05 normally). */
+    default float flySpeed() {
+        return 0.05f;
+    }
+
+    default void setFlySpeed(float speed) {
+    }
+
+    // ---- inventory HUD
+
+    /** The 36 inventory slots (0-8 the hotbar, 9-35 the rest): the version's ItemStack, or null if empty. */
+    default List<Object> inventory() {
+        return java.util.Collections.emptyList();
+    }
+
+    /** {count, damage, max damage} of one of the version's ItemStacks. */
+    default int[] stackInfo(Object stack) {
+        return new int[] {1, 0, 0};
+    }
+
+    // ---- mods, shaders and resource packs in the menu
+
+    /** The instance folder (where mods, shaderpacks and resourcepacks live). */
+    default java.nio.file.Path gameDir() {
+        java.nio.file.Path c = configFile();
+        return c == null ? java.nio.file.Paths.get(".") : c.toAbsolutePath().getParent().getParent();
+    }
+
+    /** Resource packs switched on, bottom first, as Minecraft names them ("file/Faithful.zip", "vanilla"...). */
+    default List<String> selectedPackIds() {
+        return java.util.Collections.emptyList();
+    }
+
+    /** Switches exactly these packs on (bottom first) and reloads the game's resources. */
+    default void setSelectedPacks(List<String> ids) {
+    }
+
+    /** The block state at a position, as Minecraft writes it ("minecraft:oak_stairs[facing=north,...]"), or null when that spot isn't loaded. */
+    default String blockStateAt(int x, int y, int z) {
+        return null;
+    }
 }

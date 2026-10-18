@@ -33,12 +33,27 @@ def _write_json(path: Path, data) -> None:
     tmp.replace(path)
 
 
-def _slug(name: str) -> str:
-    s = re.sub(r"[^a-zA-Z0-9_-]+", "-", name.strip()).strip("-").lower() or "instance"
-    candidate, n = s, 2
-    while (paths.INSTANCES / candidate).exists():
-        candidate, n = f"{s}-{n}", n + 1
+_RESERVED = {"con", "prn", "aux", "nul", *(f"com{i}" for i in range(1, 10)), *(f"lpt{i}" for i in range(1, 10))}
+
+
+def folder_name(name: str) -> str:
+    """The instance's name as a folder name: the same, minus characters Windows doesn't allow."""
+    s = re.sub(r'[<>:"/\\|?*\x00-\x1f]+', "", name).strip().rstrip(".").strip() or "Instance"
+    if s.lower() in _RESERVED:
+        s += " instance"
+    return s[:80]
+
+
+def _slug(name: str, mine: Path = None) -> str:
+    """A free folder name for this name: "Survival", then "Survival (2)"..."""
+    base = folder_name(name)
+    candidate, n = base, 2
+    while (paths.INSTANCES / candidate).exists() and (mine is None or (paths.INSTANCES / candidate).resolve() != mine.resolve()):
+        candidate, n = f"{base} ({n})", n + 1
     return candidate
+
+
+RUNNING = set()  # folders of instances whose game is running (never renamed then)
 
 
 def _read_options(path: Path) -> dict:
@@ -89,6 +104,32 @@ class Instance:
         current.update(changes)
         self.data.update(changes)
         _write_json(self.folder / "instance.json", current)
+
+    def match_folder(self) -> bool:
+        """Renames the folder to the instance's name (it was a code like "my-survival" before
+        1.5). Not while its game runs. Returns True if it moved."""
+        if str(self.folder) in RUNNING:
+            return False
+        want = _slug(self.name, self.folder)
+        if self.folder.name == want:
+            return False
+        new = paths.INSTANCES / want
+        old = self.folder
+        try:
+            # through a temporary name, so a change of letter case works on Windows too
+            tmp = old.with_name(old.name + ".renaming")
+            old.rename(tmp)
+            try:
+                tmp.rename(new)
+            except OSError:
+                tmp.rename(old)
+                raise
+        except OSError:
+            return False
+        self.folder = new
+        from . import servers
+        servers.folder_moved(old, new)
+        return True
 
     @property
     def icon(self):
@@ -439,6 +480,12 @@ def create(name: str, mc_version: str, loader: str = "vanilla",
             "color": INSTANCE_COLORS[(count - 1) % len(INSTANCE_COLORS)], "memory_mb": 0}
     _write_json(folder / "instance.json", data)
     return Instance(folder)
+
+
+def name_folders() -> None:
+    """Once at start: every instance's folder named like the instance."""
+    for inst in all_instances():
+        inst.match_folder()
 
 
 def all_instances() -> list:

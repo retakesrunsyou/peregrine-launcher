@@ -440,6 +440,73 @@ public final class SelfTest {
         });
         waitTicks(8);
         shot("19g-mods-tab");
+        clickOn("Mods drops down and opens Installed", "side:mods", new Cond() {
+            public boolean ok() {
+                return "mods:installed".equals(menu.section());
+            }
+        });
+        waitTicks(20);
+        shot("19h-mods-installed");
+        clickOn("Browse opens Modrinth", "side:mods:browse", new Cond() {
+            public boolean ok() {
+                return "mods:browse".equals(menu.section());
+            }
+        });
+        waitFor("Browse shows mods from Modrinth", 300, new Cond() {
+            public boolean ok() {
+                return menu.browseResults() > 0;
+            }
+        });
+        waitTicks(30);
+        shot("19i-mods-browse");
+        clickOn("Shaders opens its Installed page", "side:shaders", new Cond() {
+            public boolean ok() {
+                return "shaders:installed".equals(menu.section());
+            }
+        });
+        waitTicks(20);
+        shot("19j-shaders");
+        clickOn("Resource packs opens its Installed page", "side:packs", new Cond() {
+            public boolean ok() {
+                return "packs:installed".equals(menu.section());
+            }
+        });
+        waitTicks(20);
+        shot("19k-packs");
+        clickOn("the Locker opens in the menu", "side:locker", new Cond() {
+            public boolean ok() {
+                return "locker".equals(menu.section());
+            }
+        });
+        waitTicks(25);
+        shot("19l-menu-locker");
+        clickOn("Friends opens", "side:friends", new Cond() {
+            public boolean ok() {
+                return "friends".equals(menu.section());
+            }
+        });
+        waitTicks(20);
+        shot("19m-friends");
+        clickOn("Voice chat opens", "side:voice", new Cond() {
+            public boolean ok() {
+                return "voice".equals(menu.section());
+            }
+        });
+        waitTicks(20);
+        shot("19n-voice");
+        clickOn("Schematics opens", "side:schematics", new Cond() {
+            public boolean ok() {
+                return "schematics".equals(menu.section());
+            }
+        });
+        waitTicks(20);
+        shot("19o-schematics");
+        clickOn("Modules brings the modules back", "side:modules", new Cond() {
+            public boolean ok() {
+                return "cat:all".equals(menu.section());
+            }
+        });
+        waitTicks(10);
         ask("key Escape");
         waitFor("Esc closes the menu", 60, new Cond() {
             public boolean ok() {
@@ -774,17 +841,15 @@ public final class SelfTest {
                 return Hooks.labelHits > 0;
             }
         });
-        run("a point straight ahead lands in the middle of the screen", new Runnable() {
-            public void run() {
+        // (checked over a few ticks: on a slow test machine the player can still be landing from a jump)
+        waitFor("a point straight ahead lands in the middle of the screen", 100, new Cond() {
+            public boolean ok() {
                 double yaw = Math.toRadians(p.yaw()), pitch = Math.toRadians(p.pitch());
                 double ex = p.x() - Math.sin(yaw) * Math.cos(pitch) * 6, ey = p.y() + 1.62 - Math.sin(pitch) * 6,
                         ez = p.z() + Math.cos(yaw) * Math.cos(pitch) * 6;
                 float[] s = p.project(ex, ey, ez);
-                if (s == null || Math.abs(s[0] - p.screenWidth() / 2f) > p.screenWidth() * 0.08f
-                        || Math.abs(s[1] - p.screenHeight() / 2f) > p.screenHeight() * 0.12f) {
-                    throw new IllegalStateException("projected to " + (s == null ? "nothing" : s[0] + "," + s[1])
-                            + " on a " + p.screenWidth() + "x" + p.screenHeight() + " screen");
-                }
+                return s != null && Math.abs(s[0] - p.screenWidth() / 2f) <= p.screenWidth() * 0.08f
+                        && Math.abs(s[1] - p.screenHeight() / 2f) <= p.screenHeight() * 0.12f;
             }
         });
         waitFor("the main hand moves", 200, new Cond() {
@@ -799,6 +864,61 @@ public final class SelfTest {
             }
         });
         shot("29-batch9b");
+        // Schematics: place the test build a few blocks ahead, see its outlines, see it in the menu
+        run("place the test schematic", new Runnable() {
+            public void run() {
+                Schematics.load(Schematics.folder().resolve("peregrine-test.litematic"), p);
+            }
+        });
+        waitFor("the schematic loads", 100, new Cond() {
+            public boolean ok() {
+                return Schematics.current() != null;
+            }
+        });
+        run("move it in front of the player", new Runnable() {
+            public void run() {
+                Schematics.Placement pl = Schematics.current();
+                if (pl != null) {
+                    double yaw = Math.toRadians(p.yaw());
+                    pl.ox = (int) Math.floor(p.x() - Math.sin(yaw) * 4) - 1;
+                    pl.oz = (int) Math.floor(p.z() + Math.cos(yaw) * 4) - 1;
+                    pl.oy = (int) Math.floor(p.y());
+                    Schematics.changed();
+                }
+            }
+        });
+        waitFor("the schematic's outlines draw", 200, new Cond() {
+            public boolean ok() {
+                return Hooks.schematicHits > 0;
+            }
+        });
+        waitTicks(30);
+        shot("29c-schematic");
+        run("the menu on the Schematics page", new Runnable() {
+            public void run() {
+                pc.menu().choose("schematics");
+            }
+        });
+        open("the menu opens on Schematics", Platform.Screen.PEREGRINE_MENU);
+        waitTicks(30);
+        shot("29d-schematic-menu");
+        check("the Schematics page shows the build's progress", new Cond() {
+            public boolean ok() {
+                return Schematics.needed() > 0;
+            }
+        });
+        ask("key Escape");
+        waitFor("Esc closes the menu", 60, new Cond() {
+            public boolean ok() {
+                return p.showing(Platform.Screen.NONE);
+            }
+        });
+        run("unload the schematic", new Runnable() {
+            public void run() {
+                Schematics.unload();
+                pc.menu().choose("cat:all");
+            }
+        });
         run("Peregrine cape and item switch: third person, from behind", new Runnable() {
             public void run() {
                 if (p.supports("item_switch")) {

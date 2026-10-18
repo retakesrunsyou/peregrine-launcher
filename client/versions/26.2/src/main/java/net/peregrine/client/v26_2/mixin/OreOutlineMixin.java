@@ -22,13 +22,13 @@ public abstract class OreOutlineMixin {
 
     @Inject(method = "submitBlockOutline", at = @At("RETURN"))
     private void peregrine$ores(PoseStack pose, SubmitNodeCollector collector, LevelRenderState state, CallbackInfo ci) {
-        if (!Hooks.oreOutlines) {
+        if (!(Hooks.oreOutlines || Hooks.schematicOn)) {
             return;
         }
         float width = mc$width();
         net.minecraft.world.phys.Vec3 cam = state.cameraRenderState.pos;
         Minecraft mc = Minecraft.getInstance();
-        java.util.List<OreScan.Vein> ores = OreScan.veins();
+        java.util.List<OreScan.Vein> ores = OreScan.all();
         if (ores.isEmpty() || mc.level == null) {
             return;
         }

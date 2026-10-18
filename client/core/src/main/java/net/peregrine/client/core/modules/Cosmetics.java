@@ -58,7 +58,7 @@ public final class Cosmetics extends Module {
             "https://raw.githubusercontent.com/retakesrunsyou/peregrine-launcher/main/cosmetics.json";
     static final long REFRESH_MS = 30 * 60_000L;
     /** The Peregrine service (passed in by the launcher), or null. */
-    static final String SERVICE = System.getProperty("peregrine.service");
+    public static final String SERVICE = System.getProperty("peregrine.service");
     static final long LIVE_MS = 10 * 60_000L;
     /** uuid -> {cape file or "" (a Peregrine player), or null (not one), time asked}. */
     private static final Map<String, Object[]> LIVE = new ConcurrentHashMap<String, Object[]>();
@@ -175,7 +175,7 @@ public final class Cosmetics extends Module {
     }
 
     /** {uuid, nonce, cert, sig}: what the service checks to know a request is from this account. */
-    static JsonObject prove(String base, String token, String uuid) throws Exception {
+    public static JsonObject prove(String base, String token, String uuid) throws Exception {
         JsonObject cert = JsonParser.parseString(http("POST", "https://api.minecraftservices.com/player/certificates",
                 "", "Bearer " + token)).getAsJsonObject();
         JsonObject pair = cert.getAsJsonObject("keyPair");

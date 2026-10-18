@@ -43,6 +43,7 @@ play: more FPS, smoother frames and fewer lag spikes, out of the box.
   (compact object headers) for less memory use and fewer cleanup pauses; on Windows the game gets
   **CPU priority** over background apps. Launches skip re-checking files that haven't changed
 - **Graphics driver boost** for AMD, Intel and NVIDIA, and dedicated-GPU mode for laptops
+- **Flight boost** in creative and spectator, and an **Inventory HUD** that shows your whole inventory anywhere on screen
 - Uses **Feral GameMode** automatically if you have it
 
 **Measured** (same world, same spot, render distance 8, Minecraft's
@@ -57,13 +58,26 @@ drawn in software; real graphics cards usually gain more from Sodium):
 | 1.21.1 | 37-38 FPS (lows 16) | 42-44 FPS (lows 28) | lows +70% |
 
 **In-game menu (Peregrine Client)**
-- **Main menu**: your player turning beside the menu in your cape, a sharp logo, and a background you choose: Minecraft's
+- **Main menu**: the falcon glowing in the middle, three big glass tiles (Singleplayer, Multiplayer, Modules) and
+  round buttons for the rest, your player turning beside it in your cape, and a background you choose: Minecraft's
   panorama, Dusk, Aurora, Night sky or your own picture. The **Locker** button slides in your capes, skins and backgrounds:
   try a skin on and wear it, without leaving the game. **Adjust** your own picture like the HUD editor: drag it,
   resize it from the corners or with the scroll wheel, snap it to the middle or the edges, show the whole
   picture, darken it, and switch its slow drift on or off
-- Press **Right Shift** in game for the Peregrine menu: every mod as a tile with its icon and switch, a filter
-  list, search, a Settings tab (accent color and more) and a Keybinds tab to set every key in one place
+- Press **Right Shift** in game for the Peregrine menu, a frosted glass window with a sidebar that drops down:
+  - **Modules** (HUD, Utility, Visuals, Performance): every built-in mod as a card with its icon and switch, and search
+  - **Mods**, **Shaders** and **Resource packs**, each with **Installed** (switch on or off, remove, open the folder)
+    and **Browse** (search Modrinth and install, matched to your Minecraft version, with the mods they need)
+  - **Locker** (capes and skins, on your turning player) and **Friends** (who's online and what they're playing)
+  - **Schematics**: put .litematic, .schem (WorldEdit) or .nbt (structure block) files in the instance's
+    schematics folder, place one at your feet, then move it, turn it, mirror it and build one layer at a
+    time. Outlines show what's missing (blue), the wrong block (red) and blocks turned the wrong way (orange),
+    with how much is built and the blocks you still need next to what's in your inventory. A small HUD item
+    shows your progress and which block goes where you're looking
+  - **Voice chat**: start a party and share its 6-letter code, or join a friend's; talk on any server or
+    world (up to 8 players). Your mic turns on when you speak, or use push to talk (V); mute with a key,
+    and a HUD item shows who's talking
+  - **Keybinds** to set every key in one place, and **Settings** (accent color and more)
 - **A keybind for every feature**: set it on the feature's options page, then press it in game to switch it on or off
 - FPS, coordinates, keystrokes, CPS, armor status and potion timers, placed anywhere you drag them
 - Zoom, toggle sprint and sneak, fullbright, compass, biome, memory, clear weather and 40 more
@@ -115,7 +129,8 @@ drawn in software; real graphics cards usually gain more from Sodium):
 - Your client settings, and Minecraft's own (FOV, controls, sound, chat...), follow you to every instance and version
 - A Peregrine main menu in place of Minecraft's title screen: your name and head, buttons with icons, Realms,
   Language and Accessibility, and a **Jump back in** card for the last server you played
-- A Peregrine pause menu: Resume, Peregrine modules, Options, the rest of Minecraft's menu, and Leave
+- A Peregrine pause menu: a glass card with your head, the server and your ping, a big Resume, tiles for Modules,
+  Options, the Locker and the rest of Minecraft's menu, and Leave
 - A **Settings** tab in the in-game menu (Right Shift): the menu's background (solid, see-through or none), the main and pause
   menus, and quick switches for stretched resolution, the block place animation, the rainbow outline and capes
 - **Zoom** up to 50x: hold the key, then scroll to zoom further in or out; the mouse slows down to match

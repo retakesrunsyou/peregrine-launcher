@@ -518,9 +518,14 @@ class ContentPage(QWidget):
             fps.setIcon(icon("bolt", Theme.accent, 16))
             fps.clicked.connect(lambda: self.install_fps.emit(inst))
             self.actions.addWidget(fps)
-        folder = QPushButton("  Folders", objectName="outline")
+        opener = QPushButton("  Open folder", objectName="outline")
+        opener.setIcon(icon("folder", Theme.accent, 16))
+        opener.setToolTip(f"Open this instance's {dict(self.KINDS)[self.kind].lower()} folder")
+        opener.clicked.connect(lambda: self.open_folder(None))
+        self.actions.addWidget(opener)
+        folder = QPushButton("  More folders", objectName="outline")
         folder.setIcon(icon("folder", Theme.accent, 16))
-        folder.setToolTip("Open one of this instance's folders")
+        folder.setToolTip("Open one of this instance's other folders")
         from PySide6.QtWidgets import QMenu
         from .theme import round_menu
         menu = round_menu(QMenu(folder))

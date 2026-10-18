@@ -40,16 +40,28 @@ release. The **Profiles** page in the launcher switches on for everyone who upda
 
 ## Updating the service
 
-After `profiles/worker.js` changes, put the new version online (your storage and profiles stay):
+After `profiles/worker.js` or `profiles/wrangler.toml` changes, put the new version online (your
+storage and profiles stay):
 
 ```bash
 cd profiles
 npx --yes wrangler@3 deploy
 ```
 
+## Voice parties
+
+The same service runs voice parties: a small room per party code (a Cloudflare Durable Object,
+available on the free plan). Players join with a WebSocket and prove who they are with their
+Minecraft key, like profiles; their voice is passed straight on to the others and never stored.
+The free plan covers roughly a day of party time per day across everyone (each room-hour uses
+about 450 of the 13,000 free GB-seconds); past that, new voice connections wait until the next
+day. Cloudflare's $5 a month plan lifts that far beyond what a client like this needs.
+
 ## Check it's working
 
-Open the address in a browser: it should say `{"service":"peregrine-profiles","version":2,"ok":true}`. If it has no `"version":2`, the service is still the old one: update it as above.
+Open the address in a browser: it should say `{"service":"peregrine-profiles","version":3,"voice":true,"ok":true}`. If it shows an
+older version or `"voice":false`, the service is still the old one: update it as above (with the new
+`wrangler.toml` too).
 
 ## Tests
 

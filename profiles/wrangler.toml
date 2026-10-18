@@ -5,3 +5,12 @@ compatibility_date = "2026-01-01"
 [[kv_namespaces]]
 binding = "PROFILES"
 id = "86a6355d24564b95ab3a3c386cdd6a10"
+
+# Voice parties: one small room per party code (Durable Objects, on the free plan)
+[[durable_objects.bindings]]
+name = "VOICE"
+class_name = "VoiceRoom"
+
+[[migrations]]
+tag = "voice-v1"
+new_sqlite_classes = ["VoiceRoom"]
