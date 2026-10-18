@@ -13,7 +13,7 @@ package net.peregrine.client.core;
  */
 public final class TitleMenu {
 
-    public static final String CLIENT_VERSION = "1.5.0";
+    public static final String CLIENT_VERSION = "1.5.1";
 
     static final int H = 20, GAP = 4, SMALL_H = 15;
 
@@ -258,15 +258,7 @@ public final class TitleMenu {
                     base.rect(0, y, sw, 2, Theme.withAlpha(0, alpha));
                 }
             }
-            int edge = Math.max(1, sw / 6);
-            for (int x = 0; x < edge; x += 2) {
-                float k = 1f - x / (float) edge;
-                int alpha = Math.round(0x50 * k * k * (1f - e) * shade);
-                if (alpha > 0) {
-                    base.rect(x, 0, 2, sh, Theme.withAlpha(0, alpha));
-                    base.rect(sw - x - 2, 0, 2, sh, Theme.withAlpha(0, alpha));
-                }
-            }
+            Glass.vignette(base, sw, sh, Math.round(0x86 * (1f - e) * shade));
         }
         Draw editorLayer = base;
         if (ed > 0.999f) {
@@ -326,15 +318,30 @@ public final class TitleMenu {
         float drop = Glass.backOut(Math.min(1f, in * 1.2f));
         int ly = logoY + Math.round((1f - drop) * -16);
         float breathe = 0.5f + 0.5f * (float) Math.sin(now / 900.0);
-        for (int i = 0; i < 7; i++) {
-            int r = 12 + i * 5 + Math.round(breathe * 3);
-            d.roundRect(centerX - r, ly + 20 - r, r * 2, r * 2, r, Theme.withAlpha(a, Math.round((0x0C - i) * (0.6f + 0.4f * breathe))));
+        if (d.hasTextures()) {
+            // the falcon, smooth and full colour, over a soft breathing light in the accent
+            int fs = 42;
+            int gs = Math.round(fs * 1.4f) + Math.round(breathe * 6);
+            d.texture(Draw.GUI + "falcon_glow.png", centerX - gs / 2, ly + fs / 2 - gs / 2, gs, gs, 0f, 0f, 1f, 1f,
+                    Theme.withAlpha(a, Math.round(0x70 + 0x50 * breathe)));
+            d.texture(Art.falcon(fs), centerX - fs / 2, ly, fs, fs, 0f, 0f, 1f, 1f, 0xFFFFFFFF);
+            // the name as a crisp wordmark, letters spaced out, with a soft drop under it
+            int ww = 108, wh = Math.round(ww / Art.WORDMARK_ASPECT);
+            int wy = ly + 47;
+            String wm = Art.wordmark(ww);
+            d.texture(wm, centerX - ww / 2, wy + 1, ww, wh, 0f, 0f, 1f, 1f, 0x70000000);
+            d.texture(wm, centerX - ww / 2, wy, ww, wh, 0f, 0f, 1f, 1f, Theme.TEXT);
+        } else {
+            for (int i = 0; i < 7; i++) {
+                int r = 12 + i * 5 + Math.round(breathe * 3);
+                d.roundRect(centerX - r, ly + 20 - r, r * 2, r * 2, r, Theme.withAlpha(a, Math.round((0x0C - i) * (0.6f + 0.4f * breathe))));
+            }
+            d.textScaled(Hooks.BIG_LOGO, centerX - 20, ly, 0xFFFFFFFF, 4.4f, false);
+            String word = "PEREGRINE";
+            float ws = 2f;
+            int ww = Math.round(d.width(word) * ws);
+            d.textScaled(word, centerX - ww / 2, ly + 44, Theme.TEXT, ws, true);
         }
-        d.textScaled(Hooks.BIG_LOGO, centerX - 20, ly, 0xFFFFFFFF, 4.4f, false);
-        String word = "PEREGRINE";
-        float ws = 2f;
-        int ww = Math.round(d.width(word) * ws);
-        d.textScaled(word, centerX - ww / 2, ly + 44, Theme.TEXT, ws, true);
         // welcome back, with your head
         String hi = "Welcome back, " + p.playerName();
         int[] face = SkinFaces.get(p.playerUuid());
@@ -371,9 +378,13 @@ public final class TitleMenu {
             int r = Math.max(2, Math.round(ROUND / 2f * sc));
             boolean quit = b.action == Platform.Screen.QUIT;
             int hot = quit ? Theme.BAD : a;
+            if (b.glow > 0.01f) {
+                rd.glow(cx - r + 2, cy - r + 2, r * 2 - 4, r * 2 - 4, Theme.withAlpha(hot, Math.round(0x60 * b.glow)));
+            }
             rd.roundRect(cx - r, cy - r, r * 2, r * 2, r, Theme.mix(Glass.PANE, Theme.withAlpha(hot, 0xC0), b.glow * 0.85f));
             rd.roundOutline(cx - r, cy - r, r * 2, r * 2, r, Theme.mix(Glass.EDGE, hot, b.glow));
-            MenuIcons.draw(rd, b.icon, cx - 4, cy - 4, Theme.mix(0xFFD3D6DE, 0xFFFFFFFF, b.glow));
+            int is = Math.max(4, Math.round(10 * sc));
+            MenuIcons.draw(rd, b.icon, cx - is / 2, cy - is / 2, is, Theme.mix(0xFFD3D6DE, 0xFFFFFFFF, b.glow));
             if (b.glow > 0.05f) {  // its name floats up under it
                 String label = b.label;
                 int lw = rd.width(label) + 10;
@@ -395,9 +406,14 @@ public final class TitleMenu {
             pd.shadow(x, y, w, h);
             Glass.pane(pd, x, y, w, h, 6, 0x9C0E1117);
             // a spotlight under the player
-            for (int i = 0; i < 6; i++) {
-                int rw = w - 24 - i * 6;
-                pd.roundRect(x + (w - rw) / 2, y + h - 48 + i, rw, 3, 1, Theme.withAlpha(a, 0x10 + i * 4));
+            if (pd.hasTextures()) {
+                Glass.light(pd, x + w / 2, y + h - 45, w - 16, 14, Theme.withAlpha(a, 0x90));
+                Glass.light(pd, x + w / 2, y + h - 45, w - 40, 5, Theme.withAlpha(0xFFFFFF, 0x30));
+            } else {
+                for (int i = 0; i < 6; i++) {
+                    int rw = w - 24 - i * 6;
+                    pd.roundRect(x + (w - rw) / 2, y + h - 48 + i, rw, 3, 1, Theme.withAlpha(a, 0x10 + i * 4));
+                }
             }
             String cape = net.peregrine.client.core.modules.Cosmetics.CAPES[
                     net.peregrine.client.core.modules.Cosmetics.capeIndex()];
@@ -415,12 +431,13 @@ public final class TitleMenu {
     /** A big glass tile: its icon large in the middle, its name under it; the first is filled with the accent. */
     private static void drawTile(Draw d, Button b, int x, int y, int w, int h, float g, int a, boolean primary, long now) {
         d.shadow(x, y, w, h);
+        if (g > 0.01f || primary) {  // a soft light in the accent spills out around it
+            d.glow(x + 4, y + 6, w - 8, h - 8, Theme.withAlpha(a, Math.round((primary ? 0x30 : 0) + 0x50 * g)));
+        }
         if (primary) {
             d.roundRect(x, y, w, h, 7, Theme.mix(a, Theme.mix(a, 0xFFFFFFFF, 0.15f), g));
-            for (int i = 7; i < h / 2; i++) {  // light from the top of the tile
-                d.rect(x + 1, y + i, w - 2, 1, Theme.withAlpha(0xFFFFFF, Math.round(0x1A * (1f - i / (h / 2f)))));
-            }
-            d.rect(x + 7, y, w - 14, 1, 0x60FFFFFF);
+            Glass.sheen(d, x, y, w, h, 7, 0x2A);  // light from the top of the tile
+            Glass.line(d, x + 7, y, w - 14, 0x70FFFFFF);
             if (g > 0.01f) {
                 d.roundOutline(x - 1, y - 1, w + 2, h + 2, 8, Theme.withAlpha(a, Math.round(0x90 * g)));
             }
@@ -433,9 +450,8 @@ public final class TitleMenu {
         int fg = primary ? Theme.onColor(a) : Theme.mix(0xFFD3D6DE, 0xFFFFFFFF, g);
         // the icon, twice the size, bobbing a little while hovered
         int bob = Math.round((float) Math.sin(now / 160.0) * g * 1.5f);
-        d.pushScale(x + w / 2 - 9, y + 11 + bob, 2f);
-        MenuIcons.draw(d, b.icon, 0, 0, fg);
-        d.popScale();
+        int is = 20 + Math.round(g * 2);
+        MenuIcons.draw(d, b.icon, x + (w - is) / 2, y + 21 - is / 2 + bob, is, fg);
         String label = b.label.equals("Peregrine modules") ? "Modules" : b.label;
         label = d.trim(label, w - 8);
         d.text(label, x + (w - d.width(label)) / 2, y + h - 17, fg, !primary);

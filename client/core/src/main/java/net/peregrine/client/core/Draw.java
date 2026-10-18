@@ -65,6 +65,10 @@ public interface Draw {
     /** A filled rectangle with softly rounded corners (2 px), drawn without overlaps
      *  so see-through colors stay even. */
     default void roundRect(int x, int y, int w, int h, int argb) {
+        if (hasTextures() && w >= 5 && h >= 5) {
+            roundRect(x, y, w, h, 3, argb);
+            return;
+        }
         if (w < 5 || h < 5) {
             rect(x, y, w, h, argb);
             return;
@@ -76,9 +80,28 @@ public interface Draw {
         rect(x + 2, y + h - 1, w - 4, 1, argb);
     }
 
+    /** Whether texture() draws here (then rounded shapes get smooth, anti-aliased corners). */
+    default boolean hasTextures() {
+        return false;
+    }
+
+    String GUI = "peregrine-client:textures/gui/";
+
     /** A filled rectangle with corners rounded by r pixels (0 = square). */
     default void roundRect(int x, int y, int w, int h, int r, int argb) {
         r = Math.max(0, Math.min(r, Math.min(w, h) / 2));
+        if (r >= 2 && hasTextures()) {
+            // smooth corners: a quarter of a soft-edged circle in each, plain fills between them (no overlaps)
+            String c = r <= 16 ? Art.round(r) : GUI + "circle.png";
+            texture(c, x, y, r, r, 0f, 0f, 0.5f, 0.5f, argb);
+            texture(c, x + w - r, y, r, r, 0.5f, 0f, 1f, 0.5f, argb);
+            texture(c, x, y + h - r, r, r, 0f, 0.5f, 0.5f, 1f, argb);
+            texture(c, x + w - r, y + h - r, r, r, 0.5f, 0.5f, 1f, 1f, argb);
+            rect(x + r, y, w - 2 * r, r, argb);
+            rect(x, y + r, w, h - 2 * r, argb);
+            rect(x + r, y + h - r, w - 2 * r, r, argb);
+            return;
+        }
         if (r <= 2) {
             if (r == 2) {
                 roundRect(x, y, w, h, argb);
@@ -103,6 +126,18 @@ public interface Draw {
     /** A 1 px border that follows roundRect(x, y, w, h, r, ...)'s corners. */
     default void roundOutline(int x, int y, int w, int h, int r, int argb) {
         r = Math.max(0, Math.min(r, Math.min(w, h) / 2));
+        if (r >= 2 && r <= 16 && hasTextures()) {
+            String c = Art.ring(r);
+            texture(c, x, y, r, r, 0f, 0f, 0.5f, 0.5f, argb);
+            texture(c, x + w - r, y, r, r, 0.5f, 0f, 1f, 0.5f, argb);
+            texture(c, x, y + h - r, r, r, 0f, 0.5f, 0.5f, 1f, argb);
+            texture(c, x + w - r, y + h - r, r, r, 0.5f, 0.5f, 1f, 1f, argb);
+            rect(x + r, y, w - 2 * r, 1, argb);
+            rect(x + r, y + h - 1, w - 2 * r, 1, argb);
+            rect(x, y + r, 1, h - 2 * r, argb);
+            rect(x + w - 1, y + r, 1, h - 2 * r, argb);
+            return;
+        }
         if (r <= 2) {
             if (r == 2) {
                 roundOutline(x, y, w, h, argb);
@@ -133,6 +168,10 @@ public interface Draw {
 
     /** A 1 px border that follows roundRect's corners. */
     default void roundOutline(int x, int y, int w, int h, int argb) {
+        if (hasTextures() && w >= 5 && h >= 5) {
+            roundOutline(x, y, w, h, 3, argb);
+            return;
+        }
         if (w < 5 || h < 5) {
             outline(x, y, w, h, argb);
             return;
@@ -149,9 +188,39 @@ public interface Draw {
 
     /** A soft shadow around a box, for floating windows. */
     default void shadow(int x, int y, int w, int h) {
+        if (hasTextures() && w >= 16 && h >= 16) {
+            nineSlice(GUI + "shadow.png", x, y, w, h, 0xFFFFFFFF);
+            return;
+        }
         roundOutline(x - 1, y - 1, w + 2, h + 2, 0x50000000);
         roundOutline(x - 2, y - 1, w + 4, h + 3, 0x28000000);
         roundOutline(x - 3, y, w + 6, h + 4, 0x14000000);
+    }
+
+    /** A soft coloured light around (and under) a box, for things that are hovered or on. */
+    default void glow(int x, int y, int w, int h, int argb) {
+        if (hasTextures() && w > 0 && h > 0 && (argb >>> 24) > 0) {
+            int gw = Math.max(16, w), gh = Math.max(16, h);  // the slices need a box at least 16 square
+            nineSlice(GUI + "glow.png", x - (gw - w) / 2, y - (gh - h) / 2, gw, gh, argb);
+        }
+    }
+
+    /** A 96 x 96 blur texture stretched around a box: 8 px corners outside it, edges in between. */
+    default void nineSlice(String t, int x, int y, int w, int h, int argb) {
+        int c = 8;
+        int ox = x - c, oy = y - c, ow = w + 2 * c, oh = h + 2 * c;
+        int cs = 2 * c;  // each corner piece covers 8 px outside the box and 8 inside
+        texture(t, ox, oy, cs, cs, 0f, 0f, 0.5f, 0.5f, argb);
+        texture(t, ox + ow - cs, oy, cs, cs, 0.5f, 0f, 1f, 0.5f, argb);
+        texture(t, ox, oy + oh - cs, cs, cs, 0f, 0.5f, 0.5f, 1f, argb);
+        texture(t, ox + ow - cs, oy + oh - cs, cs, cs, 0.5f, 0.5f, 1f, 1f, argb);
+        texture(t, ox + cs, oy, ow - 2 * cs, cs, 0.49f, 0f, 0.51f, 0.5f, argb);
+        texture(t, ox + cs, oy + oh - cs, ow - 2 * cs, cs, 0.49f, 0.5f, 0.51f, 1f, argb);
+        texture(t, ox, oy + cs, cs, oh - 2 * cs, 0f, 0.49f, 0.5f, 0.51f, argb);
+        texture(t, ox + ow - cs, oy + cs, cs, oh - 2 * cs, 0.5f, 0.49f, 1f, 0.51f, argb);
+        if (t.endsWith("glow.png")) {  // the glow is solid in the middle too
+            texture(t, ox + cs, oy + cs, ow - 2 * cs, oh - 2 * cs, 0.49f, 0.49f, 0.51f, 0.51f, argb);
+        }
     }
 
     default String trim(String s, int maxWidth) {

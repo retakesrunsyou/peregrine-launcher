@@ -70,13 +70,7 @@ public final class PauseMenu {
         int sw = p.screenWidth(), sh = p.screenHeight();
         // the game dims, a little more at the edges
         d.rect(0, 0, sw, sh, 0x48000000);
-        int edge = Math.max(1, sw / 5);
-        for (int x = 0; x < edge; x += 2) {
-            float k = 1f - x / (float) edge;
-            int al = Math.round(0x50 * k * k);
-            d.rect(x, 0, 2, sh, Theme.withAlpha(0, al));
-            d.rect(sw - x - 2, 0, 2, sh, Theme.withAlpha(0, al));
-        }
+        Glass.vignette(d, sw, sh, 0x90);
 
         // the card rises into place with a little overshoot
         int rise = Math.round((1f - Glass.backOut(t)) * 14);
@@ -92,7 +86,7 @@ public final class PauseMenu {
             SkinFaces.draw(d, face, hx + 1, y + PAD + 1, 18);
             hx += 26;
         } else {
-            d.textScaled(Hooks.LOGO, hx, y + PAD, 0xFFFFFFFF, 2.2f, false);
+            Glass.logo(d, hx, y + PAD, 2.2f, 0xFFFFFFFF);
             hx += 24;
         }
         d.text(p.playerName(), hx, y + PAD + 2, Theme.TEXT, true);
@@ -121,18 +115,24 @@ public final class PauseMenu {
                 bd.text(b.label, b.x + (b.w - bd.width(b.label)) / 2 + 6, by + 8, Theme.onColor(a), false);
             } else if (b == leave) {
                 int col = Theme.mix(Theme.withAlpha(Theme.BAD, 0x90), Theme.BAD, b.glow);
+                if (b.glow > 0.01f) {
+                    bd.glow(b.x + 4, by + 3, b.w - 8, b.h - 4, Theme.withAlpha(Theme.BAD, Math.round(0x40 * b.glow)));
+                }
                 bd.roundRect(b.x, by, b.w, b.h, 6, Theme.withAlpha(Theme.BAD, Math.round(0x18 + 0x50 * b.glow)));
                 bd.roundOutline(b.x, by, b.w, b.h, 6, col);
                 MenuIcons.draw(bd, "leave", b.x + b.w / 2 - bd.width(b.label) / 2 - 8, by + 5, Theme.mix(0xFFE8B4B4, 0xFFFFFFFF, b.glow));
                 bd.text(b.label, b.x + (b.w - bd.width(b.label)) / 2 + 6, by + 5, Theme.mix(0xFFE8B4B4, 0xFFFFFFFF, b.glow), false);
             } else {
                 int lift = Math.round(b.glow * 2);
+                if (b.glow > 0.01f) {
+                    bd.glow(b.x + 4, by - lift + 5, b.w - 8, b.h - 6, Theme.withAlpha(a, Math.round(0x38 * b.glow)));
+                }
                 Glass.pane(bd, b.x, by - lift, b.w, b.h, 6, Theme.mix(Glass.PANE, Glass.PANE_HOVER, b.glow));
                 if (b.glow > 0.01f) {
                     bd.roundOutline(b.x, by - lift, b.w, b.h, 6, Theme.withAlpha(a, Math.round(0xB0 * b.glow)));
                 }
                 bd.roundRect(b.x + 7, by - lift + (b.h - 22) / 2, 22, 22, 11, Theme.mix(0x24FFFFFF, Theme.withAlpha(a, 0x70), b.glow));
-                MenuIcons.draw(bd, b.icon, b.x + 14, by - lift + (b.h - 9) / 2, Theme.mix(0xFFD3D6DE, 0xFFFFFFFF, b.glow));
+                MenuIcons.draw(bd, b.icon, b.x + 13, by - lift + (b.h - 11) / 2, 11, Theme.mix(0xFFD3D6DE, 0xFFFFFFFF, b.glow));
                 String label = b == more ? "More" : b.label;
                 bd.text(bd.trim(label, b.w - 40), b.x + 35, by - lift + b.h / 2 - 7, Theme.TEXT, false);
                 String sub = b == modules ? "Right Shift" : b == options ? "Video, sound..." : b == locker ? "Capes, skins" : "Stats, LAN...";

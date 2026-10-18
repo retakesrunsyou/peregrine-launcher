@@ -155,6 +155,10 @@ abstract class MenuPanel {
 
     /** A small trash can (9 x 10). */
     protected static void trash(Draw d, int x, int y, int c) {
+        if (d.hasTextures()) {
+            MenuIcons.draw(d, "trash", x - 1, y - 1, 11, c);
+            return;
+        }
         d.rect(x + 3, y, 3, 1, c);
         d.rect(x, y + 1, 9, 1, c);
         d.rect(x + 1, y + 3, 1, 7, c);
@@ -168,7 +172,12 @@ abstract class MenuPanel {
     protected static void dots(Draw d, int x, int y, long now, int c) {
         for (int i = 0; i < 3; i++) {
             float k = 0.35f + 0.65f * (float) Math.max(0, Math.sin((now / 160.0) - i * 0.9));
-            d.rect(x + i * 4, y, 2, 2, Theme.withAlpha(c, Math.round(0xFF * k)));
+            int col = Theme.withAlpha(c, Math.round(0xFF * k));
+            if (d.hasTextures()) {
+                d.texture(Art.round(2), x + i * 4, y, 3, 3, 0f, 0f, 1f, 1f, col);
+            } else {
+                d.rect(x + i * 4, y, 2, 2, col);
+            }
         }
     }
 

@@ -119,4 +119,9 @@ public final class GuiDraw implements Draw {
         texture(id, 0, 0, S, S, u0, v0, u1, v1, argb);
         g.pose().popMatrix();
     }
+
+    @Override
+    public boolean hasTextures() {
+        return true;
+    }
 }

@@ -533,7 +533,7 @@ public final class Menu {
 
         // Title: the falcon, "Peregrine", and where you are
         int ty = py + (TITLE_H - 8) / 2;
-        d.textScaled(Hooks.LOGO, px + 9, ty - 4, 0xFFFFFFFF, 1.6f, false);
+        Glass.logo(d, px + 9, ty - 4, 1.6f, 0xFFFFFFFF);
         d.textScaled("Peregrine", px + 27, ty - 1, Theme.TEXT, 1.25f, true);
         String crumb = crumb();
         int cx0 = px + 27 + Math.round(d.width("Peregrine") * 1.25f) + 6;
@@ -546,9 +546,13 @@ public final class Menu {
         float cg = sideGlowOf("close", closeHover, dt);
         d.roundRect(closeX, closeY, 16, 16, 8, Theme.mix(0x30FFFFFF, Theme.withAlpha(Theme.BAD, 0xD0), cg));
         int xc = Theme.mix(Theme.MUTED, 0xFFFFFFFF, cg);
-        for (int i = 0; i < 6; i++) {  // a small drawn ×, crisp at any GUI scale
-            d.rect(closeX + 5 + i, closeY + 5 + i, 1, 1, xc);
-            d.rect(closeX + 10 - i, closeY + 5 + i, 1, 1, xc);
+        if (d.hasTextures()) {
+            MenuIcons.draw(d, "close", closeX + 4, closeY + 4, 8, xc);
+        } else {
+            for (int i = 0; i < 6; i++) {  // a small drawn ×, crisp at any GUI scale
+                d.rect(closeX + 5 + i, closeY + 5 + i, 1, 1, xc);
+                d.rect(closeX + 10 - i, closeY + 5 + i, 1, 1, xc);
+            }
         }
 
         // Search (it searches whatever page you're on), and ≡ (only what's on) for the modules
@@ -798,8 +802,11 @@ public final class Menu {
         if (selY >= 0) {
             sideSlide = sideSlide < 0 ? selY : sideSlide + (selY - sideSlide) * Math.min(1f, dt * 16f);
             int sx = selKid ? sideX + 14 : sideX + 3, sw = selKid ? sideW - 17 : sideW - 6, sh = selKid ? rowH - 2 : rowH;
-            d.roundRect(sx, Math.round(sideSlide), sw, sh, 4, a);
-            d.rect(sx + 4, Math.round(sideSlide), sw - 8, 1, 0x50FFFFFF);
+            int sy = Math.round(sideSlide);
+            d.glow(sx + 3, sy + 3, sw - 6, sh - 4, Theme.withAlpha(a, 0x48));
+            d.roundRect(sx, sy, sw, sh, 4, a);
+            Glass.sheen(d, sx, sy, sw, sh, 4, 0x1C);
+            Glass.line(d, sx + 3, sy, sw - 6, 0x60FFFFFF);
         }
         // icons and names on top
         for (Row r : rows) {
@@ -819,7 +826,7 @@ public final class Menu {
                 if (r.n.icon != null) {
                     MenuIcons.draw(rd, r.n.icon, sideX + 18, r.y + ty - 2, kc);
                 } else {
-                    rd.rect(sideX + 20, r.y + ty + 2, 2, 2, kc);
+                    rd.roundRect(sideX + 19, r.y + ty + 1, 4, 4, 2, kc);
                 }
                 rd.text(rd.trim(r.n.label, sideW - 50), sideX + 31, r.y + ty - 1, kc, false);
                 if (r.n.id.startsWith("cat:")) {  // how many are on

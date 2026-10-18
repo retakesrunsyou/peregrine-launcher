@@ -72,7 +72,7 @@ final class FadeDraw implements Draw {
 
     @Override
     public void texture(String id, int x, int y, int w, int h, float u0, float v0, float u1, float v1, int argb) {
-        if (visible()) {
+        if (visible() && (argb >>> 24) != 0) {  // a texture tinted clear is just clear
             d.texture(id, x, y, w, h, u0, v0, u1, v1, fade(argb));
         }
     }
@@ -80,7 +80,7 @@ final class FadeDraw implements Draw {
     @Override
     public void textureQuad(String id, float x, float y, float ax, float ay, float bx, float by,
                             float u0, float v0, float u1, float v1, int argb) {
-        if (visible()) {
+        if (visible() && (argb >>> 24) != 0) {
             d.textureQuad(id, x, y, ax, ay, bx, by, u0, v0, u1, v1, fade(argb));
         }
     }
@@ -104,5 +104,10 @@ final class FadeDraw implements Draw {
     static float progress(long startMs, long durationMs) {
         float t = Math.max(0f, Math.min(1f, (System.currentTimeMillis() - startMs) / (float) durationMs));
         return 1f - (1f - t) * (1f - t) * (1f - t);
+    }
+
+    @Override
+    public boolean hasTextures() {
+        return d.hasTextures();
     }
 }

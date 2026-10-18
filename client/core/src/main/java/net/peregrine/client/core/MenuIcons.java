@@ -339,6 +339,26 @@ public final class MenuIcons {
             ".........",
             ".........",
             "........."});
+        ICONS.put("trash", new String[] {
+            "...###...",
+            "#########",
+            ".........",
+            ".#######.",
+            ".#.#.#.#.",
+            ".#.#.#.#.",
+            ".#.#.#.#.",
+            ".#.....#.",
+            ".#######."});
+        ICONS.put("close", new String[] {
+            ".........",
+            ".#.....#.",
+            "..#...#..",
+            "...#.#...",
+            "....#....",
+            "...#.#...",
+            "..#...#..",
+            ".#.....#.",
+            "........."});
         ICONS.put("chevron", new String[] {
             "..#......",
             "...#.....",
@@ -354,8 +374,33 @@ public final class MenuIcons {
     private MenuIcons() {
     }
 
-    /** Draws an icon 9 pixels square (times scale) with its top-left at x, y. */
+    /** Draws an icon 9 pixels square with its top-left at x, y. */
     public static void draw(Draw d, String name, int x, int y, int color) {
+        draw(d, name, x, y, 9, color);
+    }
+
+    /**
+     * Draws an icon size pixels square. Where textures work this is a smooth, high resolution
+     * picture; otherwise the 9 x 9 pixel map, scaled.
+     */
+    public static void draw(Draw d, String name, int x, int y, int size, int color) {
+        if (!ICONS.containsKey(name)) {
+            return;
+        }
+        if (d.hasTextures()) {
+            d.texture(Art.icon(name, size), x, y, size, size, 0f, 0f, 1f, 1f, color);
+            return;
+        }
+        if (size != 9) {
+            d.pushScale(x, y, size / 9f);
+            pixels(d, name, 0, 0, color);
+            d.popScale();
+            return;
+        }
+        pixels(d, name, x, y, color);
+    }
+
+    private static void pixels(Draw d, String name, int x, int y, int color) {
         String[] rows = ICONS.get(name);
         if (rows == null) {
             return;

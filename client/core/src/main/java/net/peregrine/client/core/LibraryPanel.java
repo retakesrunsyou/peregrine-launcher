@@ -155,7 +155,7 @@ final class LibraryPanel extends MenuPanel {
             boolean using = inUse != null && inUse.equals(it.file);
             Glass.pane(rd, x, ry, w, ROW, 4, Theme.mix(Glass.PANE, Glass.PANE_HOVER, g));
             if (on && kind != Library.Kind.SHADERS || using) {
-                rd.rect(x + 1, ry + 5, 2, ROW - 10, a);
+                rd.roundRect(x + 1, ry + 5, 2, ROW - 10, 1, a);
             }
             icon(rd, it.iconFile, it.name, x + 6, ry + 5, 20, a);
             int tx = x + 32;

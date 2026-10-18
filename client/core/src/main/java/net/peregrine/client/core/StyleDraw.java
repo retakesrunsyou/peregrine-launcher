@@ -172,4 +172,31 @@ final class StyleDraw implements Draw {
     public void popScale() {
         d.popScale();
     }
+
+    @Override
+    public void texture(String id, int x, int y, int w, int h, float u0, float v0, float u1, float v1, int argb) {
+        if (argb == Theme.HUD_BG) {  // a smooth corner of the panel: same rule as rect()
+            if (!m.background) {
+                return;
+            }
+            argb = Theme.withAlpha(argb, m.backgroundAlpha);
+        }
+        d.texture(id, x, y, w, h, u0, v0, u1, v1, argb);
+    }
+
+    @Override
+    public void textureQuad(String id, float x, float y, float ax, float ay, float bx, float by,
+                            float u0, float v0, float u1, float v1, int argb) {
+        d.textureQuad(id, x, y, ax, ay, bx, by, u0, v0, u1, v1, argb);
+    }
+
+    @Override
+    public boolean supportsQuads() {
+        return d.supportsQuads();
+    }
+
+    @Override
+    public boolean hasTextures() {
+        return d.hasTextures();
+    }
 }
