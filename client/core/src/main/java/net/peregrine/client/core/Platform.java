@@ -156,6 +156,10 @@ public interface Platform {
     /** Turns an option on, or back to Minecraft's default when off. */
     void setOption(Option option, boolean on);
 
+    /** Writes Minecraft's options to options.txt now, so a setting Peregrine changed back stays changed. */
+    default void saveOptions() {
+    }
+
     // ---- added in batch 3 (defaults keep older adapters and tests working)
 
     /** The player's health in half-hearts (20 = full), or -1 outside a world. */

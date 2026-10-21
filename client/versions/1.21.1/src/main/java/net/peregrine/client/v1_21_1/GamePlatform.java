@@ -754,6 +754,13 @@ final class GamePlatform implements Platform {
     }
 
     @Override
+    public void saveOptions() {
+        if (mc().options != null) {
+            mc().options.save();
+        }
+    }
+
+    @Override
     public void setOption(Option option, boolean on) {
         var o = mc().options;
         switch (option) {

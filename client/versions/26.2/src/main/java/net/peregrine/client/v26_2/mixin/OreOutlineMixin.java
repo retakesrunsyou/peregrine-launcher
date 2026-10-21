@@ -27,6 +27,15 @@ public abstract class OreOutlineMixin {
         }
         float width = mc$width();
         net.minecraft.world.phys.Vec3 cam = state.cameraRenderState.pos;
+        if (net.peregrine.client.v26_2.SchemGhosts.wanted()) {  // see-through copies of the blocks still to place
+            final double gx = cam.x, gy = cam.y, gz = cam.z;
+            try {
+                collector.submitCustomGeometry(pose, RenderTypes.entityTranslucent(net.minecraft.client.renderer.texture.TextureAtlas.LOCATION_BLOCKS),
+                        (p, vc) -> net.peregrine.client.v26_2.SchemGhosts.emit(p, vc, gx, gy, gz));
+            } catch (RuntimeException e) {
+                net.peregrine.client.v26_2.SchemGhosts.off(e);
+            }
+        }
         Minecraft mc = Minecraft.getInstance();
         java.util.List<OreScan.Vein> ores = OreScan.all();
         if (ores.isEmpty() || mc.level == null) {

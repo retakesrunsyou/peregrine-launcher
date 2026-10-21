@@ -7,12 +7,15 @@ import net.peregrine.client.core.Platform;
 import net.peregrine.client.core.Schematics;
 import net.peregrine.client.core.Theme;
 import net.peregrine.client.core.settings.BoolSetting;
+import net.peregrine.client.core.settings.SliderSetting;
 
 /** While a schematic is placed: how much is built, the layer, and which block goes where you look. */
 public final class SchematicHud extends HudModule {
 
     static final int W = 150;
     private final BoolSetting hint = add(new BoolSetting("hint", "Show the block to place where you look", true));
+    public final BoolSetting ghosts = add(new BoolSetting("ghosts", "See-through ghost blocks where blocks are missing", true));
+    public final SliderSetting ghostOpacity = add(new SliderSetting("ghost_opacity", "Ghost block opacity", 15f, 85f, 5f, 45f, "%.0f%%"));
     private String[] looking;
     private long lookedAt;
 

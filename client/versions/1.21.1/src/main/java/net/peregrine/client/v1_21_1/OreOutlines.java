@@ -19,6 +19,10 @@ final class OreOutlines {
     }
 
     static void draw(PoseStack pose, MultiBufferSource buffers, Camera camera) {
+        if (SchemGhosts.wanted()) {  // see-through copies of the blocks still to place
+            Vec3 gc = camera.getPosition();
+            SchemGhosts.emit(pose.last(), buffers.getBuffer(RenderType.entityTranslucent(net.minecraft.client.renderer.texture.TextureAtlas.LOCATION_BLOCKS)), gc.x, gc.y, gc.z);
+        }
         java.util.List<OreScan.Vein> ores = OreScan.all();
         Minecraft mc = Minecraft.getInstance();
         if (ores.isEmpty() || mc.level == null) {

@@ -11,6 +11,12 @@ public final class Hooks {
     public static volatile boolean schematicOn;
     /** Frames the schematic outlines were drawn (for the self-test). */
     public static volatile int schematicHits;
+    /** Missing blocks also show as see-through copies of the block that goes there. */
+    public static volatile boolean schematicGhosts;
+    /** How solid those ghost blocks are (0-255). */
+    public static volatile int schematicGhostAlpha = 0x70;
+    /** Ghost blocks drawn (for the self-test). */
+    public static volatile int schematicGhostHits;
 
 
     private Hooks() {

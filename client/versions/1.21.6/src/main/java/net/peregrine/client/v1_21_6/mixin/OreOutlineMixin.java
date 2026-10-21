@@ -28,6 +28,11 @@ public abstract class OreOutlineMixin {
             return;
         }
         Vec3 cam = camera.getPosition();
+        if (net.peregrine.client.v1_21_6.SchemGhosts.wanted()) {  // see-through copies of the blocks still to place
+            Vec3 gc = camera.getPosition();
+            net.peregrine.client.v1_21_6.SchemGhosts.emit(pose.last(), buffers.getBuffer(RenderType.entityTranslucent(net.minecraft.client.renderer.texture.TextureAtlas.LOCATION_BLOCKS)), gc.x, gc.y, gc.z);
+            buffers.endLastBatch();
+        }
         VertexConsumer lines = buffers.getBuffer(RenderType.lines());
         Minecraft mc = Minecraft.getInstance();
         java.util.List<OreScan.Vein> ores = OreScan.all();

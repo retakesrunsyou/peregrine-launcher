@@ -892,6 +892,11 @@ public final class SelfTest {
                 return Hooks.schematicHits > 0;
             }
         });
+        waitFor("see-through ghost blocks draw where blocks are missing", 200, new Cond() {
+            public boolean ok() {
+                return Hooks.schematicGhostHits > 0;
+            }
+        });
         waitTicks(30);
         shot("29c-schematic");
         run("the menu on the Schematics page", new Runnable() {

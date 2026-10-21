@@ -184,6 +184,20 @@ final class SchematicsPanel extends MenuPanel {
         Glass.toggle(d, sx + 5, y + 3, glow("visk", pl.visible, dt * 1.6f), a, false);
         d.text(sh, sx + 26, y + 4, Theme.TEXT, false);
         spot("visible", sx, y, sw2, 15);
+        // ghost blocks: see-through copies of the blocks still to place
+        net.peregrine.client.core.modules.SchematicHud hud = hud();
+        if (hud != null) {
+            boolean gOn = hud.ghosts.value;
+            String gh = "Ghost blocks";
+            int gw = d.width(gh) + 30, gx = sx - gw - 6;
+            if (gx > x + Math.min(w / 2, d.width(dims) + 8)) {
+                float gg = glow("ghost", in(mx, my, gx, y, gw, 15), dt);
+                Glass.pill(d, gx, y, gw, 15, false, gg, a);
+                Glass.toggle(d, gx + 5, y + 3, glow("ghostk", gOn, dt * 1.6f), a, false);
+                d.text(gh, gx + 26, y + 4, pl.visible ? Theme.TEXT : Theme.MUTED, false);
+                spot("ghosts", gx, y, gw, 15);
+            }
+        }
         int top = y + 28;
         if (!Schematics.sameWorld(pl, p)) {
             top += banner(d, x, top, w, "Placed in another world: \"To me\" moves it here", a);
@@ -320,6 +334,12 @@ final class SchematicsPanel extends MenuPanel {
             listedAt = 0;
         } else if (id.equals("visible")) {
             pl.visible = !pl.visible;
+        } else if (id.equals("ghosts")) {
+            net.peregrine.client.core.modules.SchematicHud hud = hud();
+            if (hud != null) {
+                hud.ghosts.value = !hud.ghosts.value;
+                pc.markDirty();
+            }
         } else if (id.startsWith("move:")) {
             int step = id.endsWith("+") ? 1 : -1;
             char axis = id.charAt(5);
@@ -354,5 +374,10 @@ final class SchematicsPanel extends MenuPanel {
         }
         Schematics.changed();
         return true;
+    }
+
+    private net.peregrine.client.core.modules.SchematicHud hud() {
+        Module m = pc.module("schematic");
+        return m instanceof net.peregrine.client.core.modules.SchematicHud ? (net.peregrine.client.core.modules.SchematicHud) m : null;
     }
 }

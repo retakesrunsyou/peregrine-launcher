@@ -217,7 +217,9 @@ public final class Schematics {
     public static List<int[]> overlay(Platform p, int range, int limit) {
         Placement pl = current;
         List<int[]> out = new ArrayList<int[]>();
+        List<Object[]> ghostsNow = new ArrayList<Object[]>();
         if (pl == null || !pl.visible || !p.inWorld() || !sameWorld(pl, p)) {
+            ghosts = ghostsNow;
             return out;
         }
         int cx = (int) Math.floor(p.x()), cy = (int) Math.floor(p.y()), cz = (int) Math.floor(p.z());
@@ -241,16 +243,32 @@ public final class Schematics {
                     int c = compare(pl, want, have);
                     if (c != OK) {
                         out.add(new int[] {x, y, z, c});
+                        if (c == MISSING && ghostsNow.size() < GHOST_LIMIT) {
+                            ghostsNow.add(new Object[] {x, y, z, pl.state(want)});
+                        }
                     }
                 }
             }
         }
+        ghosts = ghostsNow;
         long now = System.currentTimeMillis();
         if (now - checkedAt > 2000) {
             checkedAt = now;
             progress(pl, p);
         }
         return out;
+    }
+
+    /** At most this many ghost blocks are drawn at once (the nearest layers come first). */
+    public static final int GHOST_LIMIT = 4000;
+    private static volatile List<Object[]> ghosts = Collections.emptyList();
+
+    /**
+     * The missing blocks from the last overlay() check, to draw as see-through ghosts:
+     * {x, y, z, block state such as "minecraft:oak_stairs[facing=north,half=bottom]"}.
+     */
+    public static List<Object[]> ghosts() {
+        return ghosts;
     }
 
     /** Returned by compare when the block is right. */

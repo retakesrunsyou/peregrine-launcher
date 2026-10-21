@@ -463,7 +463,17 @@ public final class Peregrine {
         f.text(state, x + w - 6 - d.width(state), y + 4, toastOn ? accent : Theme.MUTED, false);
     }
 
+    private boolean optionsRepaired;
+
     public void tick() {
+        if (!optionsRepaired) {  // undo game settings a turned-off module left switched on
+            optionsRepaired = true;
+            try {
+                OptionModule.repair(platform, modules);
+            } catch (RuntimeException e) {
+                // never stop the game over this
+            }
+        }
         if (SelfTest.ACTIVE) {
             SelfTest.tick(this);
         }
@@ -474,6 +484,12 @@ public final class Peregrine {
         }
         Schematics.Placement placed = Schematics.current();
         Hooks.schematicOn = placed != null && placed.visible && platform.inWorld();
+        Module sm = module("schematic");
+        if (sm instanceof net.peregrine.client.core.modules.SchematicHud) {  // its ghost settings apply even with the HUD off
+            net.peregrine.client.core.modules.SchematicHud sh = (net.peregrine.client.core.modules.SchematicHud) sm;
+            Hooks.schematicGhosts = Hooks.schematicOn && sh.ghosts.value;
+            Hooks.schematicGhostAlpha = Math.round(sh.ghostOpacity.value * 2.55f);
+        }
         if (platform.inWorld()) {
             rememberServer();
             for (Module m : modules) {
