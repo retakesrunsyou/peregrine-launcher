@@ -13,6 +13,7 @@
 		"CloudsMixin",
 		"ContainerScreenAccessor",
 		"CrosshairMixin",
+		"CustomSkyMixin",
 		"DiamondBedrockMixin",
 		"EquipSpeedMixin",
 		"FogAirMixin",

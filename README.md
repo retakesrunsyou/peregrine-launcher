@@ -202,3 +202,9 @@ To uninstall on Windows use **Apps > Installed apps > Peregrine Launcher**. On L
 ---
 
 Not an official Minecraft product. Not approved by or associated with Mojang or Microsoft.
+
+## Credits for the custom skies
+
+- Star and Milky Way maps: NASA/Goddard Space Flight Center Scientific Visualization Studio, *Deep Star Maps 2020*. Gaia DR2: ESA/Gaia/DPAC. Also Hipparcos-2, Tycho-2 and the Yale Bright Star Catalog.
+- The Moon: NASA's Scientific Visualization Studio, *CGI Moon Kit* (Ernie Wright, Noah Petro), from the Lunar Reconnaissance Orbiter's camera (LROC) and laser altimeter (LOLA).
+- The black hole is Peregrine's own ray-traced simulation (`tools/blackhole_raytrace.py`); the aurora, meteors and clouds are drawn by `tools/make_sky_art.py`.

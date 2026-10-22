@@ -544,6 +544,9 @@ final class GamePlatform implements Platform {
 
     @Override
     public boolean supports(String moduleId) {
+        if (moduleId.equals("custom_sky")) {
+            return false;  // custom skies are drawn on 26.1 for now (beta)
+        }
         return !moduleId.equals("chunk_fade") || minecraftVersion().equals("1.21.11");
     }
 

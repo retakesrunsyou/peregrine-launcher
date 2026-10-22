@@ -257,6 +257,9 @@ final class GamePlatform implements Platform {
 
     @Override
     public boolean supports(String moduleId) {
+        if (moduleId.equals("custom_sky")) {
+            return false;  // custom skies are drawn on 26.1 for now (beta)
+        }
         if (moduleId.equals("motion_blur")) {
             return false;  // 1.21.2-1.21.5 effects can't keep the last frame (they can from 1.21.6)
         }
