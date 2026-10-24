@@ -66,7 +66,7 @@ public final class KnifeModels {
         }
     }
 
-    private static Knife[] cache;
+    private static Knife[] cache, lowCache;
 
     private KnifeModels() {
     }
@@ -79,6 +79,25 @@ public final class KnifeModels {
         return cache;
     }
 
+    /** The same knives with far fewer faces (for glows and afterimages). */
+    public static synchronized Knife[] low() {
+        if (lowCache == null) {
+            all();
+            Shapes.detail = 0.34f;
+            try {
+                lowCache = new Knife[] {karambit(), butterfly(), bayonet(), combat(), nomad(), skeleton(), pushDagger()};
+            } finally {
+                Shapes.detail = 1f;
+            }
+        }
+        return lowCache;
+    }
+
+    public static Knife getLow(int i) {
+        Knife[] a = low();
+        return a[Math.max(0, Math.min(a.length - 1, i))];
+    }
+
     public static Knife get(int i) {
         Knife[] a = all();
         return a[Math.max(0, Math.min(a.length - 1, i))];
@@ -89,6 +108,7 @@ public final class KnifeModels {
     /** A straight-ish handle from (x0,y0) to (x1,y1) through a middle control, with a size profile. */
     private static float[][] bar(float[] line, int n, float[][] sizes) {
         float[][] p = Shapes.path(line, n, 4);
+        n = p.length;
         for (int i = 0; i < n; i++) {
             float s = i / (float) (n - 1);
             p[i][2] = Shapes.key(sizes, 1, s);
@@ -100,6 +120,7 @@ public final class KnifeModels {
     /** Rounds off the last few points of a bar to a dome (pommel or end of a guard). */
     private static float[][] domeEnds(float[][] p, int each, boolean start, boolean end) {
         int n = p.length;
+        each = Math.min(each, (start && end ? n / 2 : n) - 1);
         for (int k = 0; k < each; k++) {
             float f = (float) Math.sqrt(1 - Math.pow((each - k) / (float) (each + 0.35f), 2));
             if (start) {
@@ -138,7 +159,7 @@ public final class KnifeModels {
             {0.90f, -0.30f, 0.95f, 0.16f, 0.9f},
             {0.97f, 0.12f, 0.38f, 0.07f, 1},
             {1.00f, 0.25f, 0.25f, 0.00f, 1},
-        }, 0.48f, 0.12f, 140, new float[] {0.14f, 0.52f, 11, 0.28f});
+        }, 0.48f, 0.12f, 100, new float[] {0.14f, 0.52f, 11, 0.28f});
         // cross guard
         float[][] guard = domeEnds(bar(straight(-2.7f, -0.28f, 2.5f, -0.28f), 22, new float[][] {
             {0, 0.30f, 0.62f}, {0.5f, 0.32f, 0.70f}, {1, 0.30f, 0.62f}}), 4, true, true);

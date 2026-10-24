@@ -15,7 +15,7 @@ public final class ZeroDelay extends Module {
     public final BoolSetting crystals = add(new BoolSetting("crystals", "Crystals vanish the moment you hit them", true));
     public final BoolSetting anchors = add(new BoolSetting("anchors", "Anchors vanish the moment you blow them up", true));
     public final BoolSetting instant = add(new BoolSetting("instant", "Clicks and hotbar keys act instantly (some anti-cheats flag this)", false));
-    public final BoolSetting gpuLag = add(new BoolSetting("gpu_lag", "Less input lag when your graphics card is the limit (costs a few FPS)", false));
+    public final BoolSetting gpuLag = add(new BoolSetting("gpu_lag", "Less input lag when your graphics card is the limit (costs some FPS)", false));
 
     /** Read by the game hooks. */
     public static volatile boolean fastCrystals, fastAnchors, instantInput, lowLatency;

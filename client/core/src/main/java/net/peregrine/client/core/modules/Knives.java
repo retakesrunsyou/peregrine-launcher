@@ -24,6 +24,7 @@ public final class Knives extends Module {
     public final SliderSetting color2 = add(new SliderSetting("color2", "Your colors: blade tip", 0f, 360f, 5f, 220f, "%.0f")
             .withText(Knives::hueName));
     public final ChoiceSetting arm = add(new ChoiceSetting("arm", "Your arm", 0, KnifeView.ARM_NAMES));
+    public final SliderSetting armSize = add(new SliderSetting("arm_size", "Arm size", 40f, 140f, 5f, 70f, "%.0f%%"));
     public final SliderSetting size = add(new SliderSetting("size", "Knife size", 0.5f, 2.5f, 0.05f, 1f, "%.2fx"));
     public final SliderSetting moveX = add(new SliderSetting("move_x", "Knife left / right", -8f, 8f, 0.5f, 0f, "%.1f"));
     public final SliderSetting moveY = add(new SliderSetting("move_y", "Knife up / down", -8f, 8f, 0.5f, 0f, "%.1f"));
@@ -67,6 +68,7 @@ public final class Knives extends Module {
         v.skin = skin.index;
         v.armMode = arm.index;
         v.size = size.value;
+        v.armSize = armSize.value / 100f;
         v.moveX = moveX.value;
         v.moveY = moveY.value;
         v.moveZ = moveZ.value;

@@ -16,7 +16,14 @@ public final class Shapes {
     public static final float HANDLE_V0 = 0.625f, HANDLE_V1 = 0.875f;
     public static final float METAL_V0 = 0.875f, METAL_V1 = 1f;
 
+    /** Level of detail for the meshes being built (1 = full; the glow and afterimages use less). */
+    static float detail = 1f;
+
     private Shapes() {
+    }
+
+    static int lod(int n, int min) {
+        return Math.max(min, Math.round(n * detail));
     }
 
     // ------------------------------------------------------------------ curves
@@ -30,6 +37,7 @@ public final class Shapes {
 
     /** n points along a Bézier, each followed by the given extra columns (filled by the caller). */
     static float[][] path(float[] b, int n, int cols) {
+        n = lod(n, 4);
         float[][] out = new float[n][cols];
         for (int i = 0; i < n; i++) {
             float[] p = bez(b, i / (float) (n - 1));
@@ -110,6 +118,7 @@ public final class Shapes {
      * teeth: null or {from s, to s, count, depth} for a saw back.
      */
     public static void blade(Mesh m, float[] line, float[][] keys, float grind, float spineBevel, int n, float[] teeth) {
+        n = lod(n, 10);
         // the cross-section: spine+, spine bevel+, grind line+, edge, grind line-, spine bevel-, spine-
         float[] f = {0, spineBevel, grind, 1, grind, spineBevel, 0};
         int[] side = {1, 1, 1, 0, -1, -1, -1};
@@ -209,6 +218,7 @@ public final class Shapes {
      * closed: the path loops (rings). Ends with a size are closed with flat caps.
      */
     public static void sweep(Mesh m, float[][] path, boolean closed, int around, float p, float zc, float v0, float v1) {
+        around = lod(around, 6);
         int n = path.length;
         int[][] ring = new int[n][around + 1];
         float total = 0;
@@ -291,6 +301,7 @@ public final class Shapes {
 
     /** A ring (in the knife's plane) of centre radius R and bar radius r. */
     public static void ring(Mesh m, float cx, float cy, float R, float r, int segs, int around, float v0, float v1) {
+        segs = lod(segs, 8);
         float[][] path = new float[segs][4];
         for (int i = 0; i < segs; i++) {
             double th = 2 * Math.PI * i / segs;
@@ -304,6 +315,7 @@ public final class Shapes {
 
     /** A short round pin through the knife's thickness (z), like a rivet or pivot. */
     public static void pin(Mesh m, float cx, float cy, float r, float half, int around) {
+        around = lod(around, 6);
         int[] top = new int[around + 1], bot = new int[around + 1], st = new int[around + 1], sb = new int[around + 1];
         for (int j = 0; j <= around; j++) {
             double th = 2 * Math.PI * j / around;

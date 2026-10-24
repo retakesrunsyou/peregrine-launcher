@@ -31,19 +31,21 @@ public final class Shine {
         float wx = rx;
         float up = wy;
         // the sky dome, a bright band near the horizon, dark ground
-        float sky = up > 0 ? 0.55f + 0.45f * (float) Math.pow(up, 0.7) : 0.10f + 0.08f * (1 + up);
-        float band = (float) Math.exp(-Math.pow((up - 0.08f) / 0.10f, 2)) * 0.55f;
+        // (cheap shapes: this runs for every vertex of the knife every frame)
+        float sky = up > 0 ? 0.55f + 0.45f * up * (2.2f - 1.2f * up) : 0.10f + 0.08f * (1 + up);
+        float bd = (up - 0.08f) / 0.10f;
+        float band = 0.55f / (1f + bd * bd * (1f + 0.5f * bd * bd));
         // two soft lamps: high front-left, and right
-        float l1 = lamp(wx, wy, wz, -0.45f, 0.70f, -0.55f, 0.88f) * 1.25f;
-        float l2 = lamp(wx, wy, wz, 0.85f, 0.25f, 0.45f, 0.93f) * 0.8f;
+        float l1 = lamp(wx, wy, wz, -0.4511f, 0.7018f, -0.5514f, 0.88f) * 1.25f;
+        float l2 = lamp(wx, wy, wz, 0.8554f, 0.2516f, 0.4528f, 0.93f) * 0.8f;
         float k = sky + band + l1 + l2;
         float d = 0.35f + 0.65f * daylight;
         return new float[] {k * d * tintR, k * d * tintG, k * d * (tintB * 1.04f)};
     }
 
+    /** A soft round light in direction l (unit). */
     private static float lamp(float x, float y, float z, float lx, float ly, float lz, float edge) {
-        float l = (float) Math.sqrt(lx * lx + ly * ly + lz * lz);
-        float d = (x * lx + y * ly + z * lz) / l;
+        float d = x * lx + y * ly + z * lz;
         if (d <= edge) {
             return 0f;
         }

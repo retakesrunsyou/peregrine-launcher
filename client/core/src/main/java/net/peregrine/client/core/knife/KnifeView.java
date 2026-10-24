@@ -18,6 +18,8 @@ public final class KnifeView {
     public volatile int skin = 1;               // KnifeSkins index
     public volatile int armMode;                // ARM_SHOWN, ARM_HIDDEN, ARM_OFF
     public volatile float size = 1f;
+    /** How big your arm looks (1 = Minecraft-sized; smaller sits further away, same spot on screen). */
+    public volatile float armSize = 0.72f;
     public volatile float moveX, moveY, moveZ;  // the knife in your hand, pixels
     public volatile float tilt, turn, roll;     // degrees
     public volatile boolean fidgets = true;
@@ -294,7 +296,9 @@ public final class KnifeView {
 
     /** Arm space: pixels, the arm along +y (to the hand at y 8..12), thumb toward -z. */
     private M4 armMatrix(M4 view) {
-        float fx = REST_X + ch[KnifeAnims.FX], fy = REST_Y + ch[KnifeAnims.FY], fz = REST_Z + ch[KnifeAnims.FZ];
+        // further away along the same line of sight = smaller on screen, same place
+        float far = 1f / Math.max(0.4f, Math.min(1.6f, armSize));
+        float fx = (REST_X + ch[KnifeAnims.FX]) * far, fy = (REST_Y + ch[KnifeAnims.FY]) * far, fz = (REST_Z + ch[KnifeAnims.FZ]) * far;
         float[] d = norm(REST_ARM);
         // the thumb points as nearly up as the forearm allows
         float[] up = {0, 1, 0};
@@ -474,7 +478,7 @@ public final class KnifeView {
         if (fx == FX_GLOW || fx == FX_HOLOGRAM) {
             out.begin(Out.ADD, tex);
             int g = glowColour(fx == FX_HOLOGRAM ? 0.5f : 0.35f);
-            for (KnifeModels.Part p : k.parts) {
+            for (KnifeModels.Part p : KnifeModels.getLow(knife).parts) {
                 glow(out, p.mesh, parts[p.group], g, fx == FX_GLOW ? 0.35f : 0.12f, t);
             }
         }
@@ -503,6 +507,16 @@ public final class KnifeView {
                 // the handle's plastic hardly reflects: leave it out of the mirror pass
                 float vv = v[q[o] * Mesh.STRIDE + 7];
                 if (vv >= Shapes.HANDLE_V0 && vv < Shapes.HANDLE_V1) {
+                    continue;
+                }
+            }
+            if (alpha == 255) {
+                // faces turned clearly away from you are hidden behind the front ones: skip them
+                int b0 = q[o] * Mesh.STRIDE, b2 = q[o + 2] * Mesh.STRIDE;
+                m.point((v[b0] + v[b2]) * 0.5f, (v[b0 + 1] + v[b2 + 1]) * 0.5f, (v[b0 + 2] + v[b2 + 2]) * 0.5f, tmp);
+                m.dir(v[b0 + 3] + v[b2 + 3], v[b0 + 4] + v[b2 + 4], v[b0 + 5] + v[b2 + 5], tmpN);
+                float facing = tmp[0] * tmpN[0] + tmp[1] * tmpN[1] + tmp[2] * tmpN[2];
+                if (facing > 0.35f * (float) Math.sqrt(tmp[0] * tmp[0] + tmp[1] * tmp[1] + tmp[2] * tmp[2])) {
                     continue;
                 }
             }
@@ -604,7 +618,7 @@ public final class KnifeView {
             prevA = a;
         }
         // afterimages of the blade, fading
-        Mesh blade = k.parts.get(0).mesh;
+        Mesh blade = KnifeModels.getLow(knife).parts.get(0).mesh;
         out.begin(Out.ADD, KnifeSkins.texture(skin));
         for (int g = 1; g <= 3; g++) {
             int idx = (ghostHead - g + 8) % 4;

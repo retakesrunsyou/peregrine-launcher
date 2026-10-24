@@ -64,7 +64,7 @@ public final class SkyDraw {
                 return;
             }
             if (buffers == null) {
-                buffers = MultiBufferSource.immediate(new ByteBufferBuilder(1 << 18));
+                buffers = MultiBufferSource.immediate(new ByteBufferBuilder(1 << 19));
             }
             PoseStack.Pose pose = new PoseStack().last();
             RenderType current = null;
@@ -78,7 +78,13 @@ public final class SkyDraw {
                     current = t;
                     vc = buffers.getBuffer(t);
                 }
+                // both sides: the pipeline hides back faces, and the sky is seen from inside
                 for (int i = 0; i < 4; i++) {
+                    vc.addVertex(pose, q.xyz[i * 3], q.xyz[i * 3 + 1], q.xyz[i * 3 + 2])
+                            .setUv(q.uv[i * 2], q.uv[i * 2 + 1])
+                            .setColor(q.argb);
+                }
+                for (int i = 3; i >= 0; i--) {
                     vc.addVertex(pose, q.xyz[i * 3], q.xyz[i * 3 + 1], q.xyz[i * 3 + 2])
                             .setUv(q.uv[i * 2], q.uv[i * 2 + 1])
                             .setColor(q.argb);

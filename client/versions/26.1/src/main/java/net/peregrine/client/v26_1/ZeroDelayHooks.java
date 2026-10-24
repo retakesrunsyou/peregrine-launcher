@@ -30,7 +30,6 @@ public final class ZeroDelayHooks {
     private static final Map<Integer, Object[]> HIDDEN = new ConcurrentHashMap<Integer, Object[]>();
     private static final Set<Integer> GONE = ConcurrentHashMap.newKeySet();
     private static boolean crystalsBroken, anchorsBroken, inputBroken, gpuBroken;
-    private static Method glFinish;
 
     private ZeroDelayHooks() {
     }
@@ -100,15 +99,48 @@ public final class ZeroDelayHooks {
             }
         }
         if (ZeroDelay.lowLatency && !gpuBroken) {
-            try {
-                if (glFinish == null) {
-                    glFinish = Class.forName("org.lwjgl.opengl.GL11").getMethod("glFinish");
-                }
-                glFinish.invoke(null);   // wait for the graphics card: frames aren't queued up behind your input
-            } catch (Throwable t) {
-                gpuBroken = true;
-            }
+            lessLag();
+        } else if (fence != 0) {
+            deleteFence();
         }
+    }
+
+    private static Method fenceSync, clientWaitSync, deleteSync;
+    private static long fence;
+
+    /**
+     * Keeps the CPU at most one frame ahead of the graphics card: each frame leaves a marker in
+     * the card's queue, and the next frame waits until the card has passed the previous marker.
+     * Your click shows up a frame sooner when the card is the limit, for a small FPS cost (far
+     * less than waiting for the card to finish everything).
+     */
+    private static void lessLag() {
+        try {
+            if (fenceSync == null) {
+                Class<?> gl = Class.forName("org.lwjgl.opengl.GL32");
+                fenceSync = gl.getMethod("glFenceSync", int.class, int.class);
+                clientWaitSync = gl.getMethod("glClientWaitSync", long.class, int.class, long.class);
+                deleteSync = gl.getMethod("glDeleteSync", long.class);
+            }
+            long previous = fence;
+            fence = (Long) fenceSync.invoke(null, 0x9117, 0);              // GL_SYNC_GPU_COMMANDS_COMPLETE
+            if (previous != 0) {
+                clientWaitSync.invoke(null, previous, 1, 20_000_000L);       // flush, wait up to 20 ms
+                deleteSync.invoke(null, previous);
+            }
+        } catch (Throwable t) {
+            gpuBroken = true;
+            System.err.println("[Peregrine] lower GPU input lag turned off: " + t);
+        }
+    }
+
+    private static void deleteFence() {
+        try {
+            deleteSync.invoke(null, fence);
+        } catch (Throwable ignored) {
+            // gone with the context
+        }
+        fence = 0;
     }
 
     private static int ping(Minecraft mc) {
