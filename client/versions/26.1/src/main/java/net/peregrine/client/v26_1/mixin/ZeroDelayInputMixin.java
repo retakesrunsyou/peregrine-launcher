@@ -7,12 +7,13 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-/** Zero delay: once a frame, put back unconfirmed crystals and (optionally) cut GPU input lag. */
+/** Once a frame: zero delay (crystals put back, GPU input lag) and the benchmark's frame times. */
 @Mixin(Minecraft.class)
 public abstract class ZeroDelayInputMixin {
 
     @Inject(method = "runTick", at = @At("TAIL"), require = 0)
     private void peregrine$frame(boolean tick, CallbackInfo ci) {
         ZeroDelayHooks.frame();
+        net.peregrine.client.core.Benchmark.INSTANCE.frame(System.nanoTime());
     }
 }

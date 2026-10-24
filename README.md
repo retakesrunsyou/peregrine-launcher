@@ -116,6 +116,11 @@ drawn in software; real graphics cards usually gain more from Sodium):
 - **Zero delay** (26.1, beta): end crystals disappear the moment you hit them and respawn anchors the moment you blow
   them up, so the next one goes down right away (they come back if the server says no). Optional instant clicks and hotbar
   keys (some anti-cheats flag these) and less input lag when your graphics card is the limit. Minecraft's miss delay is kept
+- **Benchmark** (26.1, beta): a one-minute flight round where you stand (only the camera moves, so it's fine on servers)
+  that measures average FPS, 1% and 0.1% lows, stutters and memory clean-ups, and keeps every run in
+  `peregrine-benchmarks.txt` so you can compare settings and mods
+- **Performance boost** (26.1, on by default): fewer frames while the game isn't the window you're using, a cap on
+  particles so explosions and crystal fights stay smooth, and chests, signs and banners left out past a distance you choose
 - **Crosshair hit timing**: the custom crosshair turns your ready color just before your next hit lands at full strength,
   early by your reaction time. Take the reaction test from its settings to measure yours
 - **Viewmodel effects** (26.1, beta): your hand and what it holds see-through like glass, as a hologram or glowing, with
