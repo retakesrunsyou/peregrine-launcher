@@ -113,6 +113,11 @@ drawn in software; real graphics cards usually gain more from Sodium):
   bayonet, combat knife, nomad, skeleton knife or push dagger, in 12 finishes or your own colors. A flourish when you pull
   it out, slashes that switch sides, uppercuts, an overhead chop every third hit, stabs and lunges on crits, four inspects
   (F) and little fidgets when you stand still. Move, turn and resize the knife in your hand, or hide your arm
+- **Zero delay** (26.1, beta): end crystals disappear the moment you hit them and respawn anchors the moment you blow
+  them up, so the next one goes down right away (they come back if the server says no). Optional instant clicks and hotbar
+  keys (some anti-cheats flag these) and less input lag when your graphics card is the limit. Minecraft's miss delay is kept
+- **Crosshair hit timing**: the custom crosshair turns your ready color just before your next hit lands at full strength,
+  early by your reaction time. Take the reaction test from its settings to measure yours
 - **Viewmodel effects** (26.1, beta): your hand and what it holds see-through like glass, as a hologram or glowing, with
   afterimages when you swing (everything you hold, swords only, or swords and axes). First person only
 - **Rainbow block outline**, a little thicker, on by default

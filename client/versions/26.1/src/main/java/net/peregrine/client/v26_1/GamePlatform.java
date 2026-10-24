@@ -272,6 +272,15 @@ final class GamePlatform implements Platform {
     }
 
     @Override
+    public int attackCooldownMs() {
+        if (mc().player == null) {
+            return -1;
+        }
+        float scale = mc().player.getAttackStrengthScale(0f);
+        return Math.round((1f - scale) * mc().player.getCurrentItemAttackStrengthDelay() * 50f);
+    }
+
+    @Override
     public long worldTime() {
         return mc().level == null ? 0 : mc().level.getOverworldClockTime() % 24000L;
     }

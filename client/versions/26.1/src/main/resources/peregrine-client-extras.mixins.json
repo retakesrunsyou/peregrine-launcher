@@ -15,6 +15,7 @@
 		"CrosshairMixin",
 		"CustomSkyMixin",
 		"DiamondBedrockMixin",
+		"EntityRemovedAccessor",
 		"EquipSpeedMixin",
 		"FogAirMixin",
 		"FogColorMixin",
@@ -33,6 +34,7 @@
 		"KnifeHandMixin",
 		"KnifeKeyMixin",
 		"LowFireMixin",
+		"MinecraftInputAccessor",
 		"MotionBlurMixin",
 		"NickTextMixin",
 		"NightVisionMixin",
@@ -70,6 +72,11 @@
 		"TotemHeldMixin",
 		"TotemPopMixin",
 		"WaterOverlayMixin",
+		"ZeroDelayClickMixin",
+		"ZeroDelayInputMixin",
+		"ZeroDelayKeyMixin",
+		"ZeroDelayMixin",
+		"ZeroDelayNetMixin",
 		"ZoomMouseMixin"
 	],
 	"injectors": {

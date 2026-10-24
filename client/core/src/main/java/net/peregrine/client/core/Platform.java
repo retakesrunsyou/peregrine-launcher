@@ -351,6 +351,11 @@ public interface Platform {
     default void setHitColor(int argb) {
     }
 
+    /** Milliseconds until your next hit lands at full strength (0 = ready now), or -1 if unknown. */
+    default int attackCooldownMs() {
+        return -1;
+    }
+
     /** False for features this Minecraft version can't do; they're hidden from the menu. */
     default boolean supports(String moduleId) {
         return true;

@@ -289,6 +289,15 @@ final class GamePlatform implements Platform {
     }
 
     @Override
+    public int attackCooldownMs() {
+        if (mc().player == null) {
+            return -1;
+        }
+        float scale = mc().player.getAttackStrengthScale(0f);
+        return Math.round((1f - scale) * mc().player.getCurrentItemAttackStrengthDelay() * 50f);
+    }
+
+    @Override
     public long worldTime() {
         return mc().level == null ? 0 : mc().level.getDayTime() % 24000L;
     }
@@ -565,7 +574,7 @@ final class GamePlatform implements Platform {
 
     @Override
     public boolean supports(String moduleId) {
-        if (moduleId.equals("custom_sky") || moduleId.equals("knives") || moduleId.equals("viewmodel_fx")) {
+        if (moduleId.equals("custom_sky") || moduleId.equals("knives") || moduleId.equals("viewmodel_fx") || moduleId.equals("zero_delay")) {
             return false;  // these are on 26.1 for now (beta)
         }
         return !moduleId.equals("chunk_fade");  // Minecraft added the fade-in in 1.21.11

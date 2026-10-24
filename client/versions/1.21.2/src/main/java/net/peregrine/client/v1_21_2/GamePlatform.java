@@ -257,7 +257,7 @@ final class GamePlatform implements Platform {
 
     @Override
     public boolean supports(String moduleId) {
-        if (moduleId.equals("custom_sky") || moduleId.equals("knives") || moduleId.equals("viewmodel_fx")) {
+        if (moduleId.equals("custom_sky") || moduleId.equals("knives") || moduleId.equals("viewmodel_fx") || moduleId.equals("zero_delay")) {
             return false;  // these are on 26.1 for now (beta)
         }
         if (moduleId.equals("motion_blur")) {
@@ -305,6 +305,15 @@ final class GamePlatform implements Platform {
     public byte[] serverIcon() {
         ServerData server = mc().getCurrentServer();
         return server == null ? null : server.getIconBytes();
+    }
+
+    @Override
+    public int attackCooldownMs() {
+        if (mc().player == null) {
+            return -1;
+        }
+        float scale = mc().player.getAttackStrengthScale(0f);
+        return Math.round((1f - scale) * mc().player.getCurrentItemAttackStrengthDelay() * 50f);
     }
 
     @Override

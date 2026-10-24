@@ -23,6 +23,11 @@ public final class Crosshair extends Module {
     private final ChoiceSetting color = add(new ChoiceSetting("color", "Color", 0, COLOR_NAMES));
     private final SliderSetting opacity = add(new SliderSetting("opacity", "Opacity", 20f, 100f, 5f, 100f, "%.0f%%"));
     private final BoolSetting outline = add(new BoolSetting("outline", "Dark outline", true));
+    private final BoolSetting hitTiming = add(new BoolSetting("hit_timing", "Hit timing: turns your ready color when your hit lands best", false));
+    private final ChoiceSetting ready = add(new ChoiceSetting("ready_color", "Ready color", 3, COLOR_NAMES));
+    private final SliderSetting reaction = add(new SliderSetting("reaction", "Your reaction time (turns ready this early)", 0f, 400f, 5f, 200f, "%.0f ms"));
+    private final net.peregrine.client.core.settings.ActionSetting test = add(new net.peregrine.client.core.settings.ActionSetting(
+            "reaction_test", "Find your reaction time", () -> "Take the test", () -> Peregrine.get().menu().showReactionTest()));
 
     public Crosshair() {
         super("crosshair", "Custom crosshair", "Your own crosshair: shape, size, gap, color and outline",
@@ -44,9 +49,21 @@ public final class Crosshair extends Module {
         Hooks.customCrosshair = false;
     }
 
+    /** Sets the reaction time (from the reaction test). */
+    public void setReaction(int ms) {
+        reaction.set(ms);
+    }
+
     private int argb() {
-        int rgb = COLORS[color.index];
-        if (color.index == 1) {
+        int which = color.index;
+        if (hitTiming.value) {
+            int left = platform().attackCooldownMs();
+            if (left >= 0 && left <= reaction.value) {
+                which = ready.index;   // by the time you react, the hit is at full strength
+            }
+        }
+        int rgb = COLORS[which];
+        if (which == 1) {
             rgb = Peregrine.get().accent() & 0xFFFFFF;
         }
         return Math.round(opacity.value / 100f * 255f) << 24 | rgb;

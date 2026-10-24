@@ -195,6 +195,8 @@ public final class Menu {
                 pn = new SchematicsPanel(pc, this);
             } else if (section.equals("voice")) {
                 pn = new VoicePanel(pc, this);
+            } else if (section.equals("reaction")) {
+                pn = new ReactionPanel(pc, this);
             } else {
                 String[] parts = section.split(":");
                 Library.Kind kind = parts[0].equals("mods") ? Library.Kind.MODS
@@ -205,6 +207,11 @@ public final class Menu {
             pn.shown();
         }
         return pn;
+    }
+
+    /** Opens the reaction test (from the crosshair's settings). */
+    public void showReactionTest() {
+        choose("reaction");
     }
 
     /** Chooses something in the sidebar. */
