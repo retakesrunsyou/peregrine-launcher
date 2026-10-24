@@ -204,6 +204,8 @@ public final class Peregrine {
         modules.add(new net.peregrine.client.core.modules.MusicActivity());
         modules.add(new net.peregrine.client.core.modules.PlaceAnimation());
         modules.add(new net.peregrine.client.core.modules.CustomSky());
+        modules.add(new net.peregrine.client.core.modules.Knives());
+        modules.add(new net.peregrine.client.core.modules.ViewmodelFx());
         modules.add(new Flag("borderless", "Borderless fullscreen", "F11 fills the screen without switching modes: alt-tab is instant",
                 Module.Category.UTILITY));
         this.menu = new Menu(this);

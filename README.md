@@ -109,6 +109,12 @@ drawn in software; real graphics cards usually gain more from Sodium):
   of the texture (inventory, chests, barrels, shulker boxes, dispensers and hoppers)
 - **Motion blur** (off by default): a soft trail when you turn, with a strength slider (every version except 1.21.2 to 1.21.5)
 - **Block place animation** (on by default): blocks you place grow into place from the middle, on every version
+- **Knives** (26.1, beta): your sword becomes a knife held in your own arm, shooter style: karambit, butterfly knife,
+  bayonet, combat knife, nomad, skeleton knife or push dagger, in 12 finishes or your own colors. A flourish when you pull
+  it out, slashes that switch sides, uppercuts, an overhead chop every third hit, stabs and lunges on crits, four inspects
+  (F) and little fidgets when you stand still. Move, turn and resize the knife in your hand, or hide your arm
+- **Viewmodel effects** (26.1, beta): your hand and what it holds see-through like glass, as a hologram or glowing, with
+  afterimages when you swing (everything you hold, swords only, or swords and axes). First person only
 - **Rainbow block outline**, a little thicker, on by default
 - **Music activity**: the song you're playing on Spotify, YouTube or any music app, with its cover, artist and time
   left (Linux and Windows; Spotify and Music on macOS)
