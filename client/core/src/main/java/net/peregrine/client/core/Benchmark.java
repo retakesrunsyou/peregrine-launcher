@@ -50,7 +50,8 @@ public final class Benchmark {
         lastNs = 0;
         centred = false;
         radius = Math.max(16, Math.min(96, p.renderDistance() * 16 * 0.45f));
-        setup = "Minecraft " + p.minecraftVersion() + ", render distance " + p.renderDistance() + ", " + mods(p);
+        setup = "Minecraft " + p.minecraftVersion() + ", render distance " + p.renderDistance() + ", " + collector() + ", " + mods(p);
+        listen();
         result = null;
         startNs = System.nanoTime();
         running = true;
@@ -77,6 +78,7 @@ public final class Benchmark {
                 long[] gc = gc();
                 gcCount0 = gc[0];
                 gcTime0 = gc[1];
+                longestPause = 0;
             }
             lastNs = now;
         }
@@ -114,13 +116,74 @@ public final class Benchmark {
         return new double[] {x, y, z, yaw, pitch};
     }
 
+    /** {pauses, paused ms} so far: collections that stop the game (not the background ones). */
     private static long[] gc() {
         long c = 0, ms = 0;
         for (GarbageCollectorMXBean b : ManagementFactory.getGarbageCollectorMXBeans()) {
-            c += Math.max(0, b.getCollectionCount());
-            ms += Math.max(0, b.getCollectionTime());
+            if (isPause(b.getName())) {
+                c += Math.max(0, b.getCollectionCount());
+                ms += Math.max(0, b.getCollectionTime());
+            }
         }
         return new long[] {c, ms};
+    }
+
+    /** G1 "Young/Old Generation" and ZGC "Pauses" stop the game; "Concurrent"/"Cycles" run beside it. */
+    static boolean isPause(String collector) {
+        String n = collector.toLowerCase();
+        return !n.contains("concurrent") && !n.contains("cycles");
+    }
+
+    private static volatile long longestPause;
+    private static boolean listening;
+
+    /** Listens for each collection to find the longest pause (where the JVM supports it). */
+    private static void listen() {
+        if (listening) {
+            return;
+        }
+        listening = true;
+        try {
+            for (GarbageCollectorMXBean b : ManagementFactory.getGarbageCollectorMXBeans()) {
+                if (!(b instanceof javax.management.NotificationEmitter)) {
+                    continue;
+                }
+                ((javax.management.NotificationEmitter) b).addNotificationListener((note, hb) -> {
+                    try {
+                        Object data = note.getUserData();
+                        if (!(data instanceof javax.management.openmbean.CompositeData)) {
+                            return;
+                        }
+                        javax.management.openmbean.CompositeData cd = (javax.management.openmbean.CompositeData) data;
+                        String name = String.valueOf(cd.get("gcName"));
+                        Object info = cd.get("gcInfo");
+                        if (isPause(name) && info instanceof javax.management.openmbean.CompositeData) {
+                            long ms = ((Number) ((javax.management.openmbean.CompositeData) info).get("duration")).longValue();
+                            if (ms > longestPause) {
+                                longestPause = ms;
+                            }
+                        }
+                    } catch (RuntimeException ignored) {
+                        // not this JVM's format
+                    }
+                }, null, null);
+            }
+        } catch (RuntimeException | LinkageError e) {
+            // no notifications here: the longest pause stays unknown
+        }
+    }
+
+    private static String collector() {
+        StringBuilder sb = new StringBuilder();
+        for (GarbageCollectorMXBean b : ManagementFactory.getGarbageCollectorMXBeans()) {
+            String n = b.getName();
+            String kind = n.startsWith("ZGC") ? "ZGC" : n.startsWith("G1") ? "G1" : n.startsWith("Shenandoah") ? "Shenandoah" : n;
+            if (sb.indexOf(kind) < 0) {
+                sb.append(sb.length() == 0 ? "" : "/").append(kind);
+            }
+        }
+        long max = Runtime.getRuntime().maxMemory() / (1024 * 1024);
+        return sb + " collector, " + max + " MB";
     }
 
     private static String mods(Platform p) {
@@ -177,7 +240,9 @@ public final class Benchmark {
         r.add(String.format("%.0f FPS average", avgFps));
         r.add(String.format("%.0f FPS 1%% low   %.0f FPS 0.1%% low", low1, low01));
         r.add(String.format("%d stutters   worst frame %.0f ms", stutters, worst));
-        r.add(String.format("%d memory clean-ups (%d ms)", gcCount, gcMs));
+        r.add(longestPause > 0
+                ? String.format("%d memory clean-up pauses, %d ms in all, longest %d ms", gcCount, gcMs, longestPause)
+                : String.format("%d memory clean-up pauses, %d ms in all", gcCount, gcMs));
         result = r;
         resultAt = System.currentTimeMillis();
         save(r);
