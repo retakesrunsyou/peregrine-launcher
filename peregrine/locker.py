@@ -18,8 +18,9 @@ from . import auth, config, net, paths
 
 PROFILE = "https://api.minecraftservices.com/minecraft/profile"
 LIBRARY = paths.DATA / "skins" / "library"
-CAPE_NAMES = ("None", "Falcon", "Violet", "Ember", "Starry night", "Pumpkin", "Frost")
-CAPE_FILES = ("", "falcon", "violet", "ember", "starry", "pumpkin", "frost")
+CAPE_NAMES = ("None", "Falcon", "Violet", "Ember", "Starry night", "Pumpkin", "Frost", "Your own")
+CAPE_FILES = ("", "falcon", "violet", "ember", "starry", "pumpkin", "frost", "custom")
+CUSTOM_CAPE = 7   # your own picture, GIF or video (custom_cape.py); only you see it
 
 
 class LockerError(RuntimeError):
@@ -264,6 +265,9 @@ ANIMATED = {"starry": 24}
 def cape_frames(index: int):
     """The frames of a moving cape (in order), or None for a still one."""
     import sys
+    if index == CUSTOM_CAPE:
+        from . import custom_cape
+        return custom_cape.preview()[1]
     name = CAPE_FILES[index] if 0 <= index < len(CAPE_FILES) else ""
     n = ANIMATED.get(name)
     if not n:
@@ -302,9 +306,21 @@ def set_peregrine_cape(index: int) -> None:
     paths.CLIENT_SETTINGS.write_text(json.dumps(data, indent=2))
 
 
+def cape_frame_ms(index: int) -> int:
+    """How long each preview frame of a moving cape shows."""
+    if index == CUSTOM_CAPE:
+        from . import custom_cape
+        return custom_cape.preview()[2]
+    return 125
+
+
 def cape_asset(index: int):
-    """The bundled picture of a Peregrine cape, or None."""
+    """The bundled picture of a Peregrine cape (or your own's), or None."""
     import sys
+    if index == CUSTOM_CAPE:
+        from . import custom_cape
+        still, frames, _ = custom_cape.preview()
+        return still or (frames[0] if frames else None)
     name = CAPE_FILES[index] if 0 <= index < len(CAPE_FILES) else ""
     if not name:
         return None

@@ -7,13 +7,15 @@ Peregrine players.
 """
 
 import math
+import shutil
 import time
+from pathlib import Path
 
 from PySide6.QtCore import QEasingCurve, QRectF, QSize, Qt, QTimer, QVariantAnimation, Signal
 from PySide6.QtGui import QColor, QImage, QPainter, QPainterPath, QPen
 from PySide6.QtWidgets import QFileDialog, QGridLayout, QHBoxLayout, QLabel, QVBoxLayout, QWidget
 
-from .. import auth, locker
+from .. import auth, custom_cape, locker
 from . import workers
 from .modern import Chip, PillButton, animations_on, big_title, section_label
 from .pages import clear, scroll
@@ -235,6 +237,7 @@ class SkinView(QWidget):
         self.slim = False
         self.cape = None
         self.cape_frames = None   # moving capes: their frames
+        self.cape_ms = 0.125
         self.cape_key = None
         self.backdrop = None      # the game's main menu background, behind your player
         self.angle = 25.0         # 0 = facing you, 180 = back
@@ -283,18 +286,19 @@ class SkinView(QWidget):
         self.slim = slim
         self.update()
 
-    def set_cape(self, data_or_path, frames=None):
+    def set_cape(self, data_or_path, frames=None, frame_ms=125):
         self.cape = None
         self.cape_frames = None
+        self.cape_ms = max(20, frame_ms) / 1000.0
         if frames:
             imgs = [QImage(str(f)) for f in frames]
             self.cape_frames = [i.convertToFormat(QImage.Format_ARGB32) for i in imgs if not i.isNull()] or None
-            self.cape_key = str(frames[0])
+            self.cape_key = _file_key(frames[0])
         elif data_or_path:
             img = QImage(str(data_or_path)) if not isinstance(data_or_path, (bytes, bytearray)) \
                 else QImage.fromData(data_or_path, "PNG")
             self.cape = img.convertToFormat(QImage.Format_ARGB32) if not img.isNull() else None
-            self.cape_key = str(data_or_path)[:200] if not isinstance(data_or_path, (bytes, bytearray)) else hash(data_or_path)
+            self.cape_key = _file_key(data_or_path) if not isinstance(data_or_path, (bytes, bytearray)) else hash(data_or_path)
         self.update()
 
     def set_backdrop(self, path):
@@ -392,7 +396,7 @@ class SkinView(QWidget):
             return
         cape, cape_key = self.cape, self.cape_key
         if self.cape_frames:
-            i = int(t / 0.125) % len(self.cape_frames)
+            i = int(t / self.cape_ms) % len(self.cape_frames)
             cape, cape_key = self.cape_frames[i], f"{self.cape_key}#{i}"
         bob = math.sin(t * 2.0) * 1.2 if animations_on() else 0
         paint_3d(p, self.shaded, self.img, self.img_key, self.slim, cape, cape_key, w / 2, top + bob, s,
@@ -500,19 +504,28 @@ class SkinCard(_Card):
         paint_skin(p, self.img, self.slim, False, r.center().x() - 8 * s, r.top() + (r.height() - 32 * s) / 2, s)
 
 
+def _file_key(path):
+    """A picture's cache key: its path and when it last changed (your own cape keeps its file names)."""
+    try:
+        return f"{str(path)[:200]}@{Path(path).stat().st_mtime_ns}"
+    except (OSError, TypeError, ValueError):
+        return str(path)[:200]
+
+
 class CapeCard(_Card):
-    def __init__(self, title, sub, image, frames=None):
+    def __init__(self, title, sub, image, frames=None, frame_ms=125):
         super().__init__(title, sub)
         self.img = image
         self.frames = [QImage(str(f)) for f in frames] if frames else None
+        self.ms = max(20, frame_ms) / 1000.0
         if self.frames:
             self._t0 = time.monotonic()
-            self._timer = QTimer(self, interval=125)
+            self._timer = QTimer(self, interval=max(20, int(frame_ms)))
             self._timer.timeout.connect(self._next)
             self._timer.start()
 
     def _next(self):
-        self.img = self.frames[int((time.monotonic() - self._t0) / 0.125) % len(self.frames)]
+        self.img = self.frames[int((time.monotonic() - self._t0) / self.ms) % len(self.frames)]
         self.update()
 
     def picture(self, p, r):
@@ -764,6 +777,8 @@ class LockerPage(QWidget):
             pc = []
             worn = locker.peregrine_cape()
             for i, name in enumerate(locker.CAPE_NAMES):
+                if i == locker.CUSTOM_CAPE:
+                    continue
                 path = locker.cape_asset(i)
                 c = CapeCard(name, "Moving" if locker.cape_frames(i) else "Peregrine",
                              QImage(str(path)) if path else None, locker.cape_frames(i))
@@ -772,6 +787,23 @@ class LockerPage(QWidget):
                 c.clicked.connect(lambda c=c: self.pick(c.key))
                 pc.append(c)
             self._grid("Peregrine capes · other Peregrine players see these", pc)
+            own = []
+            if custom_cape.exists():
+                i = locker.CUSTOM_CAPE
+                frames = locker.cape_frames(i)
+                path = locker.cape_asset(i)
+                c = CapeCard("Your own", "Moving" if frames else "Picture",
+                             QImage(str(path)) if path else None, frames, locker.cape_frame_ms(i))
+                c.worn = i == worn
+                c.key = ("pcape", i)
+                c.clicked.connect(lambda c=c: self.pick(c.key))
+                own.append(c)
+                add = AddCard("New cape", "Image, GIF, video", "image")
+            else:
+                add = AddCard("Make your own", "Image, GIF, video", "image")
+            add.clicked.connect(self.pick_cape_file)
+            own.append(add)
+            self._grid("Your own cape · up to 4K, only you see it", own)
             prof = self.account_profile
             if prof and prof["capes"]:
                 mc = []
@@ -821,8 +853,9 @@ class LockerPage(QWidget):
             self.wear.setText("SAVE TO MY SKINS")
             self.view.show_back(False)
         elif kind == "pcape":
-            self.view.set_cape(locker.cape_asset(what), locker.cape_frames(what))
-            self.pick_name.setText(locker.CAPE_NAMES[what] + " cape" if what else "No Peregrine cape")
+            self.view.set_cape(locker.cape_asset(what), locker.cape_frames(what), locker.cape_frame_ms(what))
+            self.pick_name.setText("Your own cape" if what == locker.CUSTOM_CAPE
+                                   else locker.CAPE_NAMES[what] + " cape" if what else "No Peregrine cape")
             self.wear.setText("WEAR THIS CAPE")
             self.view.show_back(bool(what))
         elif kind == "mcape":
@@ -862,6 +895,63 @@ class LockerPage(QWidget):
             return
         self.set_background(locker.CUSTOM)
 
+    # ------------------------------------------------------------ your own cape
+
+    CAPE_FILTER = ("Pictures and videos (*.png *.jpg *.jpeg *.webp *.gif *.bmp *.tga *.tif *.tiff "
+                   "*.mp4 *.webm *.mov *.mkv *.m4v *.avi)")
+
+    def pick_cape_file(self):
+        if getattr(self, "_making_cape", False):
+            return
+        path, _ = QFileDialog.getOpenFileName(self, "Choose a picture, GIF or video for your cape", "", self.CAPE_FILTER)
+        if not path:
+            return
+        from .sheet import tell
+        try:
+            what = custom_cape.kind(path)
+        except custom_cape.CapeError as e:
+            tell(self, "Can't make a cape from that", str(e), "error")
+            return
+        self._making_cape = True
+        self._busy("Making your cape…")
+        if what == "video" and not shutil.which("ffmpeg"):
+            # no ffmpeg: Qt plays the video here (the window keeps going), then the rest happens in the background
+            try:
+                got = custom_cape.read_video_qt(path, progress=self.status.setText)
+            except custom_cape.CapeError as e:
+                got = e
+            if not got or isinstance(got, Exception):
+                self._making_cape = False
+                self._idle()
+                tell(self, "Couldn't read that video",
+                     (str(got) + " " if isinstance(got, Exception) else "")
+                     + "Try a GIF, or install ffmpeg so Peregrine can read any video.", "error")
+                return
+            self.status.setText("Making your cape…")
+            workers.run(custom_cape.make, got, Path(path).name, done=self._cape_made, failed=self._cape_failed)
+            return
+        workers.run(custom_cape.make_from_file, path, done=self._cape_made, failed=self._cape_failed)
+
+    def _cape_made(self, meta):
+        self._making_cape = False
+        locker.set_peregrine_cape(locker.CUSTOM_CAPE)
+        w, h = (meta or {}).get("size", [0, 0])
+        n = (meta or {}).get("frames", 1)
+        size = f"{w} × {h}" + (f", {n} frames" if n > 1 else "")
+        self.render()
+        self.pick(("pcape", locker.CUSTOM_CAPE))
+        self._done(f"Your cape is ready and on ({size}). Only you see it, in Minecraft 26.1.")
+
+    def _cape_failed(self, message):
+        self._making_cape = False
+        self._idle()
+        from .sheet import tell
+        tell(self, "Couldn't make your cape", message, "error")
+
+    def _idle(self):
+        self.status.setText("")
+        self.wear.setEnabled(True)
+
     def _busy(self, text):
         self.status.setText(text)
         self.wear.setEnabled(False)
@@ -882,7 +972,10 @@ class LockerPage(QWidget):
             from .. import profiles
             if acct and acct.get("type") == "msa" and profiles.available():
                 workers.run(lambda: profiles.announce(acct, force=True), failed=lambda m: None)
-            self._done(f"Wearing the {locker.CAPE_NAMES[what]} cape in game" if what else "Peregrine cape off")
+            if what == locker.CUSTOM_CAPE:
+                self._done("Wearing your own cape in game. Only you see it; other players see no cape.")
+            else:
+                self._done(f"Wearing the {locker.CAPE_NAMES[what]} cape in game" if what else "Peregrine cape off")
             self.render()
             return
         if kind == "account-skin":

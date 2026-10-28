@@ -195,7 +195,8 @@ def unshare(account: dict) -> None:
 
 # ---------------------------------------------------------------------- badges and capes
 
-CAPE_FILES = ("", "falcon", "violet", "ember", "starry", "pumpkin", "frost")  # the in-game Cosmetics list
+# the in-game Cosmetics list; your own cape (the last) is never shared, so others see no cape
+CAPE_FILES = ("", "falcon", "violet", "ember", "starry", "pumpkin", "frost", "")
 RESEND_AFTER = 20 * 3600
 
 

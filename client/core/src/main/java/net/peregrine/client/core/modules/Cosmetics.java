@@ -35,9 +35,11 @@ import net.peregrine.client.core.settings.ChoiceSetting;
  */
 public final class Cosmetics extends Module {
 
-    public static final String[] CAPES = {"None", "Falcon", "Violet", "Ember", "Starry night", "Pumpkin", "Frost"};
-    /** Texture names, under assets/peregrine-client/textures/cape/. */
-    public static final String[] FILES = {null, "falcon", "violet", "ember", "starry", "pumpkin", "frost"};
+    public static final String[] CAPES = {"None", "Falcon", "Violet", "Ember", "Starry night", "Pumpkin", "Frost", "Your own"};
+    /** Texture names, under assets/peregrine-client/textures/cape/ ("custom" is your own, made in the launcher). */
+    public static final String[] FILES = {null, "falcon", "violet", "ember", "starry", "pumpkin", "frost", "custom"};
+    /** "Your own" cape: a picture, GIF or video made into a cape in the launcher's Locker. Only you see it. */
+    public static final int CUSTOM = 7;
     /** Animated capes: frames (files name_0.png ...) and how long each shows. */
     static final java.util.Map<String, Integer> FRAMES = new java.util.HashMap<String, Integer>();
     static final long FRAME_MS = 125;
@@ -46,8 +48,117 @@ public final class Cosmetics extends Module {
         FRAMES.put("starry", 24);
     }
 
+    // ---- your own cape (<data>/capes/custom: frame_000.png ... and cape.json, written by the launcher)
+
+    private static volatile long customCheckedAt;
+    private static volatile long customStamp = -1;
+    /** {version, frame count, total ms}, then each frame's ms; null when there is none. */
+    private static volatile int[] custom;
+
+    static java.nio.file.Path customDir() {
+        String data = System.getProperty("peregrine.data");
+        return data == null || data.isEmpty() ? null : java.nio.file.Paths.get(data, "capes", "custom");
+    }
+
+    /** Reads cape.json again when it changed (checked every couple of seconds). */
+    static int[] custom() {
+        long now = System.currentTimeMillis();
+        if (now - customCheckedAt < 2000) {
+            return custom;
+        }
+        customCheckedAt = now;
+        java.nio.file.Path dir = customDir();
+        java.nio.file.Path json = dir == null ? null : dir.resolve("cape.json");
+        try {
+            long stamp = json == null || !java.nio.file.Files.isRegularFile(json) ? -1
+                    : java.nio.file.Files.getLastModifiedTime(json).toMillis();
+            if (stamp == customStamp) {
+                return custom;
+            }
+            customStamp = stamp;
+            custom = stamp < 0 ? null : parseCustom(new String(java.nio.file.Files.readAllBytes(json), StandardCharsets.UTF_8));
+        } catch (Exception e) {
+            custom = null;
+        }
+        return custom;
+    }
+
+    /** cape.json as {version, frames, total ms, ms of each frame...}; null if it makes no sense. */
+    public static int[] parseCustom(String text) {
+        JsonObject o = JsonParser.parseString(text).getAsJsonObject();
+        int n = o.get("frames").getAsInt();
+        if (n < 1 || n > 1000) {
+            return null;
+        }
+        int[] c = new int[3 + n];
+        c[0] = Math.abs(o.get("v").getAsInt());
+        c[1] = n;
+        com.google.gson.JsonArray ms = o.has("ms") ? o.getAsJsonArray("ms") : null;
+        for (int i = 0; i < n; i++) {
+            int m = ms != null && i < ms.size() ? ms.get(i).getAsInt() : 100;
+            c[3 + i] = Math.max(20, m);
+            c[2] += c[3 + i];
+        }
+        return c;
+    }
+
+    /** Which frame of your own cape shows at a moment: "custom_<version>_<frame>". */
+    public static String customFrame(int[] c, long nowMs) {
+        int i = 0;
+        if (c[1] > 1) {
+            long t = nowMs % c[2];
+            while (i < c[1] - 1 && t >= c[3 + i]) {
+                t -= c[3 + i];
+                i++;
+            }
+        }
+        return "custom_" + c[0] + "_" + i;
+    }
+
+    /** Whether you have made your own cape in the launcher (and this version can show it). */
+    public static boolean hasCustom() {
+        net.peregrine.client.core.Peregrine pg = net.peregrine.client.core.Peregrine.get();
+        return pg != null && pg.platform() != null && pg.platform().supportsCustomCape() && custom() != null;
+    }
+
+    /** How many capes the menus list: "Your own" only once you've made one. */
+    public static int shown() {
+        return hasCustom() ? CAPES.length : CUSTOM;
+    }
+
+    /** The PNG of a frame of your own cape ("custom_<version>_<frame>"). */
+    public static java.nio.file.Path customFile(String name) {
+        java.nio.file.Path dir = customDir();
+        int us = name.lastIndexOf('_');
+        if (dir == null || us < 0) {
+            return null;
+        }
+        int i = Integer.parseInt(name.substring(us + 1));
+        return dir.resolve(String.format("frame_%03d.png", i));
+    }
+
+    /** The texture id to draw a cape's current frame in the menus, or null (nothing to draw yet). */
+    public static String textureId(String file) {
+        if (file == null) {
+            return null;
+        }
+        if (!file.equals("custom")) {
+            return "peregrine-client:textures/cape/" + frame(file) + ".png";
+        }
+        int[] c = hasCustom() ? custom() : null;
+        if (c == null) {
+            return null;
+        }
+        String name = customFrame(c, System.currentTimeMillis());
+        return net.peregrine.client.core.Peregrine.get().platform().customCapeTexture(name, customFile(name));
+    }
+
     /** The texture file to show right now for a cape (moving capes change frame as time passes). */
     public static String frame(String file) {
+        if ("custom".equals(file)) {
+            int[] c = hasCustom() ? custom() : null;
+            return c == null ? null : customFrame(c, System.currentTimeMillis());
+        }
         Integer n = file == null ? null : FRAMES.get(file);
         if (n == null) {
             return file;
@@ -103,11 +214,11 @@ public final class Cosmetics extends Module {
             return null;
         }
         String[] p = players.get(key(uuid));
-        if (p != null && p[0] != null) {
+        if (p != null && p[0] != null && !p[0].startsWith("custom")) {
             return frame(p[0]);
         }
         String live = live(uuid);
-        return live == null || live.isEmpty() ? null : frame(live);
+        return live == null || live.isEmpty() || live.startsWith("custom") ? null : frame(live);
     }
 
     /** What the service said about this player: their cape file, "" (Peregrine, no cape) or null. */
@@ -161,7 +272,7 @@ public final class Cosmetics extends Module {
         Thread t = new Thread(() -> {
             try {
                 String base = SERVICE.replaceAll("/+$", "");
-                String file = FILES[index] == null ? "" : FILES[index];
+                String file = FILES[index] == null || index == CUSTOM ? "" : FILES[index];   // your own stays private
                 JsonObject body = prove(base, token, uuid);
                 body.addProperty("cape", file);
                 http("PUT", base + "/v1/presence", body.toString(), null);

@@ -86,6 +86,16 @@ public interface Platform {
         return false;
     }
 
+    /** Whether "Your own" cape (a picture or video made in the launcher's Locker) can be shown here. */
+    default boolean supportsCustomCape() {
+        return false;
+    }
+
+    /** The texture id for one frame of your own cape (a PNG file), loaded when first asked; null while it isn't ready. */
+    default String customCapeTexture(String name, java.nio.file.Path png) {
+        return null;
+    }
+
     /** Whether joinServer works here. */
     default boolean supportsJoin() {
         return false;

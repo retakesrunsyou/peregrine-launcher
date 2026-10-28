@@ -26,6 +26,9 @@ public abstract class CapeMixin {
             return s;
         }
         var t = Capes.texture(cape);
+        if (t == null) {
+            return s;
+        }
         return new PlayerSkin(s.body(), t, t, s.model(), s.secure());
     }
 }

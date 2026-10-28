@@ -22,6 +22,10 @@ play: more FPS, smoother frames and fewer lag spikes, out of the box.
 - **Locker**: try on skins and capes on your turning player, then wear them. Keep a collection of skins (from files, or
   copied from any player by name) and put one on your Minecraft account with classic or slim arms, switch your official
   Minecraft capes, pick your Peregrine cape, and choose the game's main menu background (featured ones or your own picture)
+- **Your own cape** (shows in 26.1): Locker → Capes → **Make your own**, then pick a picture, GIF or short video. Pictures
+  stay sharp up to 4K (a 4096 × 2048 cape); GIFs and videos (their first 8 seconds) move in game, as sharp as fits
+  their length. Elytra use it too. It stays on your computer: only you see it, other players see no cape. Videos use
+  ffmpeg when it's installed, otherwise Qt's own player
 - **Profiles**: share your setup under your Minecraft name (only when you press Share), and look up a friend's to grab their
   mods, resource packs and shaders from Modrinth and, if you like, their in-game mod settings. See [profiles/README.md](profiles/README.md)
 - **Folders** on every instance: Schematics, Screenshots, Worlds, Resource packs, Shaders, Mods and Mod settings, one click away

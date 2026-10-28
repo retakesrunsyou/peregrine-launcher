@@ -200,6 +200,17 @@ final class GamePlatform implements Platform {
     }
 
     @Override
+    public boolean supportsCustomCape() {
+        return true;
+    }
+
+    @Override
+    public String customCapeTexture(String name, java.nio.file.Path png) {
+        net.minecraft.resources.Identifier id = CustomCape.id(name, png);
+        return id == null ? null : id.toString();
+    }
+
+    @Override
     public boolean supportsJoin() {
         return true;
     }

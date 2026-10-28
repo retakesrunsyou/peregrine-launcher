@@ -236,8 +236,7 @@ public final class PlayerPreview {
         if (d.supportsQuads()) {  // the real thing: a 3D player you can turn all the way round
             String capeFile3d = capeIndex > 0 && capeIndex < net.peregrine.client.core.modules.Cosmetics.FILES.length
                     ? net.peregrine.client.core.modules.Cosmetics.FILES[capeIndex] : null;
-            String capeTex = capeFile3d == null ? null
-                    : "peregrine-client:textures/cape/" + net.peregrine.client.core.modules.Cosmetics.frame(capeFile3d) + ".png";
+            String capeTex = net.peregrine.client.core.modules.Cosmetics.textureId(capeFile3d);
             float s3 = s * 0.92f;
             Model3D.draw(d, useId, useSlim, useLegacy, capeTex, cx, top + 32 * (s - s3) / 2, s3, angle, -10f,
                     (System.currentTimeMillis() % 100000L) / 1000f);
@@ -254,11 +253,12 @@ public final class PlayerPreview {
         for (int part : order) {
             drawFace(d, useId, f, part, back ? 1 : 0, place[part], cx, top, s, squash, tw, th, useLegacy, 0f);
         }
-        String capeFile = capeIndex > 0 && capeIndex < net.peregrine.client.core.modules.Cosmetics.FILES.length
-                ? net.peregrine.client.core.modules.Cosmetics.FILES[capeIndex] : null;
+        String capeFile = net.peregrine.client.core.modules.Cosmetics.textureId(
+                capeIndex > 0 && capeIndex < net.peregrine.client.core.modules.Cosmetics.FILES.length
+                ? net.peregrine.client.core.modules.Cosmetics.FILES[capeIndex] : null);
         if (back && capeFile != null) {
             int x0 = Math.round(cx + (3 - 8) * s * squash);
-            d.texture("peregrine-client:textures/cape/" + net.peregrine.client.core.modules.Cosmetics.frame(capeFile) + ".png", x0, Math.round(top + 8 * s),
+            d.texture(capeFile, x0, Math.round(top + 8 * s),
                     Math.max(1, Math.round(10 * s * squash)), Math.round(16 * s),
                     1f / 64, 1f / 32, 11f / 64, 17f / 32, 0xFFFFFFFF);
         }

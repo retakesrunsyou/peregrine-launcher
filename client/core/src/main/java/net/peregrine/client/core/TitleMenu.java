@@ -13,7 +13,7 @@ package net.peregrine.client.core;
  */
 public final class TitleMenu {
 
-    public static final String CLIENT_VERSION = "1.6.1";
+    public static final String CLIENT_VERSION = "1.6.2";
 
     static final int H = 20, GAP = 4, SMALL_H = 15;
 
@@ -483,7 +483,7 @@ public final class TitleMenu {
         int y0 = 62;
         int gh = sh - y0 - 8;
         if (lockerTab == 0) {
-            grid(0, net.peregrine.client.core.modules.Cosmetics.CAPES.length, 58, 82, 0, gx, y0, gw, gh);
+            grid(0, net.peregrine.client.core.modules.Cosmetics.shown(), 58, 82, 0, gx, y0, gw, gh);
         } else if (lockerTab == 1) {
             grid(3, Math.min(skins.list(p).size(), skinGlow.length), 58, 92, 0, gx, y0, gw, gh);
         } else {
@@ -619,9 +619,10 @@ public final class TitleMenu {
                 String file = net.peregrine.client.core.modules.Cosmetics.FILES[i];
                 int ph = Math.max(16, h - 44), pw = ph * 10 / 16;
                 int px = x + (w - pw) / 2, py = cy + 8;
-                if (file != null) {
+                String capeTex = net.peregrine.client.core.modules.Cosmetics.textureId(file);
+                if (capeTex != null) {
                     // the outside of the cape: 10x16 pixels at (1, 1) of its 64x32 layout
-                    cd.texture("peregrine-client:textures/cape/" + net.peregrine.client.core.modules.Cosmetics.frame(file) + ".png", px, py, pw, ph,
+                    cd.texture(capeTex, px, py, pw, ph,
                             1f / 64, 1f / 32, 11f / 64, 17f / 32, 0xFFFFFFFF);
                 } else {
                     cd.roundOutline(px, py, pw, ph, 2, 0x40FFFFFF);
@@ -630,7 +631,7 @@ public final class TitleMenu {
                 String name = net.peregrine.client.core.modules.Cosmetics.CAPES[i];
                 String n = cd.trim(name, w - 6);
                 cd.text(n, x + (w - cd.width(n)) / 2, cy + h - 22, Theme.TEXT, false);
-                String sub = picked ? "Wearing" : "Peregrine";
+                String sub = picked ? "Wearing" : i == net.peregrine.client.core.modules.Cosmetics.CUSTOM ? "Only you" : "Peregrine";
                 cd.text(sub, x + (w - cd.width(sub)) / 2, cy + h - 11, picked ? a : Theme.FAINT, false);
             } else {
                 int iw = w - 8, ih = iw * 9 / 16;

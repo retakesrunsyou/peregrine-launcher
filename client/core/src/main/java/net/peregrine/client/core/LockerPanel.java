@@ -90,7 +90,7 @@ final class LockerPanel extends MenuPanel {
             d.text(d.trim(st, gw - (tx - gx) - 6), tx + 6, y + 4, skins.busy ? Theme.MUTED : Theme.TEXT, false);
         }
         int top = y + 22, gh = y + h - top;
-        int n = tab == 0 ? Cosmetics.CAPES.length : Math.min(48, skins.list(p).size());
+        int n = tab == 0 ? Cosmetics.shown() : Math.min(48, skins.list(p).size());
         if (n == 0) {
             d.text("No skins yet.", gx, top + 6, Theme.TEXT, false);
             d.text("Add some in the launcher's Locker, then wear them here.", gx, top + 18, Theme.MUTED, false);
@@ -130,14 +130,15 @@ final class LockerPanel extends MenuPanel {
                 String file = Cosmetics.FILES[i];
                 int ph2 = chH - 36, pw2 = ph2 * 10 / 16;
                 int px2 = cx + (cw - pw2) / 2, py2 = cy + 6;
-                if (file != null) {
-                    cd.texture("peregrine-client:textures/cape/" + Cosmetics.frame(file) + ".png", px2, py2, pw2, ph2,
+                String capeTex = Cosmetics.textureId(file);
+                if (capeTex != null) {
+                    cd.texture(capeTex, px2, py2, pw2, ph2,
                             1f / 64, 1f / 32, 11f / 64, 17f / 32, 0xFFFFFFFF);
                 } else {
                     cd.roundOutline(px2, py2, pw2, ph2, 2, 0x40FFFFFF);
                 }
                 name = Cosmetics.CAPES[i];
-                sub = picked ? "Wearing" : "Peregrine";
+                sub = picked ? "Wearing" : i == Cosmetics.CUSTOM ? "Only you" : "Peregrine";
             } else {
                 LockerSkins.Skin sk = list.get(i);
                 String tex = skins.texture(p, sk);

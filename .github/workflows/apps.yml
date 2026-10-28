@@ -21,7 +21,7 @@ jobs:
         with:
           python-version: '3.12'
       - name: Install build tools
-        run: pip install --quiet -r requirements.txt pyinstaller pillow
+        run: pip install --quiet -r requirements.txt PySide6-Addons pyinstaller pillow   # Addons: videos for your own cape
       - name: Build Peregrine.exe
         shell: bash
         run: |
@@ -138,7 +138,7 @@ jobs:
         run: |
           sudo apt-get update -qq
           sudo apt-get install -y -qq libxcb-cursor0 libegl1 libxkbcommon-x11-0 libfuse2 desktop-file-utils >/dev/null
-          pip install --quiet -r requirements.txt pyinstaller
+          pip install --quiet -r requirements.txt PySide6-Addons pyinstaller   # Addons: videos for your own cape
           mkdir -p log
       - name: Build the app
         run: |
