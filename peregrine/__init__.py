@@ -1,7 +1,7 @@
 """Peregrine Launcher: a Minecraft: Java Edition launcher for Windows and Linux."""
 
 NAME = "Peregrine"
-VERSION = "1.5.8"
+VERSION = "1.5.9"
 TAGLINE = "Fast to launch. Faster to play."
 USER_AGENT = f"peregrine-launcher/{VERSION} (Minecraft launcher)"
 

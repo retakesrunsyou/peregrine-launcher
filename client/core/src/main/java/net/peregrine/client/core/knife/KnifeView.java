@@ -47,6 +47,9 @@ public final class KnifeView {
         public boolean critReady;      // a hit now would be a critical hit
         public float walk;             // distance walked (for the step bob)
         public float moving;           // 0 standing .. 1 walking .. 1.3 sprinting
+        public boolean sprinting;
+        public boolean onGround = true;
+        public float vy;               // up/down speed, blocks per tick
         public boolean leftHanded;
         public boolean slim;
         public String skinTexture;     // the player's skin (64 x 64)
@@ -221,14 +224,7 @@ public final class KnifeView {
                 ch[i] += fading[i] * w;
             }
         }
-        // breathing, and the bob of your steps
-        float breath = (float) Math.sin(t * 1.6) * 0.004f;
-        float mv = Math.min(1.3f, f.moving);
-        float ph = f.walk * (float) Math.PI;
-        ch[KnifeAnims.FX] += (float) Math.sin(ph) * 0.022f * mv;
-        ch[KnifeAnims.FY] += breath - Math.abs((float) Math.cos(ph)) * 0.026f * mv + 0.012f * mv;
-        ch[KnifeAnims.ROLL] += (float) Math.sin(ph) * 3f * mv;
-        ch[KnifeAnims.PITCH] += mv * 4f;
+        moveBody(f, t);
 
         Shine.setPitch(f.pitch);
         Shine.daylight = Math.max(0.05f, Math.min(1f, f.light));
@@ -270,6 +266,65 @@ public final class KnifeView {
         return false;
     }
 
+    // smoothed movement state
+    private float moveS, sprintS, airS, land, landV, lastVy;
+    private boolean wasOnGround = true;
+    private double lastBodyAt;
+    private float stepPhase;
+
+    /**
+     * How walking, sprinting, jumping and landing move the arm: a figure-eight sway with your
+     * steps, the knife lowered and tipped forward while you sprint, lifted as you rise and pressed
+     * down as you fall, a springy dip when you land, and slow breathing when you stand still.
+     */
+    private void moveBody(Frame f, double t) {
+        float dt = (float) Math.max(0.0, Math.min(0.1, t - lastBodyAt));
+        lastBodyAt = t;
+        float k = 1f - (float) Math.exp(-dt * 8.0);
+        float walkTarget = f.onGround ? Math.min(1f, f.moving) : 0f;
+        float sprintTarget = f.sprinting && f.onGround && f.moving > 0.3f ? 1f : 0f;
+        moveS += (walkTarget - moveS) * k;
+        sprintS += (sprintTarget - sprintS) * (1f - (float) Math.exp(-dt * 6.0));
+        airS += ((f.onGround ? 0f : 1f) - airS) * (1f - (float) Math.exp(-dt * 10.0));
+        // landing: a little spring pressed by how fast you were falling
+        if (f.onGround && !wasOnGround && lastVy < -0.25f) {
+            landV -= Math.min(0.6f, -lastVy) * 1.2f;
+        }
+        wasOnGround = f.onGround;
+        lastVy = f.vy;
+        float accel = -land * 180f - landV * 18f;
+        landV += accel * dt;
+        land += landV * dt;
+        // steps: one cycle per two steps, following how far you've walked
+        stepPhase = f.walk * (float) Math.PI;
+        float ph = stepPhase;
+        float m = moveS * (1f + 0.5f * sprintS);
+        float sx = (float) Math.sin(ph), cy = (float) Math.cos(2 * ph);
+        // walking: figure eight, the knife lagging a touch
+        ch[KnifeAnims.FX] += sx * 0.016f * m;
+        ch[KnifeAnims.FY] += -(1f - cy) * 0.010f * m;
+        ch[KnifeAnims.ROLL] += sx * 2.2f * m;
+        ch[KnifeAnims.YAW] += (float) Math.cos(ph) * 1.4f * m;
+        ch[KnifeAnims.WP] += (float) Math.sin(2 * ph + 0.6) * 2.0f * m;
+        // sprinting: lowered, pulled in and tipped forward
+        ch[KnifeAnims.FY] -= 0.045f * sprintS;
+        ch[KnifeAnims.FX] += 0.025f * sprintS;
+        ch[KnifeAnims.FZ] += 0.04f * sprintS;
+        ch[KnifeAnims.PITCH] += 14f * sprintS;
+        ch[KnifeAnims.WP] += 18f * sprintS;
+        ch[KnifeAnims.WR] -= 12f * sprintS;
+        // in the air: lifted while rising, pressed down when falling
+        float rise = Math.max(-1f, Math.min(1f, f.vy * 2.2f));
+        ch[KnifeAnims.FY] += airS * rise * 0.03f;
+        ch[KnifeAnims.PITCH] += airS * -rise * 6f;
+        ch[KnifeAnims.FY] += land * 0.06f;
+        ch[KnifeAnims.WP] += land * -25f;
+        // breathing when still
+        float still = 1f - Math.min(1f, moveS + airS);
+        ch[KnifeAnims.FY] += (float) Math.sin(t * 1.5) * 0.004f * still;
+        ch[KnifeAnims.WR] += (float) Math.sin(t * 0.9) * 1.2f * still;
+    }
+
     /** You're no longer holding the knife. */
     public void hidden() {
         wasHolding = false;
@@ -284,13 +339,13 @@ public final class KnifeView {
 
     // the resting hold: where the fist is (view space, blocks), which way the forearm comes up
     // to it from below the screen, and how the wrist bends the blade upright
-    static float REST_X = 0.25f, REST_Y = -0.16f, REST_Z = -0.70f;
-    static float[] REST_ARM = {-0.47f, 0.71f, -0.51f};
+    static float REST_X = 0.24f, REST_Y = -0.15f, REST_Z = -0.70f;
+    static float[] REST_ARM = {-0.45f, 0.55f, -0.70f};
     /** Wrist bend (pitch, yaw, roll) and the knife's turn round its length, for each way of holding it. */
     static float[][] REST_WRIST = {
-        {50f, 8f, 0f, 35f},     // hammer: blade upright, its flat toward you
-        {-20f, 0f, 0f, 0f},     // reverse (karambit): blade below the fist, claw curling forward
-        {5f, -25f, 0f, 90f},      // push dagger: blade forward out of the fist
+        {25f, 10f, 0f, 40f},     // hammer: blade upright out of the fist, its flat toward you
+        {-10f, 0f, 70f, 0f},     // reverse (karambit): ring on top, the claw out to the side
+        {-20f, -35f, 0f, 90f},   // push dagger: blade forward out of the fist
     };
     private int hold;
 
@@ -311,6 +366,10 @@ public final class KnifeView {
                 .rotX(ch[KnifeAnims.PITCH])
                 .basis(x, d, z)
                 .rotY(ch[KnifeAnims.ROLL])
+                // no wrist: the whole arm turns round the fist as one piece
+                .rotX(REST_WRIST[hold][0] + ch[KnifeAnims.WP])
+                .rotZ(REST_WRIST[hold][1] + ch[KnifeAnims.WY])
+                .rotY(REST_WRIST[hold][2] + ch[KnifeAnims.WR])
                 .scale(1 / 16f)
                 .translate(0, -10, 0);
     }
@@ -329,11 +388,7 @@ public final class KnifeView {
     }
 
     private M4 handMatrix(M4 arm) {
-        return new M4(arm).translate(0, 8, 0)
-                .rotX(REST_WRIST[hold][0] + ch[KnifeAnims.WP])
-                .rotZ(REST_WRIST[hold][1] + ch[KnifeAnims.WY])
-                .rotY(REST_WRIST[hold][2] + ch[KnifeAnims.WR])
-                .translate(0, -8, 0);
+        return arm;   // the fist is part of the arm (no wrist joint)
     }
 
     private void drawArm(Out out, M4 arm, M4 hand, Frame f) {
@@ -346,16 +401,13 @@ public final class KnifeView {
         int argb = alpha << 24 | col;
         out.begin(Out.LIT, skin);
         float w = f.slim ? 3 : 4;
-        // forearm (rows 0..8 of the arm's picture) and the fist (8..12); sleeve layer just outside
-        box(out, arm, w, 0, 8, 40, 16, 0, argb);
-        box(out, hand, w, 8, 12, 40, 16, 0, argb);
-        box(out, arm, w, 0, 8, 40, 32, 0.25f, argb);
-        box(out, hand, w, 8, 12, 40, 32, 0.25f, argb);
+        // the whole arm as one piece, with its sleeve layer just outside
+        box(out, arm, w, 0, 12, 40, 16, 0, argb);
+        box(out, arm, w, 0, 12, 40, 32, 0.25f, argb);
         if (fx == FX_GLOW || fx == FX_HOLOGRAM) {
             int g = glowColour(fx == FX_HOLOGRAM ? 0.35f : 0.22f);
             out.begin(Out.ADD, skin);
-            box(out, arm, w, 0, 8, 40, 16, 0.35f, g);
-            box(out, hand, w, 8, 12, 40, 16, 0.35f, g);
+            box(out, arm, w, 0, 12, 40, 16, 0.35f, g);
         }
     }
 

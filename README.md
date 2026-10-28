@@ -119,8 +119,10 @@ drawn in software; real graphics cards usually gain more from Sodium):
 - **Benchmark** (26.1, beta): a one-minute flight round where you stand (only the camera moves, so it's fine on servers)
   that measures average FPS, 1% and 0.1% lows, stutters and memory clean-ups, and keeps every run in
   `peregrine-benchmarks.txt` so you can compare settings and mods
-- **Performance boost** (26.1, on by default): fewer frames while the game isn't the window you're using, a cap on
-  particles so explosions and crystal fights stay smooth, and chests, signs and banners left out past a distance you choose
+- **Performance boost** (26.1, on by default): **world resolution** (draw the world at 85, 75, 66 or 50% and scale it up
+  smoothly, while your hand, HUD and menus stay sharp: a big FPS gain on weaker graphics), fewer frames while the game
+  isn't the window you're using, a cap on particles so explosions and crystal fights stay smooth, and chests, signs and
+  banners drawn up to 32 blocks (you choose)
 - **Crosshair hit timing**: the custom crosshair turns your ready color just before your next hit lands at full strength,
   early by your reaction time. Take the reaction test from its settings to measure yours
 - **Viewmodel effects** (26.1, beta): your hand and what it holds see-through like glass, as a hologram or glowing, with

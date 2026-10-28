@@ -77,6 +77,8 @@
 		"TotemHeldMixin",
 		"TotemPopMixin",
 		"WaterOverlayMixin",
+		"WorldScaleMixin",
+		"WorldScaleTargetMixin",
 		"ZeroDelayClickMixin",
 		"ZeroDelayInputMixin",
 		"ZeroDelayKeyMixin",

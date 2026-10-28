@@ -170,40 +170,54 @@ public final class KnifeAnims {
 
     // ------------------------------------------------------------------ inspecting (F)
 
-    /** Show-off: bring it in, turn it to show both sides, then a spin. */
-    public static final Anim SHOWOFF = new Anim("show-off", 2.7f,
-            k(0.12f, FX, -0.14f, FY, 0.06f, FZ, 0.05f, WY, -30, WR, -20, TWIST, 0),
-            k(0.35f, FX, -0.16f, FY, 0.07f, FZ, 0.06f, WY, -36, WR, -25, TWIST, 170),
-            k(0.55f, FX, -0.14f, FY, 0.06f, FZ, 0.06f, WY, -30, WR, -20, TWIST, 180),
-            k(0.66f, FX, -0.08f, FY, 0.03f, WY, -10, TWIST, 360, SPIN, 0),
-            k(0.85f, SPIN, 360, TWIST, 360),
-            k(1, SPIN, 360, TWIST, 360));
+    /** Show-off: a small dip, brought in close, turned to show one face then the other, a spin to finish. */
+    public static final Anim SHOWOFF = new Anim("show-off", 3.1f,
+            k(0.05f, FY, -0.012f, WP, -8, TWIST, 0),
+            k(0.17f, FX, -0.13f, FY, 0.065f, FZ, 0.07f, WY, -34, WR, -14, WP, 6, TWIST, 0),
+            k(0.30f, FX, -0.14f, FY, 0.07f, FZ, 0.075f, WY, -30, WR, -18, TWIST, 70),
+            k(0.42f, FX, -0.145f, FY, 0.072f, FZ, 0.075f, WY, -27, WR, -20, TWIST, 182),
+            k(0.50f, FX, -0.14f, FY, 0.07f, FZ, 0.074f, WY, -28, WR, -19, TWIST, 176),
+            k(0.58f, FX, -0.135f, FY, 0.068f, FZ, 0.07f, WY, -30, WR, -17, TWIST, 180),
+            k(0.66f, FX, -0.10f, FY, 0.05f, FZ, 0.05f, WY, -20, WP, -10, TWIST, 270, SPIN, 0),
+            k(0.80f, FX, -0.05f, FY, 0.025f, FZ, 0.02f, WY, -6, WP, 4, TWIST, 360, SPIN, 330),
+            k(0.88f, FY, -0.006f, WP, -3, TWIST, 360, SPIN, 368),
+            k(0.94f, TWIST, 360, SPIN, 358),
+            k(1, TWIST, 360, SPIN, 360));
 
-    /** Looking over the blade: held flat in front, turned slowly along. */
-    public static final Anim LOOK_OVER = new Anim("look over", 2.9f,
-            k(0.15f, FX, -0.18f, FY, 0.08f, FZ, 0.08f, WR, -80, WP, 15, YAW, 8, TWIST, 0),
-            k(0.45f, FX, -0.20f, FY, 0.10f, FZ, 0.10f, WR, -85, WP, 25, YAW, 12, TWIST, -40),
-            k(0.70f, FX, -0.18f, FY, 0.08f, FZ, 0.08f, WR, -70, WP, -10, YAW, 6, TWIST, -150),
-            k(0.85f, FX, -0.05f, WR, -20, TWIST, -180),
+    /** Looking over the blade: raised flat at eye level, turned slowly along, a glance down its edge. */
+    public static final Anim LOOK_OVER = new Anim("look over", 3.2f,
+            k(0.06f, FY, -0.01f, WP, -6, TWIST, 0),
+            k(0.18f, FX, -0.17f, FY, 0.09f, FZ, 0.09f, WR, -78, WP, 14, YAW, 8, TWIST, 0),
+            k(0.34f, FX, -0.19f, FY, 0.10f, FZ, 0.10f, WR, -84, WP, 22, YAW, 11, TWIST, -30),
+            k(0.50f, FX, -0.19f, FY, 0.105f, FZ, 0.10f, WR, -82, WP, 8, YAW, 10, TWIST, -95),
+            k(0.64f, FX, -0.18f, FY, 0.095f, FZ, 0.09f, WR, -74, WP, -12, YAW, 6, TWIST, -160),
+            k(0.72f, FX, -0.175f, FY, 0.093f, FZ, 0.088f, WR, -72, WP, -14, TWIST, -184),
+            k(0.86f, FX, -0.05f, FY, 0.02f, WR, -18, WP, -4, TWIST, -180),
+            k(0.94f, FY, -0.006f, WR, 2, TWIST, -180),
             k(1, TWIST, -180));
 
-    /** Toss and catch: up it goes, turning over twice, back into the fist. */
-    public static final Anim TOSS_CATCH = new Anim("toss", 2.0f,
-            k(0.10f, FY, -0.06f, WP, -15, TOSS, 0, SPIN, 0),
-            k(0.22f, FY, 0.05f, WP, 10, TOSS, 0.05f, SPIN, 60),
-            k(0.45f, FY, 0.02f, TOSS, 0.42f, SPIN, 400),
-            k(0.66f, FY, -0.02f, TOSS, 0.04f, SPIN, 700),
-            k(0.72f, FY, -0.07f, TOSS, 0, SPIN, 720, WP, -12),
-            k(0.86f, FY, 0.01f, SPIN, 720, WP, 4),
+    /** Toss and catch: a dip, up it goes turning over twice, caught with a little give. */
+    public static final Anim TOSS_CATCH = new Anim("toss", 2.2f,
+            k(0.08f, FY, -0.035f, WP, -18, TOSS, 0, SPIN, 0),
+            k(0.17f, FY, 0.045f, WP, 14, TOSS, 0.06f, SPIN, 50),
+            k(0.30f, FY, 0.02f, TOSS, 0.36f, SPIN, 300),
+            k(0.42f, FY, 0.0f, TOSS, 0.44f, SPIN, 470),
+            k(0.56f, FY, -0.01f, TOSS, 0.22f, SPIN, 640),
+            k(0.64f, FY, -0.02f, TOSS, 0.0f, SPIN, 720, WP, 0),
+            k(0.69f, FY, -0.065f, TOSS, 0, SPIN, 720, WP, -14),
+            k(0.80f, FY, 0.012f, SPIN, 720, WP, 5),
+            k(0.90f, FY, -0.004f, SPIN, 720, WP, -1),
             k(1, SPIN, 720));
 
-    /** Spin frenzy: fast twirls while the wrist rolls round. */
-    public static final Anim FRENZY = new Anim("frenzy", 2.3f,
-            k(0.10f, FX, -0.08f, FY, 0.04f, WY, -20, SPIN, 0),
-            k(0.30f, WY, 20, WR, 30, SPIN, 540),
-            k(0.50f, WY, -25, WR, -30, SPIN, 1080, FX, -0.12f),
-            k(0.70f, WY, 15, WR, 20, SPIN, 1620),
-            k(0.85f, FX, -0.02f, WY, 0, WR, 0, SPIN, 1800),
+    /** Spin frenzy: twirls building up fast while the wrist rolls round, then a clean stop. */
+    public static final Anim FRENZY = new Anim("frenzy", 2.5f,
+            k(0.08f, FX, -0.06f, FY, 0.03f, WY, -18, SPIN, 0),
+            k(0.22f, WY, 16, WR, 24, SPIN, 300),
+            k(0.38f, WY, -22, WR, -26, SPIN, 800, FX, -0.10f),
+            k(0.54f, WY, 18, WR, 22, SPIN, 1340),
+            k(0.70f, WY, -10, WR, -10, SPIN, 1720, FX, -0.07f),
+            k(0.80f, FX, -0.02f, WY, 2, WR, 2, SPIN, 1812),
+            k(0.88f, SPIN, 1795, WP, -4),
             k(1, SPIN, 1800));
 
     /** The butterfly knife's inspect: closes and flips open again, twice. */

@@ -120,9 +120,34 @@ public final class Shapes {
     public static void blade(Mesh m, float[] line, float[][] keys, float grind, float spineBevel, int n, float[] teeth) {
         n = lod(n, 10);
         // the cross-section: spine+, spine bevel+, grind line+, edge, grind line-, spine bevel-, spine-
-        float[] f = {0, spineBevel, grind, 1, grind, spineBevel, 0};
-        int[] side = {1, 1, 1, 0, -1, -1, -1};
-        float[][][] pts = new float[n][7][3];
+        // the cross-section, round from the spine on one face, over the edge, back on the other;
+        // extra points across the flat and the bevel give smoother reflections
+        int nf = detail >= 0.99f ? 2 : 0, nb = detail >= 0.99f ? 1 : 0;
+        int half = 3 + nf + nb;                    // spine, spine bevel, flats, grind, bevels (one face)
+        int pc = half * 2 + 1;                     // both faces and the edge
+        float[] f = new float[pc];
+        int[] side = new int[pc];
+        float[] tf = new float[pc];                // thickness: -1 = the spine's own, else a share of t
+        int q = 0;
+        f[q] = 0; tf[q++] = -1;
+        f[q] = spineBevel; tf[q++] = 1;
+        for (int i = 1; i <= nf; i++) {
+            f[q] = spineBevel + (grind - spineBevel) * i / (nf + 1f); tf[q++] = 1;
+        }
+        f[q] = grind; tf[q++] = 1;
+        for (int j = 1; j <= nb; j++) {
+            f[q] = grind + (1 - grind) * j / (nb + 1f); tf[q++] = 1 - j / (nb + 1f);
+        }
+        int edgeAt = q;
+        f[q] = 1; tf[q++] = 0;
+        for (int i = 0; i < half; i++) {
+            f[edgeAt + 1 + i] = f[edgeAt - 1 - i];
+            tf[edgeAt + 1 + i] = tf[edgeAt - 1 - i];
+        }
+        for (int i = 0; i < pc; i++) {
+            side[i] = i < edgeAt ? 1 : i == edgeAt ? 0 : -1;
+        }
+        float[][][] pts = new float[n][pc][3];
         float[][] centre = new float[n][3];
         float[] ss = new float[n];
         float len = 0;
@@ -148,12 +173,11 @@ public final class Shapes {
                 sp += -Math.signum(ed - sp) * teeth[3] * shape;      // teeth stand out from the spine
             }
             float h0 = t * (1 - sw);
-            float[] hs = {h0, t, t, 0, t, t, h0};
-            for (int j = 0; j < 7; j++) {
+            for (int j = 0; j < pc; j++) {
                 float o = sp + (ed - sp) * f[j];
                 pts[i][j][0] = c[0] + nx * o;
                 pts[i][j][1] = c[1] + ny * o;
-                pts[i][j][2] = side[j] * hs[j];
+                pts[i][j][2] = side[j] * (tf[j] < 0 ? h0 : t * tf[j]);
             }
             float mo = (sp + ed) / 2;
             centre[i][0] = c[0] + nx * mo;
@@ -164,9 +188,8 @@ public final class Shapes {
             arc[i] = len;
             prev = c;
         }
-        int[][] segs = {{0, 1}, {1, 2}, {2, 3}, {3, 4}, {4, 5}, {5, 6}, {6, 0}};
-        for (int[] sg : segs) {
-            int a = sg[0], b = sg[1];
+        for (int sgi = 0; sgi < pc; sgi++) {
+            int a = sgi, b = (sgi + 1) % pc;
             int[] va = new int[n], vb = new int[n];
             float[] last = {0, 0, 1};
             for (int i = 0; i < n; i++) {
@@ -197,16 +220,16 @@ public final class Shapes {
         }
         // close the end at the hilt
         float[] p0 = pts[0][0];
-        float[] p3 = pts[0][3];
-        float[] dir = sub(mid(pts[1][0], pts[1][3]), mid(p0, p3));
+        float[] p3 = pts[0][edgeAt];
+        float[] dir = sub(mid(pts[1][0], pts[1][edgeAt]), mid(p0, p3));
         float[] nn = scale(dir, -1 / Math.max(1e-6f, len(dir)));
         int cc = m.vertex(centre[0][0], centre[0][1], 0, nn[0], nn[1], nn[2], 0, BLADE_V1 * 0.5f);
-        int[] ring = new int[7];
-        for (int j = 0; j < 7; j++) {
+        int[] ring = new int[pc];
+        for (int j = 0; j < pc; j++) {
             ring[j] = m.vertex(pts[0][j][0], pts[0][j][1], pts[0][j][2], nn[0], nn[1], nn[2], 0, BLADE_V1 * f[j]);
         }
-        for (int j = 0; j < 7; j++) {
-            orientedTri(m, cc, ring[j], ring[(j + 1) % 7]);
+        for (int j = 0; j < pc; j++) {
+            orientedTri(m, cc, ring[j], ring[(j + 1) % pc]);
         }
     }
 

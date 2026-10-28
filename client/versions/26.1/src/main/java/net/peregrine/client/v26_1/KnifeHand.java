@@ -85,6 +85,9 @@ public final class KnifeHand {
         Vec3 dm = player.getDeltaMovement();
         float speed = (float) Math.sqrt(dm.x * dm.x + dm.z * dm.z);
         f.moving = player.onGround() ? Math.min(1.3f, speed / 0.2f) : 0f;
+        f.sprinting = player.isSprinting();
+        f.onGround = player.onGround();
+        f.vy = (float) dm.y;
         f.leftHanded = player.getMainArm() == HumanoidArm.LEFT;
         try {
             f.slim = player.getSkin().model() == PlayerModelType.SLIM;

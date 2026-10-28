@@ -23,7 +23,8 @@ public final class CustomSky extends Module {
 
     public final ChoiceSetting sky = add(new ChoiceSetting("sky", "Sky", 0, Skies.NAMES));
     public final SliderSetting brightness = add(new SliderSetting("brightness", "Brightness", 30f, 150f, 5f, 100f, "%.0f%%"));
-    public final SliderSetting speed = add(new SliderSetting("speed", "Animation speed", 25f, 300f, 25f, 100f, "%.0f%%"));
+    public final SliderSetting speed = add(new SliderSetting("speed", "Animation speed", 10f, 300f, 5f, 50f, "%.0f%%"));
+    public final BoolSetting turning = add(new BoolSetting("turning", "Stars turn with the time of day (off: the sky stays still)", false));
     public final BoolSetting moon = add(new BoolSetting("moon", "Realistic moon (in its real phase)", true));
     public final BoolSetting clouds = add(new BoolSetting("clouds", "Night clouds drifting low in the sky", true));
     public final BoolSetting daytime = add(new BoolSetting("daytime", "Show it faintly during the day too", false));
@@ -53,6 +54,7 @@ public final class CustomSky extends Module {
         Skies.moon = moon.value;
         Skies.clouds = clouds.value;
         Skies.daytime = daytime.value;
+        Skies.turning = turning.value;
         Skies.moonPhase = (int) Math.floorMod(p.worldDay() - 1, 8L);
         Skies.day = p.worldDay();
         Skies.loader = name -> load(p, name);

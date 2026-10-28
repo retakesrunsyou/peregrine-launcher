@@ -42,6 +42,7 @@ public final class Skies {
     public static volatile boolean daytime;         // also show it during the day (faded)
     public static volatile boolean moon = true;     // a detailed moon, in its real phase
     public static volatile boolean clouds = true;   // thin night clouds drifting low in the sky
+    public static volatile boolean turning;         // the stars turn with the time of day (off: they stay put)
     public static volatile int moonPhase;           // 0 full .. 4 new .. 7, from the world's day
     public static volatile long day;                // the world's day: the stars shift a little each night
     public static volatile float weather;           // 0 clear .. 1 full rain: clouds hide the sky
@@ -187,6 +188,11 @@ public final class Skies {
         final double lst;
 
         Sky(long worldTime, long day) {
+            if (!turning) {
+                // still: the Milky Way arched high across the sky (Cygnus overhead), as on a summer night
+                lst = Math.toRadians(20.3 * 15);
+                return;
+            }
             double t = ((worldTime % 24000L) + 24000L) % 24000L;
             lst = (t - 18000) / 24000.0 * Math.PI * 2 + Math.toRadians(18.5 * 15) + Math.floorMod(day, 12L) * Math.toRadians(2 * 15);
         }
