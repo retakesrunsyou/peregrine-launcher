@@ -351,6 +351,16 @@ public interface Platform {
     default void setHitColor(int argb) {
     }
 
+    /** The area miner's view of the world, or null where it can't run (only singleplayer). */
+    default Object botWorld() {
+        return null;
+    }
+
+    /** The block the crosshair is on {x, y, z}, or null. */
+    default int[] lookedAtPos() {
+        return null;
+    }
+
     /** Milliseconds until your next hit lands at full strength (0 = ready now), or -1 if unknown. */
     default int attackCooldownMs() {
         return -1;

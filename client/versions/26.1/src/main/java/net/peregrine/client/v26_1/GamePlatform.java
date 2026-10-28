@@ -272,6 +272,21 @@ final class GamePlatform implements Platform {
     }
 
     @Override
+    public Object botWorld() {
+        return MinerWorld.get();
+    }
+
+    @Override
+    public int[] lookedAtPos() {
+        if (mc().hitResult instanceof net.minecraft.world.phys.BlockHitResult
+                && mc().hitResult.getType() == net.minecraft.world.phys.HitResult.Type.BLOCK) {
+            net.minecraft.core.BlockPos b = ((net.minecraft.world.phys.BlockHitResult) mc().hitResult).getBlockPos();
+            return new int[] {b.getX(), b.getY(), b.getZ()};
+        }
+        return null;
+    }
+
+    @Override
     public int attackCooldownMs() {
         if (mc().player == null) {
             return -1;

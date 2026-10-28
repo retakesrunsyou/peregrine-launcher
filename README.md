@@ -119,6 +119,10 @@ drawn in software; real graphics cards usually gain more from Sodium):
 - **Auto reconnect** (26.1): kicked for being idle, a server restart or a dropped connection? You're put back in by
   yourself after a few seconds, each later try waiting twice as long (up to 5 minutes). A button on the disconnected screen
   shows the countdown and stops it. Never after a ban or a login somewhere else
+- **Area miner** (26.1, singleplayer only): mark two corners, stand on a top corner and turn it on: it clears the box
+  between them layer by layer, with a normal pickaxe (1x1) or a tool that mines 3x3. It fills in lava and water it
+  uncovers, lays blocks from your off hand where the ground is missing, picks the best tool from your hotbar, eats when
+  hungry, and stops by itself when your tool is nearly broken, your inventory is full or something goes wrong
 - **Benchmark** (26.1, beta): a one-minute flight round where you stand (only the camera moves, so it's fine on servers)
   that measures average FPS, 1% and 0.1% lows, stutters and memory clean-ups, and keeps every run in
   `peregrine-benchmarks.txt` so you can compare settings and mods
