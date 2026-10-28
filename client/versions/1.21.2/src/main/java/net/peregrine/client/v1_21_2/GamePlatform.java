@@ -257,7 +257,7 @@ final class GamePlatform implements Platform {
 
     @Override
     public boolean supports(String moduleId) {
-        if (moduleId.equals("custom_sky") || moduleId.equals("knives") || moduleId.equals("viewmodel_fx") || moduleId.equals("zero_delay") || moduleId.equals("benchmark") || moduleId.equals("boost")) {
+        if (moduleId.equals("custom_sky") || moduleId.equals("knives") || moduleId.equals("viewmodel_fx") || moduleId.equals("zero_delay") || moduleId.equals("benchmark") || moduleId.equals("boost") || moduleId.equals("auto_reconnect")) {
             return false;  // these are on 26.1 for now (beta)
         }
         if (moduleId.equals("motion_blur")) {

@@ -116,6 +116,9 @@ drawn in software; real graphics cards usually gain more from Sodium):
 - **Zero delay** (26.1, beta): end crystals disappear the moment you hit them and respawn anchors the moment you blow
   them up, so the next one goes down right away (they come back if the server says no). Optional instant clicks and hotbar
   keys (some anti-cheats flag these) and less input lag when your graphics card is the limit. Minecraft's miss delay is kept
+- **Auto reconnect** (26.1): kicked for being idle, a server restart or a dropped connection? You're put back in by
+  yourself after a few seconds, each later try waiting twice as long (up to 5 minutes). A button on the disconnected screen
+  shows the countdown and stops it. Never after a ban or a login somewhere else
 - **Benchmark** (26.1, beta): a one-minute flight round where you stand (only the camera moves, so it's fine on servers)
   that measures average FPS, 1% and 0.1% lows, stutters and memory clean-ups, and keeps every run in
   `peregrine-benchmarks.txt` so you can compare settings and mods
