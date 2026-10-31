@@ -553,7 +553,7 @@ final class GamePlatform implements Platform {
 
     @Override
     public boolean supports(String moduleId) {
-        if (moduleId.equals("custom_sky") || moduleId.equals("knives") || moduleId.equals("viewmodel_fx") || moduleId.equals("zero_delay") || moduleId.equals("benchmark") || moduleId.equals("boost") || moduleId.equals("auto_reconnect") || moduleId.equals("area_miner")) {
+        if (moduleId.equals("custom_sky") || moduleId.equals("knives") || moduleId.equals("viewmodel_fx") || moduleId.equals("zero_delay") || moduleId.equals("benchmark") || moduleId.equals("boost") || moduleId.equals("auto_reconnect") || moduleId.equals("area_miner") || moduleId.equals("skeletons") || moduleId.equals("pickaxe_look")) {
             return false;  // these are on 26.1 for now (beta)
         }
         return !moduleId.equals("chunk_fade") || minecraftVersion().equals("1.21.11");

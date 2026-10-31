@@ -127,6 +127,13 @@ drawn in software; real graphics cards usually gain more from Sodium):
   between them layer by layer, with a normal pickaxe (1x1) or a tool that mines 3x3. It fills in lava and water it
   uncovers, lays blocks from your off hand where the ground is missing, picks the best tool from your hotbar, eats when
   hungry, and stops by itself when your tool is nearly broken, your inventory is full or something goes wrong
+- **Skeleton look** (26.1): every player, you included in third person, drawn as a realistic 3D human skeleton (skull
+  with sockets, teeth and jaw, a curved spine, twelve pairs of ribs, shoulder blades, pelvis, hands and feet) that moves
+  exactly like the player does, and your first-person arm as bone. Held items stay in their hands; armor optional. Only
+  on your screen, with less detail for players further away so it stays smooth
+- **Pickaxe look** (26.1): your pickaxe drawn as a glowing star wand with drifting sparkles, or a peppermint axe with a
+  candy-cane handle and a round peppermint blade (original designs), in first and third person. It still mines like the
+  pickaxe it is, and only you see it
 - **Benchmark** (26.1, beta): a one-minute flight round where you stand (only the camera moves, so it's fine on servers)
   that measures average FPS, 1% and 0.1% lows, stutters and memory clean-ups, and keeps every run in
   `peregrine-benchmarks.txt` so you can compare settings and mods

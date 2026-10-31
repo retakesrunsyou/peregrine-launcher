@@ -399,6 +399,16 @@ public final class KnifeView {
         int alpha = fx == FX_GLASS ? Math.round(255 * fxOpacity) : fx == FX_HOLOGRAM ? Math.round(255 * Math.min(0.6f, fxOpacity)) : 255;
         int col = fx == FX_HOLOGRAM ? tint(0xFFFFFF, fxColor, 0.6f) : 0xFFFFFF;
         int argb = alpha << 24 | col;
+        if (net.peregrine.client.core.modules.SkeletonLook.arm()) {
+            // Skeleton look: the arm is bone (the bone arm's own space is the player model's arm)
+            float c = f.slim ? -0.5f : -1f;
+            M4 bm = new M4(arm).translate(-c, 2, 0);
+            final int a2 = alpha;
+            out.begin(Out.LIT, net.peregrine.client.core.skeleton.Skeleton.TEXTURE);
+            net.peregrine.client.core.skeleton.Skeleton.arm(true, f.slim, net.peregrine.client.core.skeleton.Skeleton.lod(0), bm,
+                    (x, y, z, nx, ny, nz, u, v, cc) -> out.vertex(x, y, z, nx, ny, nz, u, v, a2 << 24 | (cc & 0xFFFFFF)));
+            return;
+        }
         out.begin(Out.LIT, skin);
         float w = f.slim ? 3 : 4;
         // the whole arm as one piece, with its sleeve layer just outside
