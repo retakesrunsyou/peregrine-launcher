@@ -23,7 +23,7 @@ public final class Bones {
     public static final int BONE = 0xFFF2EEE6, TOOTH = 0xFFFFFFFF, CARTILAGE = 0xFFC9CDD2, DARK = 0xFF8A8478;
 
     /** Detail levels: grid cell (pixels), sides of tubes, smoothing of tube paths. */
-    static final float[] CELL = {0.15f, 0.27f, 0.45f};
+    static final float[] CELL = {0.15f, 0.24f, 0.34f};
     static final int[] AROUND = {6, 5, 4};
     static final int[] SMOOTH = {2, 1, 0};
 
@@ -40,49 +40,56 @@ public final class Bones {
     /** The skull, jaw and neck vertebrae, around the neck pivot. */
     public static Geo head(int lod) {
         List<Sdf.Node> skull = new ArrayList<Sdf.Node>();
-        // the braincase: an egg longer front to back, a little flat at the sides
-        skull.add(egg(0f, -5.05f, 0.45f, 2.1f, 2.25f, 2.7f));
-        skull.add(egg(0f, -4.55f, 1.3f, 1.95f, 1.75f, 1.9f));                 // the back of the head
-        skull.add(egg(0f, -4.75f, -1.95f, 1.75f, 0.42f, 0.55f));              // brow ridge
-        // the face: a flat upper jaw under the nose, cheekbones and their arches back to the ears
-        skull.add(egg(0f, -2.6f, -1.45f, 0.98f, 0.55f, 0.72f));
-        skull.add(rod(-0.75f, -3.35f, -1.95f, 0.75f, -3.35f, -1.95f, 0.32f, 0.32f));          // between the eyes and the teeth
-        skull.add(rod(0f, -4.2f, -2.05f, 0f, -3.55f, -2.2f, 0.2f, 0.16f));                    // bridge of the nose
-        for (int s = -1; s <= 1; s += 2) {
-            skull.add(egg(s * 1.42f, -3.4f, -1.4f, 0.48f, 0.42f, 0.62f));
-            skull.add(rod(s * 1.62f, -3.3f, -1.05f, s * 1.98f, -3.15f, 0.55f, 0.2f, 0.17f));
-            skull.add(egg(s * 1.9f, -2.75f, 0.95f, 0.3f, 0.42f, 0.38f));      // mastoid behind the ear
-            skull.add(rod(s * 0.55f, -2.6f, -1.95f, s * 1.3f, -3.15f, -1.55f, 0.28f, 0.3f));   // upper jaw up to the cheek
-            skull.add(rod(s * 0.95f, -4.75f, -2.05f, s * 1.55f, -3.7f, -1.6f, 0.2f, 0.24f));   // outer rim of the eye
-        }
-        // the gum ridge the upper teeth grow from
-        for (int i = 0; i < 6; i++) {
+        // the braincase: an egg longer front to back, a little flat at the sides, a smooth high forehead
+        skull.add(egg(0f, -5.1f, 0.5f, 2.08f, 2.22f, 2.68f));
+        skull.add(egg(0f, -4.6f, 1.35f, 1.9f, 1.7f, 1.85f));                  // the back of the head
+        skull.add(egg(0f, -4.68f, -1.98f, 1.55f, 0.26f, 0.36f));              // a light brow ridge
+        // the face: one smooth plate from the brows to the teeth, narrower toward the mouth
+        skull.add(egg(0f, -3.3f, -1.3f, 1.62f, 1.5f, 1.0f));
+        skull.add(egg(0f, -2.35f, -1.5f, 0.9f, 0.45f, 0.65f));                // upper jaw under the nose
+        for (int i = 0; i < 6; i++) {                                          // the ridge the upper teeth grow from
             float a0 = (float) Math.toRadians(-80 + i * 32), a1 = (float) Math.toRadians(-80 + (i + 1) * 32);
-            skull.add(rod((float) Math.sin(a0) * 1.0f, -2.12f, -1.2f - (float) Math.cos(a0) * 0.9f,
-                    (float) Math.sin(a1) * 1.0f, -2.12f, -1.2f - (float) Math.cos(a1) * 0.9f, 0.22f, 0.22f));
+            skull.add(rod((float) Math.sin(a0) * 0.98f, -2.05f, -1.22f - (float) Math.cos(a0) * 0.88f,
+                    (float) Math.sin(a1) * 0.98f, -2.05f, -1.22f - (float) Math.cos(a1) * 0.88f, 0.21f, 0.21f));
         }
-        // the base of the skull, where it sits on the spine
-        skull.add(egg(0f, -3.05f, 0.75f, 1.35f, 0.7f, 1.35f));
+        for (int s = -1; s <= 1; s += 2) {
+            // cheekbone and its slim arch back to the ear
+            skull.add(rod(s * 1.3f, -3.55f, -1.9f, s * 1.72f, -3.2f, -1.15f, 0.2f, 0.18f));
+            skull.add(rod(s * 1.72f, -3.2f, -1.15f, s * 2.0f, -3.08f, 0.5f, 0.13f, 0.12f));
+            skull.add(egg(s * 1.88f, -2.7f, 0.95f, 0.24f, 0.36f, 0.3f));      // mastoid behind the ear
+            skull.add(egg(s * 1.42f, -3.38f, -1.5f, 0.42f, 0.38f, 0.55f));     // cheek
+            skull.add(rod(s * 1.25f, -4.6f, -2.0f, s * 1.62f, -3.6f, -1.6f, 0.17f, 0.2f));   // outer edge of the eye socket
+        }
+        skull.add(rod(0f, -4.45f, -2.2f, 0f, -3.45f, -2.32f, 0.13f, 0.09f));  // bridge of the nose
+        skull.add(egg(0f, -3.05f, 0.75f, 1.3f, 0.65f, 1.3f));                 // the base, where it sits on the spine
         List<Sdf.Node> holes = new ArrayList<Sdf.Node>();
         for (int s = -1; s <= 1; s += 2) {
-            holes.add(egg(s * 0.85f, -4.02f, -2.3f, 0.7f, 0.64f, 0.8f).tint(0xFFB8AF9E));     // eye sockets, deep
-            holes.add(rod(s * 0.82f, -4.0f, -2.1f, s * 0.6f, -4.0f, -0.6f, 0.55f, 0.25f).tint(0xFF6E665A));
-            holes.add(ball(s * 2.12f, -3.25f, 0.45f, 0.16f));                 // ear openings
+            holes.add(egg(s * 0.86f, -3.95f, -2.3f, 0.76f, 0.68f, 0.78f));                         // eye sockets, deep
+            holes.add(rod(s * 0.82f, -3.95f, -2.0f, s * 0.6f, -3.95f, -0.6f, 0.5f, 0.22f).tint(0xFF5E574C));
+            holes.add(ball(s * 2.1f, -3.2f, 0.45f, 0.15f));                   // ear openings
+            holes.add(egg(s * 0.7f, -2.75f, -2.25f, 0.35f, 0.3f, 0.25f));     // the shallow dip each side of the nose
+            holes.add(egg(s * 1.95f, -3.6f, -0.25f, 0.18f, 0.5f, 0.6f));      // temples
         }
-        holes.add(egg(0f, -3.05f, -2.25f, 0.34f, 0.58f, 0.9f).tint(0xFF8C8374));               // the nose opening
-        holes.add(egg(0f, -3.4f, -2.3f, 0.22f, 0.32f, 0.8f).tint(0xFF8C8374));
-        Sdf.Node cranium = Sdf.cut(Sdf.union(0.45f, skull), 0.15f, holes.toArray(new Sdf.Node[0]));
+        holes.add(ellipsoid(0f, -2.95f, -2.3f, Sdf.X, norm(0, 1, 0.15f), Sdf.Z, 0.34f, 0.5f, 0.9f).tint(0xFF7D7466));   // nose opening
+        holes.add(egg(0f, -3.32f, -2.35f, 0.17f, 0.3f, 0.8f).tint(0xFF7D7466));
+        Sdf.Node cranium = Sdf.cut(Sdf.union(0.28f, skull), 0.1f, holes.toArray(new Sdf.Node[0]));
 
-        // the jaw: chin, the U of its body, then up to the joint in front of the ear
+        // the jaw: a small chin, a slim U-shaped body, then a thin plate up to the joint in front of the ear
         List<Sdf.Node> jaw = new ArrayList<Sdf.Node>();
-        jaw.add(egg(0f, -0.78f, -1.92f, 0.55f, 0.36f, 0.3f));
-        for (int s = -1; s <= 1; s += 2) {
-            jaw.add(rod(s * 0.35f, -0.88f, -1.9f, s * 1.12f, -1.0f, -1.12f, 0.33f, 0.3f));
-            jaw.add(rod(s * 1.12f, -1.0f, -1.12f, s * 1.62f, -1.15f, 0.15f, 0.3f, 0.28f));
-            jaw.add(ellipsoid(s * 1.68f, -2.15f, 0.25f, Sdf.X, norm(0, 1, 0.15f), norm(0, -0.15f, 1), 0.14f, 0.85f, 0.42f));
-            jaw.add(egg(s * 1.75f, -2.95f, 0.5f, 0.2f, 0.18f, 0.24f));        // the joint
+        jaw.add(egg(0f, -0.66f, -1.95f, 0.42f, 0.26f, 0.22f));
+        for (int i = 0; i < 6; i++) {                                          // the ridge the lower teeth grow from
+            float a0 = (float) Math.toRadians(-78 + i * 31.2f), a1 = (float) Math.toRadians(-78 + (i + 1) * 31.2f);
+            jaw.add(rod((float) Math.sin(a0) * 0.9f, -1.12f, -1.22f - (float) Math.cos(a0) * 0.8f,
+                    (float) Math.sin(a1) * 0.9f, -1.12f, -1.22f - (float) Math.cos(a1) * 0.8f, 0.19f, 0.19f));
         }
-        Sdf.Node mandible = Sdf.union(0.3f, jaw);
+        for (int s = -1; s <= 1; s += 2) {
+            jaw.add(rod(s * 0.3f, -0.78f, -1.92f, s * 1.0f, -0.86f, -1.2f, 0.22f, 0.2f));
+            jaw.add(rod(s * 1.0f, -0.86f, -1.2f, s * 1.48f, -0.85f, 0.1f, 0.2f, 0.19f));
+            jaw.add(ellipsoid(s * 1.62f, -1.85f, 0.25f, Sdf.X, norm(0, 1, 0.18f), norm(0, -0.18f, 1), 0.12f, 1.05f, 0.46f));
+            jaw.add(rod(s * 1.55f, -2.0f, -0.05f, s * 1.6f, -2.75f, -0.3f, 0.09f, 0.05f));   // the thin front point
+            jaw.add(egg(s * 1.72f, -2.88f, 0.48f, 0.18f, 0.14f, 0.2f));       // the joint
+        }
+        Sdf.Node mandible = Sdf.union(0.18f, jaw);
 
         // neck: seven vertebrae down to the shoulders
         List<Sdf.Node> neck = new ArrayList<Sdf.Node>();
@@ -97,7 +104,7 @@ public final class Bones {
 
         Sdf.Node skullAll = Sdf.union(0.02f, cranium, mandible);
         Geo g = new Geo();
-        Nets.mesh(skullAll, new float[] {-2.6f, -7.6f, -2.8f}, new float[] {2.6f, -0.3f, 3.5f}, CELL[lod] * 1.1f, 1f, g);
+        Nets.mesh(skullAll, new float[] {-2.6f, -7.6f, -2.8f}, new float[] {2.6f, -0.3f, 3.5f}, CELL[lod] * 0.95f, 1f, g);
         // teeth: upper and lower rows round the front of the jaws, growing out of the gums
         int ta = Math.max(4, AROUND[lod]);
         for (int row = 0; row < 2; row++) {
@@ -109,7 +116,7 @@ public final class Bones {
                 float x = (float) Math.sin(a) * rad, z = -1.2f - (float) Math.cos(a) * (rad - 0.08f);
                 int edge = Math.min(i, count - 1 - i);
                 boolean molar = edge < 3, canine = edge == 3;
-                float w = molar ? 0.16f : canine ? 0.12f : 0.1f;
+                float w = molar ? 0.14f : canine ? 0.11f : 0.095f;
                 float t2 = tip + (row == 0 ? 1 : -1) * (canine ? 0.06f : 0f);
                 float mid = (root + t2) / 2;
                 // the cross-section runs along the jaw: flatter front to back for the front teeth
@@ -139,51 +146,60 @@ public final class Bones {
             float y = 0.25f + i * (10.4f / 16f);
             float z = spineZ(y);
             boolean lumbar = i >= 12;
-            float r = lumbar ? 0.62f : 0.42f + i * 0.012f;
-            parts.add(egg(0f, y, z - 0.15f, r, lumbar ? 0.24f : 0.2f, r * 0.85f));
+            float r = lumbar ? 0.5f : 0.32f + i * 0.012f;
+            parts.add(egg(0f, y, z - 0.15f, r, lumbar ? 0.22f : 0.18f, r * 0.85f));
             // the spike at the back and the wings to the sides
-            parts.add(rod(0f, y, z + 0.25f, 0f, y + (lumbar ? 0.15f : 0.45f), z + (lumbar ? 0.95f : 1.0f), 0.13f, 0.09f));
-            float wing = lumbar ? 1.05f : 0.85f;
-            parts.add(rod(-wing, y - 0.05f, z + 0.3f, wing, y - 0.05f, z + 0.3f, 0.1f, 0.1f));
+            parts.add(rod(0f, y, z + 0.2f, 0f, y + (lumbar ? 0.15f : 0.45f), z + (lumbar ? 0.85f : 0.9f), 0.1f, 0.07f));
+            float wing = lumbar ? 0.95f : 0.75f;
+            parts.add(rod(-wing, y - 0.05f, z + 0.3f, wing, y - 0.05f, z + 0.3f, 0.075f, 0.075f));
         }
         // breastbone: the wide top, the long body, the little tip
-        parts.add(ellipsoid(0f, 1.05f, -1.82f, Sdf.X, norm(0, 1, 0.12f), norm(0, -0.12f, 1), 0.72f, 0.6f, 0.17f));
-        parts.add(ellipsoid(0f, 3.2f, -1.95f, Sdf.X, norm(0, 1, 0.1f), norm(0, -0.1f, 1), 0.48f, 1.75f, 0.16f));
+        parts.add(ellipsoid(0f, 1.05f, -1.82f, Sdf.X, norm(0, 1, 0.12f), norm(0, -0.12f, 1), 0.6f, 0.52f, 0.13f));
+        parts.add(ellipsoid(0f, 3.2f, -1.95f, Sdf.X, norm(0, 1, 0.1f), norm(0, -0.1f, 1), 0.4f, 1.75f, 0.12f));
         parts.add(rod(0f, 4.9f, -1.9f, 0f, 5.5f, -1.75f, 0.14f, 0.06f));
         for (int s = -1; s <= 1; s += 2) {
             // shoulder blade: a thin triangle on the back, its ridge, and the socket for the arm
             float[] top = {s * 1.35f, 0.55f, 1.7f}, low = {s * 1.9f, 4.65f, 1.55f}, out = {s * 3.65f, 1.05f, 1.1f};
-            parts.add(Sdf.plate(top, low, out, 0.16f));
-            parts.add(rod(s * 1.55f, 1.45f, 1.85f, s * 3.85f, 0.35f, 0.9f, 0.12f, 0.16f));
+            parts.add(Sdf.plate(top, low, out, 0.12f));
+            parts.add(rod(s * 1.55f, 1.45f, 1.8f, s * 3.85f, 0.35f, 0.9f, 0.09f, 0.13f));
             parts.add(egg(s * 3.75f, 1.05f, 0.75f, 0.25f, 0.42f, 0.3f));
             // pelvis: the hip bone's wing, its rim, the socket, and the rings round the opening below
-            parts.add(ellipsoid(s * 2.35f, 10.85f, 0.3f, norm(s * 0.5f, 0.35f, -0.8f), norm(0, 1, 0.25f),
-                    norm(s * 0.85f, 0.05f, 0.5f), 1.5f, 1.1f, 0.26f));
+            // the hip bone's wing: part of a thin bowl that flares up and out from the hip socket
+            Sdf.Node bowl = Sdf.shell(egg(0f, 11.35f, 0.3f, 3.05f, 1.65f, 1.55f), 0.15f);
+            parts.add(Sdf.both(bowl, Sdf.box(s * 1.05f, 9.55f, -0.95f, s * 3.4f, 12.0f, 1.35f), 0.12f));
             parts.add(Sdf.rods(new float[][] {
-                {s * 0.95f, 10.0f, 1.2f, 0.16f}, {s * 2.15f, 9.75f, 1.0f, 0.2f}, {s * 3.15f, 10.0f, 0.25f, 0.2f},
-                {s * 3.2f, 10.45f, -0.55f, 0.18f}, {s * 2.6f, 11.0f, -0.85f, 0.14f}}));
-            parts.add(egg(s * 1.95f, 12.0f, 0.05f, 0.72f, 0.65f, 0.72f));
-            parts.add(rod(s * 1.75f, 12.25f, -0.4f, s * 0.28f, 12.65f, -1.05f, 0.3f, 0.24f));      // pubic bone
-            parts.add(rod(s * 1.85f, 12.55f, 0.25f, s * 1.45f, 13.5f, 0.5f, 0.33f, 0.3f));         // sit bone
-            parts.add(rod(s * 1.45f, 13.5f, 0.5f, s * 0.35f, 13.15f, -0.85f, 0.22f, 0.18f));
+                {s * 0.95f, 10.0f, 1.2f, 0.13f}, {s * 2.15f, 9.75f, 1.0f, 0.15f}, {s * 3.15f, 10.0f, 0.25f, 0.15f},
+                {s * 3.2f, 10.45f, -0.55f, 0.14f}, {s * 2.6f, 11.0f, -0.85f, 0.11f}}));
+            parts.add(egg(s * 1.95f, 12.0f, 0.05f, 0.62f, 0.56f, 0.62f));
+            parts.add(rod(s * 1.75f, 12.25f, -0.4f, s * 0.28f, 12.65f, -1.05f, 0.22f, 0.18f));      // pubic bone
+            parts.add(rod(s * 1.85f, 12.55f, 0.25f, s * 1.45f, 13.5f, 0.5f, 0.25f, 0.22f));         // sit bone
+            parts.add(rod(s * 1.45f, 13.5f, 0.5f, s * 0.35f, 13.15f, -0.85f, 0.16f, 0.13f));
         }
         // the sacrum: a curved wedge closing the pelvis at the back, and the tailbone
-        parts.add(ellipsoid(0f, 11.4f, 1.1f, Sdf.X, norm(0, 1, 0.3f), norm(0, -0.3f, 1), 1.15f, 1.35f, 0.3f));
+        parts.add(ellipsoid(0f, 11.55f, 1.15f, Sdf.X, norm(0, 1, 0.3f), norm(0, -0.3f, 1), 0.85f, 1.15f, 0.22f));
         parts.add(rod(0f, 12.6f, 1.4f, 0f, 13.35f, 1.15f, 0.2f, 0.07f));
         Sdf.Node solid = Sdf.union(0.22f, parts);
 
         // the shoulder sockets and hip sockets are cupped
         List<Sdf.Node> holes = new ArrayList<Sdf.Node>();
         for (int s = -1; s <= 1; s += 2) {
-            holes.add(ball(s * 2.25f, 12.0f, 0.05f, 0.55f));
+            holes.add(ball(s * 2.2f, 12.0f, 0.05f, 0.48f));
             holes.add(ball(s * 4.05f, 1.1f, 0.65f, 0.3f));
             holes.add(egg(s * 1.15f, 12.95f, -0.15f, 0.35f, 0.4f, 0.55f));    // the opening in each hip bone
         }
         Sdf.Node body = Sdf.cut(solid, 0.1f, holes.toArray(new Sdf.Node[0]));
         lastBody = body;
         Geo g = new Geo();
-        Nets.mesh(body, new float[] {-4.3f, -0.4f, -2.3f}, new float[] {4.3f, 13.8f, 2.4f}, CELL[lod] * 1.35f, 1f, g);
+        Nets.mesh(body, new float[] {-4.3f, -0.4f, -2.3f}, new float[] {4.3f, 13.8f, 2.4f}, CELL[lod] * 1.15f, 1f, g);
 
+        if (lod > 0) {   // keep the spine whole at a distance
+            float[][] sp = new float[9][];
+            for (int i = 0; i < 9; i++) {
+                float y = 0.2f + i * 1.3f;
+                sp[i] = new float[] {0f, y, spineZ(y) - 0.15f, i >= 6 ? 0.3f : 0.2f};
+            }
+            Tube.build(g, sp, null, BONE, AROUND[lod], 1f, new float[] {0, 0, 1}, 0);
+        }
         // ribs and collarbones are thin: tubes
         int around = AROUND[lod], smooth = SMOOTH[lod];
         float[] widths = {1.55f, 2.25f, 2.7f, 3.0f, 3.2f, 3.3f, 3.32f, 3.25f, 3.15f, 3.0f, 2.75f, 2.45f};
@@ -203,15 +219,15 @@ public final class Bones {
                             * (th > Math.PI / 2 ? (float) Math.sin(th) : 1f));
                     float z = -0.3f + 1.45f * (float) Math.cos(th) + (k == 0 ? spineZ(y0) - 1.15f : 0);
                     float y = y0 + drop * (float) Math.pow(th / Math.PI, 1.4);
-                    pts[k] = new float[] {x, y, z, k == n - 1 ? 0.12f : 0.16f};
+                    pts[k] = new float[] {x, y, z, k == n - 1 ? 0.1f : 0.13f};
                     cols[k] = !floating && k >= n - 3 ? CARTILAGE : BONE;
                 }
                 if (!floating) {   // cartilage on to the breastbone (true ribs) or the rib above (false ribs)
                     float[] last = pts[n - 1];
                     float ty = falseRib ? last[1] - 0.6f : Math.min(4.8f, 0.9f + i * 0.62f);
                     float tx = falseRib ? s * (float) Math.max(0.7, Math.abs(last[0]) - 0.6) : s * 0.42f;
-                    pts = append(pts, new float[] {(last[0] + tx) / 2, (last[1] + ty) / 2 + 0.1f, -1.85f, 0.12f});
-                    pts = append(pts, new float[] {tx, ty, -1.9f, 0.11f});
+                    pts = append(pts, new float[] {(last[0] + tx) / 2, (last[1] + ty) / 2 + 0.1f, -1.85f, 0.1f});
+                    pts = append(pts, new float[] {tx, ty, -1.9f, 0.09f});
                     cols = append(cols, CARTILAGE);
                     cols = append(cols, CARTILAGE);
                 }
@@ -220,8 +236,8 @@ public final class Bones {
         }
         for (int s = -1; s <= 1; s += 2) {
             Tube.build(g, new float[][] {
-                {s * 0.45f, 0.6f, -1.75f, 0.24f}, {s * 1.6f, 0.38f, -1.9f, 0.19f}, {s * 2.7f, 0.25f, -1.45f, 0.18f},
-                {s * 3.5f, 0.12f, -0.6f, 0.2f}, {s * 3.9f, 0.08f, 0.1f, 0.24f}},
+                {s * 0.45f, 0.6f, -1.75f, 0.19f}, {s * 1.6f, 0.38f, -1.9f, 0.14f}, {s * 2.7f, 0.25f, -1.45f, 0.13f},
+                {s * 3.5f, 0.12f, -0.6f, 0.15f}, {s * 3.9f, 0.08f, 0.1f, 0.19f}},
                     null, BONE, around, 0.8f, new float[] {0, 1, 0}, smooth);
         }
         return g.pack();
@@ -248,23 +264,28 @@ public final class Bones {
         float c = slim ? -0.5f : -1f, k = slim ? 0.85f : 1f;   // slim arms: thinner bones
         float in = 1f;                                          // toward the body (+x for the right arm)
         List<Sdf.Node> p = new ArrayList<Sdf.Node>();
-        p.add(ball(c + in * 0.2f, -1.25f, 0.1f, 0.55f * k));                                 // head of the upper arm
-        p.add(egg(c - in * 0.25f, -0.95f, -0.15f, 0.38f * k, 0.4f, 0.35f * k));              // its knob
+        p.add(ball(c + in * 0.2f, -1.25f, 0.1f, 0.48f * k));                                 // head of the upper arm
+        p.add(egg(c - in * 0.2f, -0.95f, -0.12f, 0.3f * k, 0.34f, 0.28f * k));              // its knob
         // real proportions: the upper arm reaches about the bottom of the ribs, the fingertips the middle of the thigh
-        p.add(rod(c, -0.8f, 0.05f, c + in * 0.05f, 4.45f, 0.1f, 0.34f * k, 0.3f * k));
-        p.add(egg(c, 4.7f, 0.05f, 0.62f * k, 0.32f, 0.4f * k));                             // elbow end
-        p.add(egg(c + in * 0.1f, 4.85f, 0.45f, 0.28f * k, 0.36f, 0.26f * k));                // the elbow point
-        p.add(rod(c + in * 0.2f, 5.05f, 0.25f, c + in * 0.25f, 9.55f, 0.12f, 0.22f * k, 0.15f * k));   // ulna
-        p.add(rod(c - in * 0.2f, 5.15f, -0.05f, c - in * 0.3f, 9.55f, -0.18f, 0.17f * k, 0.27f * k));  // radius
+        p.add(rod(c, -0.8f, 0.05f, c + in * 0.05f, 4.45f, 0.1f, 0.27f * k, 0.23f * k));
+        p.add(egg(c, 4.7f, 0.05f, 0.5f * k, 0.26f, 0.32f * k));                             // elbow end
+        p.add(egg(c + in * 0.1f, 4.85f, 0.38f, 0.22f * k, 0.3f, 0.2f * k));                // the elbow point
+        p.add(rod(c + in * 0.15f, 4.8f, 0.3f, c + in * 0.25f, 9.55f, 0.12f, 0.17f * k, 0.11f * k));   // ulna
+        p.add(rod(c - in * 0.2f, 4.85f, -0.05f, c - in * 0.3f, 9.55f, -0.18f, 0.13f * k, 0.21f * k));  // radius
         // wrist: two rows of small bones
         for (int i = 0; i < 4; i++) {
             float z = -0.36f + i * 0.24f;
-            p.add(egg(c, 9.85f, z, 0.24f * k, 0.17f, 0.15f));
-            p.add(egg(c + in * 0.03f, 10.2f, z * 1.1f, 0.22f * k, 0.17f, 0.15f));
+            p.add(egg(c, 9.85f, z, 0.2f * k, 0.15f, 0.13f));
+            p.add(egg(c + in * 0.03f, 10.2f, z * 1.1f, 0.19f * k, 0.15f, 0.13f));
         }
         Sdf.Node arm = Sdf.union(0.16f, p);
         Geo g = new Geo();
         Nets.mesh(arm, new float[] {c - 1.2f, -2f, -1.2f}, new float[] {c + 1.2f, 10.5f, 1.2f}, CELL[lod] * 1.2f, 1f, g);
+        if (lod > 0) {   // at a distance the grid is too coarse for thin shafts: tubes keep them whole
+            shaft(g, lod, c, -0.8f, 0.05f, c + in * 0.05f, 4.45f, 0.1f, 0.25f * k);
+            shaft(g, lod, c + in * 0.15f, 4.8f, 0.3f, c + in * 0.25f, 9.55f, 0.12f, 0.14f * k);
+            shaft(g, lod, c - in * 0.2f, 4.85f, -0.05f, c - in * 0.3f, 9.55f, -0.18f, 0.16f * k);
+        }
         // the hand, relaxed: palm bones fanning out from the wrist, fingers hanging with a slight
         // curl toward the palm (which faces the body), the thumb forward
         int around = Math.max(4, AROUND[lod] - 1), smooth = SMOOTH[lod];
@@ -273,7 +294,7 @@ public final class Bones {
         for (int f = 0; f < 4; f++) {
             float z0 = fz[f] * 0.6f, z1 = fz[f];
             float L = len[f];
-            float r = (f == 3 ? 0.095f : 0.11f) * k;
+            float r = (f == 3 ? 0.08f : 0.095f) * k;
             float ky = 10.35f + 1.15f * L;                     // knuckle
             Tube.build(g, new float[][] {
                 {c, 10.3f, z0, r * 1.15f}, {c, (10.3f + ky) / 2, (z0 + z1) / 2, r * 0.85f}, {c, ky, z1, r * 1.3f},   // palm bone and knuckle
@@ -302,6 +323,17 @@ public final class Bones {
         return g.pack();
     }
 
+    /** A plain tube along a long bone's shaft (simpler detail levels). */
+    private static void shaft(Geo g, int lod, float ax, float ay, float az, float bx, float by, float bz, float r) {
+        Tube.build(g, new float[][] {{ax, ay, az, r}, {bx, by, bz, r}}, null, BONE, AROUND[lod], 1f, new float[] {0, 0, 1}, 0);
+    }
+
+    /** How far the leg bones lean in toward the middle at a height down the leg (pixels). */
+    static float kneeIn(float y) {
+        float t = Math.max(0, Math.min(1, (y - 0.4f) / 5.4f));
+        return 0.55f * t * t * (3 - 2 * t) * 0.6f + 0.55f * t * 0.4f;
+    }
+
     /** How far the arm bones lean in toward the body at a height along the arm (pixels). */
     static float lean(float y) {
         if (y <= -1.2f) {
@@ -322,25 +354,30 @@ public final class Bones {
     public static Geo rightLeg(int lod) {
         float in = 1f;   // toward the middle of the body
         List<Sdf.Node> p = new ArrayList<Sdf.Node>();
-        p.add(ball(in * 0.2f, 0.02f, 0.05f, 0.52f));                                  // head of the thigh bone, in the hip socket
-        p.add(rod(in * 0.15f, 0.1f, 0.05f, -in * 0.5f, 0.6f, 0.05f, 0.3f, 0.34f));   // its neck
-        p.add(egg(-in * 0.8f, 0.4f, 0.15f, 0.42f, 0.55f, 0.45f));                    // the big knob on the outside
-        p.add(rod(-in * 0.55f, 0.85f, 0.05f, 0f, 5.45f, -0.05f, 0.36f, 0.33f));      // the shaft
-        p.add(egg(in * 0.38f, 5.75f, 0.1f, 0.42f, 0.42f, 0.6f));                     // knee ends
-        p.add(egg(-in * 0.38f, 5.75f, 0.1f, 0.42f, 0.42f, 0.6f));
-        p.add(ellipsoid(0f, 5.85f, -0.72f, Sdf.X, norm(0, 1, 0.2f), norm(0, -0.2f, 1), 0.4f, 0.48f, 0.17f).tint(BONE));   // kneecap
-        p.add(egg(0f, 6.4f, 0.0f, 0.82f, 0.28f, 0.66f));                             // top of the shin bone
-        p.add(rod(0.05f, 6.6f, -0.12f, in * 0.1f, 10.8f, 0f, 0.33f, 0.27f));
-        p.add(egg(in * 0.35f, 11.05f, 0f, 0.3f, 0.3f, 0.32f));                       // inner ankle knob
-        p.add(rod(-in * 0.58f, 6.55f, 0.25f, -in * 0.55f, 10.95f, 0.15f, 0.17f, 0.14f));   // fibula
-        p.add(egg(-in * 0.58f, 11.15f, 0.12f, 0.21f, 0.32f, 0.24f));                 // outer ankle knob
+        p.add(ball(in * 0.2f, 0.02f, 0.05f, 0.46f));                                  // head of the thigh bone, in the hip socket
+        p.add(rod(in * 0.15f, 0.1f, 0.05f, -in * 0.45f, 0.6f, 0.05f, 0.24f, 0.27f));  // its neck
+        p.add(egg(-in * 0.72f, 0.42f, 0.15f, 0.34f, 0.45f, 0.36f));                   // the knob on the outside
+        p.add(rod(-in * 0.5f, 0.85f, 0.05f, 0f, 5.45f, -0.05f, 0.29f, 0.26f));        // the shaft
+        p.add(egg(in * 0.32f, 5.75f, 0.1f, 0.36f, 0.36f, 0.5f));                      // knee ends
+        p.add(egg(-in * 0.32f, 5.75f, 0.1f, 0.36f, 0.36f, 0.5f));
+        p.add(ellipsoid(0f, 5.85f, -0.62f, Sdf.X, norm(0, 1, 0.2f), norm(0, -0.2f, 1), 0.33f, 0.4f, 0.14f).tint(BONE));   // kneecap
+        p.add(egg(0f, 6.38f, 0.0f, 0.7f, 0.24f, 0.55f));                              // top of the shin bone
+        p.add(rod(0.05f, 6.55f, -0.1f, in * 0.1f, 10.8f, 0f, 0.27f, 0.21f));
+        p.add(egg(in * 0.3f, 11.05f, 0f, 0.24f, 0.26f, 0.26f));                       // inner ankle knob
+        p.add(rod(-in * 0.5f, 6.5f, 0.22f, -in * 0.48f, 10.95f, 0.14f, 0.12f, 0.1f)); // fibula
+        p.add(egg(-in * 0.5f, 11.12f, 0.12f, 0.17f, 0.27f, 0.2f));                    // outer ankle knob
         // foot: ankle bone, heel and the arch
-        p.add(egg(0f, 11.45f, 0.05f, 0.44f, 0.3f, 0.5f));
-        p.add(egg(-in * 0.05f, 11.72f, 0.6f, 0.38f, 0.3f, 0.55f));
-        p.add(egg(in * 0.1f, 11.55f, -0.55f, 0.45f, 0.25f, 0.4f));
+        p.add(egg(0f, 11.45f, 0.05f, 0.38f, 0.26f, 0.44f));
+        p.add(egg(-in * 0.05f, 11.72f, 0.6f, 0.32f, 0.27f, 0.48f));
+        p.add(egg(in * 0.1f, 11.56f, -0.55f, 0.4f, 0.22f, 0.36f));
         Sdf.Node leg = Sdf.union(0.2f, p);
         Geo g = new Geo();
-        Nets.mesh(leg, new float[] {-1.5f, -0.7f, -1.4f}, new float[] {1.0f, 12.1f, 1.3f}, CELL[lod] * 1.3f, 1f, g);
+        Nets.mesh(leg, new float[] {-1.5f, -0.7f, -1.4f}, new float[] {1.0f, 12.1f, 1.3f}, CELL[lod] * 1.15f, 1f, g);
+        if (lod > 0) {
+            shaft(g, lod, -in * 0.5f, 0.85f, 0.05f, 0f, 5.45f, -0.05f, 0.26f);
+            shaft(g, lod, 0.05f, 6.55f, -0.1f, in * 0.1f, 10.8f, 0f, 0.23f);
+            shaft(g, lod, -in * 0.5f, 6.5f, 0.22f, -in * 0.48f, 10.95f, 0.14f, 0.1f);
+        }
         int around = Math.max(4, AROUND[lod] - 2), smooth = SMOOTH[lod];
         for (int t = 0; t < 5; t++) {
             float x0 = in * (0.35f - t * 0.17f), x1 = in * (0.55f - t * 0.27f);
@@ -350,6 +387,18 @@ public final class Bones {
                 {x0, 11.6f, -0.65f, r}, {x1 * 0.9f, 11.78f, -1.15f, r * 0.9f}, {x1, 11.88f, -1.4f - 0.25f * L, r * 1.05f},
                 {x1, 11.9f, -1.6f - 0.4f * L, r * 0.85f}, {x1, 11.92f, -1.65f - 0.55f * L, r * 0.75f}},
                     null, BONE, around, 1f, new float[] {0, 1, 0}, smooth);
+        }
+        // thigh bones slope in from the hips so the knees sit closer together, shins straight down
+        for (int i = 0; i < g.verts; i++) {
+            int o = i * Geo.STRIDE;
+            float y = g.v[o + 1];
+            g.v[o] += in * kneeIn(y);
+            float slope = (kneeIn(y + 0.05f) - kneeIn(y - 0.05f)) / 0.1f;
+            g.v[o + 4] -= in * slope * g.v[o + 3];
+            float l = (float) Math.sqrt(g.v[o + 3] * g.v[o + 3] + g.v[o + 4] * g.v[o + 4] + g.v[o + 5] * g.v[o + 5]);
+            g.v[o + 3] /= l;
+            g.v[o + 4] /= l;
+            g.v[o + 5] /= l;
         }
         return g.pack();
     }

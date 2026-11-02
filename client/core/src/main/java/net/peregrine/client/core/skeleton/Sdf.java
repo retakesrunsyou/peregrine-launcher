@@ -149,6 +149,61 @@ public final class Sdf {
         return dx * dx + dy * dy + dz * dz;
     }
 
+    /** A shape's skin only: a shell of the given thickness each side of its surface. */
+    public static Node shell(final Node base, final float t) {
+        Node n = new Node() {
+            @Override
+            public float d(float x, float y, float z) {
+                return Math.abs(base.d(x, y, z)) - t;
+            }
+        };
+        n.bx = base.bx;
+        n.by = base.by;
+        n.bz = base.bz;
+        n.br = base.br == Float.MAX_VALUE ? Float.MAX_VALUE : base.br + t;
+        return n;
+    }
+
+    /** A box from (x0, y0, z0) to (x1, y1, z1). */
+    public static Node box(final float x0, final float y0, final float z0, final float x1, final float y1, final float z1) {
+        final float cx = (x0 + x1) / 2, cy = (y0 + y1) / 2, cz = (z0 + z1) / 2;
+        final float hx = Math.abs(x1 - x0) / 2, hy = Math.abs(y1 - y0) / 2, hz = Math.abs(z1 - z0) / 2;
+        Node n = new Node() {
+            @Override
+            public float d(float x, float y, float z) {
+                float qx = Math.abs(x - cx) - hx, qy = Math.abs(y - cy) - hy, qz = Math.abs(z - cz) - hz;
+                float ox = Math.max(qx, 0), oy = Math.max(qy, 0), oz = Math.max(qz, 0);
+                return (float) Math.sqrt(ox * ox + oy * oy + oz * oz) + Math.min(Math.max(qx, Math.max(qy, qz)), 0);
+            }
+        };
+        n.bx = cx;
+        n.by = cy;
+        n.bz = cz;
+        n.br = (float) Math.sqrt(hx * hx + hy * hy + hz * hz);
+        return n;
+    }
+
+    /** Only where both shapes are (k: how rounded the new edges are). */
+    public static Node both(final Node a, final Node b, final float k) {
+        Node n = new Node() {
+            @Override
+            public float d(float x, float y, float z) {
+                return smax(a.d(x, y, z), b.d(x, y, z), k);
+            }
+
+            @Override
+            public int color(float x, float y, float z) {
+                return a.color(x, y, z);
+            }
+        };
+        Node small = a.br <= b.br ? a : b;
+        n.bx = small.bx;
+        n.by = small.by;
+        n.bz = small.bz;
+        n.br = small.br;
+        return n;
+    }
+
     // ------------------------------------------------------------------ combining
 
     /** Shapes blended together (k: how far the blend reaches). */
@@ -233,7 +288,7 @@ public final class Sdf {
                 // the inside of a cut (deep in an eye socket) takes the cut's colour
                 float d = base.d(x, y, z);
                 for (Node h : holes) {
-                    if (h.color != 0xFFFFFFFF && -h.d(x, y, z) > d - 0.05f) {
+                    if (h.color != 0xFFFFFFFF && -h.d(x, y, z) > d + 0.03f) {
                         return h.color;
                     }
                 }
