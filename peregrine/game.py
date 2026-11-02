@@ -524,6 +524,13 @@ def build_command(profile: dict, info: dict, java: str, account: dict,
         tuned.append(info["log_arg"])
     tuned.append(f"-Dperegrine.config={paths.CLIENT_SETTINGS}")
     tuned.append(f"-Dperegrine.data={paths.DATA}")  # your skin and main menu picture, for the game's Locker
+    try:  # Clips record with ffmpeg
+        from . import ffmpeg_tool
+        ff = ffmpeg_tool.find()
+        if ff:
+            tuned.append(f"-Dperegrine.ffmpeg={ff}")
+    except Exception:
+        pass
     from . import PROFILES_URL
     if PROFILES_URL:
         tuned.append(f"-Dperegrine.service={PROFILES_URL}")  # in game: who else plays with Peregrine

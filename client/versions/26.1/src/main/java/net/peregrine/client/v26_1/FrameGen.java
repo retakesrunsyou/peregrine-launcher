@@ -220,6 +220,7 @@ public final class FrameGen {
 
     /** Instead of swapping the window: hand the frame to the presenter. */
     public static void present(long handle) {
+        ClipCapture.frame();   // clips record the finished frame (whether or not frame generation is on)
         if (!active) {
             GLFW.glfwSwapBuffers(handle);
             return;

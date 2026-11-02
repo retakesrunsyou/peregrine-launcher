@@ -26,7 +26,7 @@ class MainWindow(QMainWindow):
     # Pages by name. "content" (one instance's mods) lives under Home in the rail,
     # "accounts" under the profile pill, "browse" under Recent's Mods & packs button.
     RAIL = [("friends", "s_user", "Friends"), ("profiles", "users", "Profiles"), ("locker", "s_shirt", "Locker"), ("home", "s_home", "Instances"),
-            ("recent", "s_grid", "Recent servers"), ("settings", "s_gear", "Settings")]
+            ("recent", "s_grid", "Recent servers"), ("clips", "s_film", "Clips"), ("settings", "s_gear", "Settings")]
     RAIL_OF = {"content": "home", "accounts": None, "browse": "recent"}
 
     def __init__(self):
@@ -144,6 +144,8 @@ class MainWindow(QMainWindow):
         self.locker = LockerPage(say=lambda t: self.say(t))
         from .profiles_page import ProfilesPage
         self.profiles = ProfilesPage(say=lambda t: self.say(t))
+        from .clips_page import ClipsPage
+        self.clips = ClipsPage(say=lambda t: self.say(t))
         self.modpacks = ModpacksPage()
         self.mods = BrowsePage("mod", "Mods", "Fabric mods from Modrinth, for the instance you pick. "
                                               "Required libraries come along automatically.")
@@ -154,7 +156,7 @@ class MainWindow(QMainWindow):
         self.market = MarketPage(self.mods, self.packs, self.modpacks, self.shaders)
         self.pages = {"recent": self.recent, "home": self.home, "content": self.content,
                       "settings": self.settings, "accounts": self.accounts, "friends": self.friends,
-                      "profiles": self.profiles, "locker": self.locker,
+                      "profiles": self.profiles, "locker": self.locker, "clips": self.clips,
                       "browse": self.market}
         for page in self.pages.values():
             self.stack.addWidget(page)

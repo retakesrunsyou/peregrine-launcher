@@ -258,6 +258,7 @@ _PATHS = {
     "user_plus": '<circle cx="9.5" cy="8" r="3.8"/><path d="M2.5 20c.4-3.6 3.2-5.6 7-5.6s6.6 2 7 5.6M18.5 7v6M15.5 10h6"/>',
     "x": '<path d="M6.5 6.5l11 11M17.5 6.5l-11 11"/>',
     "s_shirt": '<path fill="FILL" stroke="none" d="M8.6 3.5 3 6.6l1.9 4.6 2.4-1V20a1 1 0 0 0 1 1h7.4a1 1 0 0 0 1-1v-9.8l2.4 1 1.9-4.6-5.6-3.1a3.6 3.6 0 0 1-6.8 0z"/>',
+    "s_film": '<path fill="FILL" stroke="none" d="M5 4h14a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2zm0 2v2h2V6zm12 0v2h2V6zM5 10v4h2v-4zm12 0v4h2v-4zM5 16v2h2v-2zm12 0v2h2v-2zM9.5 8.6v6.8l5.6-3.4z"/>',
     "alert": '<path d="M12 3.8 2.8 19.5h18.4z"/><path d="M12 9.5v4.5M12 16.8v.2"/>',
     "info": '<circle cx="12" cy="12" r="8.5"/><path d="M12 11v5.5M12 7.8v.2"/>',
 }

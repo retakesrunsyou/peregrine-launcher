@@ -213,6 +213,21 @@ final class GamePlatform implements Platform {
     }
 
     @Override
+    public int windowWidth() {
+        return mc().getWindow().getWidth();
+    }
+
+    @Override
+    public int windowHeight() {
+        return mc().getWindow().getHeight();
+    }
+
+    @Override
+    public boolean killedSomething() {
+        return ClipCapture.killedSomething();
+    }
+
+    @Override
     public int shownFps() {
         return FrameGen.shownFps();
     }

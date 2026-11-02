@@ -100,6 +100,20 @@ public interface Platform {
     default void playUiSound(String id, float volume, float pitch) {
     }
 
+    /** The window's size in real pixels. */
+    default int windowWidth() {
+        return screenWidth();
+    }
+
+    default int windowHeight() {
+        return screenHeight();
+    }
+
+    /** True once, shortly after something you hit died (for auto clips). */
+    default boolean killedSomething() {
+        return false;
+    }
+
     /** Frames shown per second when frame generation adds frames (else -1: only what's drawn). */
     default int shownFps() {
         return -1;

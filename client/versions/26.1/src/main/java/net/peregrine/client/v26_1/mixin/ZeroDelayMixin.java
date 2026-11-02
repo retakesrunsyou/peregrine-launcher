@@ -20,6 +20,7 @@ public abstract class ZeroDelayMixin {
     @Inject(method = "attack", at = @At("TAIL"), require = 0)
     private void peregrine$crystal(Player player, Entity target, CallbackInfo ci) {
         ZeroDelayHooks.attacked(player, target);
+        net.peregrine.client.v26_1.ClipCapture.attacked(target);
     }
 
     @Inject(method = "performUseItemOn", at = @At("HEAD"), require = 0)
