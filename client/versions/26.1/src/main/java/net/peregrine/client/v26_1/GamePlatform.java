@@ -200,6 +200,11 @@ final class GamePlatform implements Platform {
     }
 
     @Override
+    public int shownFps() {
+        return FrameGen.shownFps();
+    }
+
+    @Override
     public boolean supportsCustomCape() {
         return true;
     }
@@ -594,7 +599,7 @@ final class GamePlatform implements Platform {
         if (key < 0 || Screens.current() != null) {
             return false;
         }
-        long window = org.lwjgl.glfw.GLFW.glfwGetCurrentContext();  // the game's window, on the render thread
+        long window = mc().getWindow().handle();  // the game's window (frame generation draws on another context)
         return window != 0 && org.lwjgl.glfw.GLFW.glfwGetKey(window, key) == org.lwjgl.glfw.GLFW.GLFW_PRESS;
     }
 

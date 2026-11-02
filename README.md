@@ -18,6 +18,7 @@ play: more FPS, smoother frames and fewer lag spikes, out of the box.
 - **Peregrine extras on every Fabric instance**: AppleSkin, Enchantment Descriptions, Not Enough Animations,
   Continuity, Simple Voice Chat and Iris, kept up to date like the performance mods, plus the MakeUp Ultra Fast shader pack
   ready to switch on (shaders start off). Turn the whole set off in Settings, or one mod off in Content
+- **One launcher at a time**: opening Peregrine again brings the open window to the front instead of starting a second copy
 - **Recommended mods** in one click: 3D Skin Layers, LambDynamicLights and Wavey Capes
 - **Locker**: try on skins and capes on your turning player, then wear them. Keep a collection of skins (from files, or
   copied from any player by name) and put one on your Minecraft account with classic or slim arms, switch your official
@@ -127,6 +128,10 @@ drawn in software; real graphics cards usually gain more from Sodium):
   between them layer by layer, with a normal pickaxe (1x1) or a tool that mines 3x3. It fills in lava and water it
   uncovers, lays blocks from your off hand where the ground is missing, picks the best tool from your hotbar, eats when
   hungry, and stops by itself when your tool is nearly broken, your inventory is full or something goes wrong
+- **Frame generation** (26.1, beta, off by default): shows 2x, 3x or 4x the frames the game draws. Between real frames
+  the last one is shown again, turned to where your view is heading, evenly spaced, while your HUD and hand stay put,
+  so turning looks smoother when your FPS is below your screen's refresh rate. Fast flicks can blur at the edges. It
+  changes how frames reach the screen, so switching it on or off takes effect the next time the game starts
 - **Skeleton look** (26.1): every player, you included in third person, drawn as a realistic 3D human skeleton in real human
   proportions (a life-size skull on a visible neck, long arms reaching mid-thigh; skull with sockets, teeth and jaw, a curved spine, twelve pairs of ribs, shoulder blades, pelvis, hands and feet) that moves
   exactly like the player does, and your first-person arm as bone. Held items stay in their hands; armor optional. Only

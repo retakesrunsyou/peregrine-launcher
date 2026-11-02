@@ -909,6 +909,11 @@ def main():
     app.setApplicationDisplayName(f"{NAME} Launcher")
     app.setDesktopFileName("peregrine")
     app.setWindowIcon(app_icon())
+    from .. import single
+    if "--smoke" not in sys.argv and single.already_running():
+        # another launcher is open: it has been brought to the front instead
+        print("[peregrine] already open; showing that window")
+        sys.exit(0)
     install_crash_handler(app)
     cfg = config.load()
     Theme.set(cfg["theme"], cfg["accent"])
@@ -918,6 +923,7 @@ def main():
         print(f"[peregrine] couldn't rename instance folders: {e}")
     win = MainWindow()
     win.make_tray()
+    guard = single.Guard(win.bring_back)  # later launches bring this window back  # noqa: F841
     if "--tray" in sys.argv and win.tray is not None:
         pass  # started with the computer: wait in the tray
     else:

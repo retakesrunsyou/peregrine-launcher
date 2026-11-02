@@ -132,6 +132,11 @@ def _apply_appimage(update: dict, progress=None) -> None:
 
 def restart() -> None:
     how = kind()
+    try:  # let the new copy be "the" launcher (it would otherwise find this one still listening)
+        from . import single
+        single.release()
+    except Exception:
+        pass
     if how == "windows":
         os._exit(0)  # the installer starts the new version
     if how == "appimage":

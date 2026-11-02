@@ -10,7 +10,8 @@ public final class FpsHud extends LineHud {
 
     @Override
     String value(Platform p) {
-        return String.valueOf(p.fps());
+        int shown = p.shownFps();
+        return shown > 0 ? shown + "  (" + p.fps() + " drawn)" : String.valueOf(p.fps());
     }
 
     @Override

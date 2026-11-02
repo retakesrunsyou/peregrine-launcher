@@ -96,6 +96,11 @@ public interface Platform {
         return null;
     }
 
+    /** Frames shown per second when frame generation adds frames (else -1: only what's drawn). */
+    default int shownFps() {
+        return -1;
+    }
+
     /** Whether joinServer works here. */
     default boolean supportsJoin() {
         return false;
