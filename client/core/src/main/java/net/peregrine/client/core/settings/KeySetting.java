@@ -6,9 +6,17 @@ import net.peregrine.client.core.Keys;
 public final class KeySetting extends Setting {
 
     public int key = Keys.NONE;
+    private final int def;
 
     public KeySetting(String id, String label) {
+        this(id, label, Keys.NONE);
+    }
+
+    /** With a key it starts on (GLFW code). */
+    public KeySetting(String id, String label, int def) {
         super(id, label);
+        this.def = def;
+        this.key = def;
     }
 
     public String text() {
@@ -31,6 +39,6 @@ public final class KeySetting extends Setting {
 
     @Override
     public void reset() {
-        key = Keys.NONE;
+        key = def;
     }
 }

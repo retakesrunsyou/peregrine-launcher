@@ -16,7 +16,7 @@ import net.peregrine.client.core.settings.KeySetting;
 
 /**
  * Clips, like Medal: the game keeps recording into a replay buffer, and the clip key saves the
- * last moments as a video (the HUD and chat included, the game's sound too on Linux). Save the
+ * last moments as a video (the HUD and chat included, the game's sound too: PulseAudio on Linux, DirectShow on Windows). Save the
  * last 30 seconds up to an hour, the whole day, or everything since the game started. Clips can
  * also save themselves when you die or get a kill. Find, watch, trim and rename them in the
  * launcher's Clips page.
@@ -34,7 +34,8 @@ public final class Clips extends Module {
     public static final String[] DISK_NAMES = {"5 GB", "10 GB", "20 GB", "50 GB", "No limit"};
     static final long[] DISK_GB = {5, 10, 20, 50, -1};
     public final ChoiceSetting disk = add(new ChoiceSetting("disk", "Use at most (disk)", 1, DISK_NAMES));
-    public final KeySetting clipKey = add(new KeySetting("clip_key", "Clip key"));
+    // (a new id: the old "clip_key" was saved unbound for everyone, so F8 never worked)
+    public final KeySetting clipKey = add(new KeySetting("save_key", "Clip key", 297));   // F8
     public final ChoiceSetting clipLength = add(new ChoiceSetting("clip_length", "Clip key saves", 0, CLIP_NAMES));
     public final KeySetting longKey = add(new KeySetting("long_key", "Second clip key"));
     public final ChoiceSetting longLength = add(new ChoiceSetting("long_length", "Second key saves", 3, CLIP_NAMES));
@@ -48,8 +49,8 @@ public final class Clips extends Module {
     public final ChoiceSetting resolution = add(new ChoiceSetting("resolution", "Resolution", 0, "720p", "1080p", "Your window size"));
     public final ChoiceSetting frameRate = add(new ChoiceSetting("fps", "Frame rate", 0, "30 FPS", "60 FPS"));
     public final ChoiceSetting quality = add(new ChoiceSetting("quality", "Quality", 1, "Smaller files", "Balanced", "Best"));
-    public final BoolSetting sound = add(new BoolSetting("sound", "Record the game's sound (Linux)", true));
-    public final BoolSetting mic = add(new BoolSetting("mic", "Record your microphone (Linux)", true));
+    public final BoolSetting sound = add(new BoolSetting("sound", "Record the game's sound", true));
+    public final BoolSetting mic = add(new BoolSetting("mic", "Record your microphone", true));
     public final BoolSetting onDeath = add(new BoolSetting("on_death", "Clip by itself when you die", true));
     public final BoolSetting onKill = add(new BoolSetting("on_kill", "Clip by itself when you get a kill", false));
     public final ChoiceSetting autoLength = add(new ChoiceSetting("auto_length", "Clips made by themselves are", 0,
@@ -163,6 +164,7 @@ public final class Clips extends Module {
             setNote("Clips need ffmpeg: set it up in the launcher's Clips page");
             return;
         }
+        recorderFfmpeg = ff;
         if (recorder == null) {
             recorder = new Recorder(ff, dataDir().resolve("clips").resolve(".buffer"));
             if (!sessionCleared) {
@@ -170,8 +172,9 @@ public final class Clips extends Module {
                 sessionCleared = true;
             }
         } else if (recorder.lastError() != null) {
-            if (!noSound && sound.value) {
-                noSound = true;   // most likely the sound input: try without it
+            if (!noSound && (sound.value || mic.value)) {
+                noSound = true;   // most likely a sound input: try without them
+                System.out.println("[Peregrine] clips: trying again without sound");
             }
             setNote("Clips: " + recorder.lastError());
         }
@@ -193,6 +196,8 @@ public final class Clips extends Module {
     }
 
     private String recordingWith = "";
+    private String recorderFfmpeg;
+    private String[] windowsDevices;
 
     /** The settings a running recording was started with. */
     private String how() {
@@ -221,13 +226,26 @@ public final class Clips extends Module {
         // bitrate: about 5 Mbit/s for 720p30 on Balanced, scaled by pixels and frame rate
         double px = s[0] * (double) s[1] / (1280.0 * 720.0);
         int kbps = (int) Math.round(new int[] {3000, 5000, 9000}[quality.index] * px * (fps == 60 ? 1.5 : 1.0));
-        boolean linux = System.getProperty("os.name", "").toLowerCase().contains("linux");
-        String audio = sound.value && linux && !noSound ? "@DEFAULT_MONITOR@" : null;
-        String voice = mic.value && linux && !noSound ? "@DEFAULT_SOURCE@" : null;
+        String os = System.getProperty("os.name", "").toLowerCase();
+        String[] audio = null, voice = null;
+        if (!noSound && os.contains("linux")) {
+            audio = sound.value ? new String[] {"pulse", "@DEFAULT_MONITOR@"} : null;
+            voice = mic.value ? new String[] {"pulse", "@DEFAULT_SOURCE@"} : null;
+        } else if (!noSound && os.contains("win")) {
+            if (windowsDevices == null) {
+                windowsDevices = Encoders.windowsAudio(recorderFfmpeg);
+                System.out.println("[Peregrine] clips: Windows sound " + (windowsDevices[0] == null ? "(no Stereo Mix device)" : windowsDevices[0])
+                        + ", microphone " + (windowsDevices[1] == null ? "(none)" : windowsDevices[1]));
+            }
+            audio = sound.value && windowsDevices[0] != null ? new String[] {"dshow", windowsDevices[0]} : null;
+            voice = mic.value && windowsDevices[1] != null ? new String[] {"dshow", windowsDevices[1]} : null;
+        }
         recordingWith = how();
         try {
             recorder.keep(KEEP_SECONDS[keep.index]);
             recorder.maxBytes(diskBytes());
+            System.out.println("[Peregrine] clips: recording " + s[0] + "x" + s[1] + " at " + fps + " FPS with " + encoder.name
+                    + (audio != null ? ", game sound" : "") + (voice != null ? ", microphone" : ""));
             recorder.start(encoder, s[0], s[1], fps, Math.max(800, kbps), audio, voice);
         } catch (Exception e) {
             setNote("Clips couldn't start ffmpeg: " + e.getMessage());
@@ -283,6 +301,9 @@ public final class Clips extends Module {
     }
 
     private void setNote(String text) {
+        if (!text.equals(note)) {
+            System.out.println("[Peregrine] " + text);   // also into the game log
+        }
         note = text;
         noteAt = System.currentTimeMillis();
     }

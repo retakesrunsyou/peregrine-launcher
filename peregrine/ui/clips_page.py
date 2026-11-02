@@ -40,7 +40,7 @@ def screenshot_files():
     except Exception:
         insts = []
     for inst in insts:
-        d = inst.game_dir() / "screenshots"
+        d = inst.game_dir / "screenshots"
         if d.is_dir():
             out += [(p, inst.name) for p in d.iterdir() if p.suffix.lower() in (".png", ".jpg") and p.is_file()]
     return sorted(out, key=lambda e: e[0].stat().st_mtime, reverse=True)

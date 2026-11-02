@@ -93,8 +93,16 @@ public final class Recorder {
         start(enc, w, h, frameRate, kbps, audioInput, null);
     }
 
-    /** Also records a microphone (mixed with the game's sound) when mic isn't null. */
+    /** Also records a microphone (mixed with the game's sound) when mic isn't null (PulseAudio names). */
     public synchronized void start(Encoders.Choice enc, int w, int h, int frameRate, int kbps, String audioInput, String mic) throws IOException {
+        start(enc, w, h, frameRate, kbps, audioInput == null ? null : new String[] {"pulse", audioInput},
+                mic == null ? null : new String[] {"pulse", mic});
+    }
+
+    /** Sound inputs as {ffmpeg input format, device}: "pulse" on Linux, "dshow" ("audio=Name") on Windows. */
+    public synchronized void start(Encoders.Choice enc, int w, int h, int frameRate, int kbps, String[] game, String[] voice) throws IOException {
+        String audioInput = game == null ? null : game[1];
+        String mic = voice == null ? null : voice[1];
         stop();
         Files.createDirectories(dir);
         width = w;
@@ -120,21 +128,11 @@ public final class Recorder {
         cmd.add("-i");
         cmd.add("pipe:0");
         if (audioInput != null) {
-            cmd.add("-f");
-            cmd.add("pulse");
-            cmd.add("-thread_queue_size");
-            cmd.add("2048");
-            cmd.add("-i");
-            cmd.add(audioInput);
+            addAudio(cmd, game);
         }
         int audios = (audioInput != null ? 1 : 0) + (mic != null ? 1 : 0);
         if (mic != null) {
-            cmd.add("-f");
-            cmd.add("pulse");
-            cmd.add("-thread_queue_size");
-            cmd.add("2048");
-            cmd.add("-i");
-            cmd.add(mic);
+            addAudio(cmd, voice);
         }
         if (audios == 2) {   // the game and your voice in one track
             cmd.add("-filter_complex");
@@ -190,6 +188,19 @@ public final class Recorder {
         writer = new Thread(this::writeLoop, "Peregrine clips");
         writer.setDaemon(true);
         writer.start();
+    }
+
+    private static void addAudio(List<String> cmd, String[] in) {
+        cmd.add("-f");
+        cmd.add(in[0]);
+        cmd.add("-thread_queue_size");
+        cmd.add("2048");
+        if (in[0].equals("dshow")) {
+            cmd.add("-audio_buffer_size");
+            cmd.add("50");
+        }
+        cmd.add("-i");
+        cmd.add(in[1]);
     }
 
     /** Stops recording (the pieces stay, so you can still save a clip). */
@@ -304,7 +315,11 @@ public final class Recorder {
     private void drain(Process p) {
         try (BufferedReader r = new BufferedReader(new InputStreamReader(p.getErrorStream(), StandardCharsets.UTF_8))) {
             String line;
+            int logged = 0;
             while ((line = r.readLine()) != null) {
+                if (logged++ < 30) {   // into the game log, so problems can be found
+                    System.out.println("[Peregrine] clips (ffmpeg): " + line);
+                }
                 errorLines.add(line);
                 if (errorLines.size() > 20) {
                     errorLines.remove(0);

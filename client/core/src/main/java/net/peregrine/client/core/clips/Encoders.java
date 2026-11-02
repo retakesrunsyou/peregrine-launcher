@@ -66,8 +66,10 @@ public final class Encoders {
     public static Choice pick(String ffmpeg) {
         for (Choice c : candidates()) {
             if (works(ffmpeg, c)) {
+                System.out.println("[Peregrine] clips: encoding with " + c.name);
                 return c;
             }
+            System.out.println("[Peregrine] clips: " + c.name + " doesn't work here");
         }
         return null;
     }
@@ -100,6 +102,54 @@ public final class Encoders {
         } catch (Exception e) {
             return false;
         }
+    }
+
+    /**
+     * Windows sound devices ffmpeg can record (DirectShow): {what the computer plays, your
+     * microphone}, either null when there isn't one. What the computer plays needs a "Stereo Mix"
+     * style device (Windows has one on most sound cards; it may need switching on in the sound
+     * settings).
+     */
+    public static String[] windowsAudio(String ffmpeg) {
+        String[] out = new String[2];
+        try {
+            Process p = new ProcessBuilder(ffmpeg, "-hide_banner", "-list_devices", "true", "-f", "dshow", "-i", "dummy")
+                    .redirectErrorStream(true).start();
+            List<String> audio = new ArrayList<String>();
+            try (java.io.BufferedReader r = new java.io.BufferedReader(new java.io.InputStreamReader(p.getInputStream(),
+                    java.nio.charset.StandardCharsets.UTF_8))) {
+                String line;
+                boolean audioSection = false;
+                while ((line = r.readLine()) != null) {
+                    if (line.contains("DirectShow audio devices")) {
+                        audioSection = true;
+                    } else if (line.contains("DirectShow video devices")) {
+                        audioSection = false;
+                    }
+                    int a = line.indexOf('"'), b = line.lastIndexOf('"');
+                    if (a < 0 || b <= a || line.contains("Alternative name")) {
+                        continue;
+                    }
+                    if (line.contains("(audio)") || (audioSection && !line.contains("(video)"))) {
+                        audio.add(line.substring(a + 1, b));
+                    }
+                }
+            }
+            p.waitFor(10, TimeUnit.SECONDS);
+            for (String name : audio) {
+                String n = name.toLowerCase();
+                boolean loop = n.contains("stereo mix") || n.contains("what u hear") || n.contains("wave out") || n.contains("loopback")
+                        || n.contains("stereomix") || n.contains("cable output");
+                if (loop && out[0] == null) {
+                    out[0] = "audio=" + name;
+                } else if (!loop && out[1] == null) {
+                    out[1] = "audio=" + name;
+                }
+            }
+        } catch (Exception e) {
+            System.out.println("[Peregrine] clips: couldn't list sound devices: " + e.getMessage());
+        }
+        return out;
     }
 
     /** Finds ffmpeg: the one the launcher set up, else one on the PATH. */

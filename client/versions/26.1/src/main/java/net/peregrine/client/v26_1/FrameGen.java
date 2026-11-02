@@ -83,7 +83,10 @@ public final class FrameGen {
     /** Was frame generation switched on when the game last saved its settings? */
     private static boolean wanted() {
         try {
-            Path f = FabricLoader.getInstance().getConfigDir().resolve("peregrine-client.json");
+            // the settings the launcher shares between instances, else this instance's own
+            String shared = System.getProperty("peregrine.config");
+            Path f = shared != null && !shared.isEmpty() ? java.nio.file.Paths.get(shared)
+                    : FabricLoader.getInstance().getConfigDir().resolve("peregrine-client.json");
             if (!Files.isRegularFile(f)) {
                 return false;
             }

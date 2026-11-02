@@ -586,8 +586,10 @@ def has_nvidia() -> bool:
 
 def launch_env(cfg: dict) -> dict:
     """Environment for the game process: graphics driver speed-ups."""
-    import os
-    env = dict(os.environ)
+    # Without the packaged app's own library folder: the game, and the ffmpeg it starts for clips,
+    # would otherwise load the app's libraries instead of the system's (ffmpeg fails to start).
+    from .custom_cape import _plain_env
+    env = _plain_env()
     if cfg.get("driver_boost", True):
         # Let the graphics driver work on a second CPU thread. Big FPS gains
         # on AMD/Intel (Mesa); NVIDIA's equivalent setting.
