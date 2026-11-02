@@ -13,6 +13,8 @@
 		"BorderlessMixin",
 		"BossBarMixin",
 		"CapeMixin",
+		"ClickSoundMixin",
+		"ClickSoundMouseMixin",
 		"ClockMixin",
 		"CloudsMixin",
 		"ContainerScreenAccessor",

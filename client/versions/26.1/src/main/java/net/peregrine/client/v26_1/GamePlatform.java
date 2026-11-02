@@ -199,6 +199,19 @@ final class GamePlatform implements Platform {
         return true;
     }
 
+    private static final java.util.Map<String, net.minecraft.sounds.SoundEvent> UI_SOUNDS = new java.util.HashMap<>();
+
+    @Override
+    public void playUiSound(String id, float volume, float pitch) {
+        Minecraft mc = mc();
+        if (mc.getSoundManager() == null) {
+            return;
+        }
+        net.minecraft.sounds.SoundEvent e = UI_SOUNDS.computeIfAbsent(id,
+                k -> net.minecraft.sounds.SoundEvent.createVariableRangeEvent(net.minecraft.resources.Identifier.parse(k)));
+        mc.getSoundManager().play(net.minecraft.client.resources.sounds.SimpleSoundInstance.forUI(e, pitch, volume));
+    }
+
     @Override
     public int shownFps() {
         return FrameGen.shownFps();

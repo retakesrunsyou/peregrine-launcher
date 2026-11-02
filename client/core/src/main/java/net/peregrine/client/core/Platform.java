@@ -96,6 +96,10 @@ public interface Platform {
         return null;
     }
 
+    /** Plays one of Peregrine's interface sounds (e.g. "peregrine-client:click.letter.down"). */
+    default void playUiSound(String id, float volume, float pitch) {
+    }
+
     /** Frames shown per second when frame generation adds frames (else -1: only what's drawn). */
     default int shownFps() {
         return -1;

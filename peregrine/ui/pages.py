@@ -704,6 +704,41 @@ class SettingsPage(QWidget):
         box.currentIndexChanged.connect(chosen)
         return box
 
+    def _click_sound_row(self, kind):
+        from .. import click_sounds
+        from .sheet import tell
+        row = QHBoxLayout()
+        name = QLabel("", objectName="faint")
+        pick = QPushButton("Choose…")
+        reset = QPushButton("Default")
+
+        def show():
+            cur = click_sounds.current(kind)
+            name.setText("Your own" if cur else "Default")
+            reset.setEnabled(cur is not None)
+
+        def choose():
+            path, _ = QFileDialog.getOpenFileName(self, "Choose a sound", "", click_sounds.FILTER)
+            if not path:
+                return
+            try:
+                click_sounds.set_sound(kind, path)
+            except Exception as e:
+                tell(self, "Couldn't use that sound", str(e), "error")
+            show()
+
+        def clear():
+            click_sounds.clear(kind)
+            show()
+
+        pick.clicked.connect(choose)
+        reset.clicked.connect(clear)
+        row.addWidget(name)
+        row.addWidget(pick)
+        row.addWidget(reset)
+        show()
+        return row
+
     def save(self, key, value):
         cfg = config.load()
         cfg[key] = value
@@ -819,6 +854,13 @@ class SettingsPage(QWidget):
         self.body.addWidget(java)
 
         # ---- launcher
+        sounds = Section("Click sounds", "Your own sounds for the in-game Click sounds (turn them on in the game's "
+                                         "menu). Short sounds work best; anything left at Default uses Peregrine's.")
+        from .. import click_sounds
+        for kind, label in click_sounds.KINDS:
+            sounds.row(label, self._click_sound_row(kind))
+        self.body.addWidget(sounds)
+
         launcher = Section("Launcher")
         on_launch = QComboBox()
         for key, label in [("keep", "Keep the launcher open"), ("minimize", "Minimize the launcher"),

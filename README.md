@@ -128,6 +128,11 @@ drawn in software; real graphics cards usually gain more from Sodium):
   between them layer by layer, with a normal pickaxe (1x1) or a tool that mines 3x3. It fills in lava and water it
   uncovers, lays blocks from your off hand where the ground is missing, picks the best tool from your hotbar, eats when
   hungry, and stops by itself when your tool is nearly broken, your inventory is full or something goes wrong
+- **Click sounds** (26.1): a soft, deep creamy-keyboard sound for every key you press (and a lighter one as it comes
+  back up), a deeper spacebar, chunkier big keys, and muted mouse clicks. Pick your own sound for letters, numbers,
+  space, big keys, other keys and each mouse button under Settings → Click sounds in the launcher
+- **HD look** (26.1): a crisper picture: sharpening that adapts to each spot (no halos on edges), local clarity and
+  vibrance, with a slider for each. Applied to the world only, so text and the HUD stay clean
 - **Frame generation** (26.1, beta, off by default): shows 2x, 3x or 4x the frames the game draws. Between real frames
   the last one is shown again, turned to where your view is heading, evenly spaced, while your HUD and hand stay put,
   so turning looks smoother when your FPS is below your screen's refresh rate. Fast flicks can blur at the edges. It

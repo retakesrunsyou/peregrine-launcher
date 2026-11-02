@@ -1,0 +1,362 @@
+{
+ "click.letter.down": {
+  "sounds": [
+   {
+    "name": "peregrine-client:click/letter_down_0",
+    "stream": false
+   },
+   {
+    "name": "peregrine-client:click/letter_down_1",
+    "stream": false
+   },
+   {
+    "name": "peregrine-client:click/letter_down_2",
+    "stream": false
+   },
+   {
+    "name": "peregrine-client:click/letter_down_3",
+    "stream": false
+   }
+  ]
+ },
+ "click.letter.up": {
+  "sounds": [
+   {
+    "name": "peregrine-client:click/letter_up_0",
+    "stream": false
+   },
+   {
+    "name": "peregrine-client:click/letter_up_1",
+    "stream": false
+   },
+   {
+    "name": "peregrine-client:click/letter_up_2",
+    "stream": false
+   },
+   {
+    "name": "peregrine-client:click/letter_up_3",
+    "stream": false
+   }
+  ]
+ },
+ "click.number.down": {
+  "sounds": [
+   {
+    "name": "peregrine-client:click/number_down_0",
+    "stream": false
+   },
+   {
+    "name": "peregrine-client:click/number_down_1",
+    "stream": false
+   },
+   {
+    "name": "peregrine-client:click/number_down_2",
+    "stream": false
+   },
+   {
+    "name": "peregrine-client:click/number_down_3",
+    "stream": false
+   }
+  ]
+ },
+ "click.number.up": {
+  "sounds": [
+   {
+    "name": "peregrine-client:click/number_up_0",
+    "stream": false
+   },
+   {
+    "name": "peregrine-client:click/number_up_1",
+    "stream": false
+   },
+   {
+    "name": "peregrine-client:click/number_up_2",
+    "stream": false
+   },
+   {
+    "name": "peregrine-client:click/number_up_3",
+    "stream": false
+   }
+  ]
+ },
+ "click.other.down": {
+  "sounds": [
+   {
+    "name": "peregrine-client:click/other_down_0",
+    "stream": false
+   },
+   {
+    "name": "peregrine-client:click/other_down_1",
+    "stream": false
+   },
+   {
+    "name": "peregrine-client:click/other_down_2",
+    "stream": false
+   },
+   {
+    "name": "peregrine-client:click/other_down_3",
+    "stream": false
+   }
+  ]
+ },
+ "click.other.up": {
+  "sounds": [
+   {
+    "name": "peregrine-client:click/other_up_0",
+    "stream": false
+   },
+   {
+    "name": "peregrine-client:click/other_up_1",
+    "stream": false
+   },
+   {
+    "name": "peregrine-client:click/other_up_2",
+    "stream": false
+   },
+   {
+    "name": "peregrine-client:click/other_up_3",
+    "stream": false
+   }
+  ]
+ },
+ "click.enter.down": {
+  "sounds": [
+   {
+    "name": "peregrine-client:click/enter_down_0",
+    "stream": false
+   },
+   {
+    "name": "peregrine-client:click/enter_down_1",
+    "stream": false
+   },
+   {
+    "name": "peregrine-client:click/enter_down_2",
+    "stream": false
+   },
+   {
+    "name": "peregrine-client:click/enter_down_3",
+    "stream": false
+   }
+  ]
+ },
+ "click.enter.up": {
+  "sounds": [
+   {
+    "name": "peregrine-client:click/enter_up_0",
+    "stream": false
+   },
+   {
+    "name": "peregrine-client:click/enter_up_1",
+    "stream": false
+   },
+   {
+    "name": "peregrine-client:click/enter_up_2",
+    "stream": false
+   },
+   {
+    "name": "peregrine-client:click/enter_up_3",
+    "stream": false
+   }
+  ]
+ },
+ "click.space.down": {
+  "sounds": [
+   {
+    "name": "peregrine-client:click/space_down_0",
+    "stream": false
+   },
+   {
+    "name": "peregrine-client:click/space_down_1",
+    "stream": false
+   },
+   {
+    "name": "peregrine-client:click/space_down_2",
+    "stream": false
+   },
+   {
+    "name": "peregrine-client:click/space_down_3",
+    "stream": false
+   }
+  ]
+ },
+ "click.space.up": {
+  "sounds": [
+   {
+    "name": "peregrine-client:click/space_up_0",
+    "stream": false
+   },
+   {
+    "name": "peregrine-client:click/space_up_1",
+    "stream": false
+   },
+   {
+    "name": "peregrine-client:click/space_up_2",
+    "stream": false
+   },
+   {
+    "name": "peregrine-client:click/space_up_3",
+    "stream": false
+   }
+  ]
+ },
+ "click.mouse_left.down": {
+  "sounds": [
+   {
+    "name": "peregrine-client:click/mouse_left_down_0",
+    "stream": false
+   },
+   {
+    "name": "peregrine-client:click/mouse_left_down_1",
+    "stream": false
+   },
+   {
+    "name": "peregrine-client:click/mouse_left_down_2",
+    "stream": false
+   },
+   {
+    "name": "peregrine-client:click/mouse_left_down_3",
+    "stream": false
+   }
+  ]
+ },
+ "click.mouse_left.up": {
+  "sounds": [
+   {
+    "name": "peregrine-client:click/mouse_left_up_0",
+    "stream": false
+   },
+   {
+    "name": "peregrine-client:click/mouse_left_up_1",
+    "stream": false
+   },
+   {
+    "name": "peregrine-client:click/mouse_left_up_2",
+    "stream": false
+   },
+   {
+    "name": "peregrine-client:click/mouse_left_up_3",
+    "stream": false
+   }
+  ]
+ },
+ "click.mouse_right.down": {
+  "sounds": [
+   {
+    "name": "peregrine-client:click/mouse_right_down_0",
+    "stream": false
+   },
+   {
+    "name": "peregrine-client:click/mouse_right_down_1",
+    "stream": false
+   },
+   {
+    "name": "peregrine-client:click/mouse_right_down_2",
+    "stream": false
+   },
+   {
+    "name": "peregrine-client:click/mouse_right_down_3",
+    "stream": false
+   }
+  ]
+ },
+ "click.mouse_right.up": {
+  "sounds": [
+   {
+    "name": "peregrine-client:click/mouse_right_up_0",
+    "stream": false
+   },
+   {
+    "name": "peregrine-client:click/mouse_right_up_1",
+    "stream": false
+   },
+   {
+    "name": "peregrine-client:click/mouse_right_up_2",
+    "stream": false
+   },
+   {
+    "name": "peregrine-client:click/mouse_right_up_3",
+    "stream": false
+   }
+  ]
+ },
+ "click.mouse_middle.down": {
+  "sounds": [
+   {
+    "name": "peregrine-client:click/mouse_middle_down_0",
+    "stream": false
+   },
+   {
+    "name": "peregrine-client:click/mouse_middle_down_1",
+    "stream": false
+   },
+   {
+    "name": "peregrine-client:click/mouse_middle_down_2",
+    "stream": false
+   },
+   {
+    "name": "peregrine-client:click/mouse_middle_down_3",
+    "stream": false
+   }
+  ]
+ },
+ "click.mouse_middle.up": {
+  "sounds": [
+   {
+    "name": "peregrine-client:click/mouse_middle_up_0",
+    "stream": false
+   },
+   {
+    "name": "peregrine-client:click/mouse_middle_up_1",
+    "stream": false
+   },
+   {
+    "name": "peregrine-client:click/mouse_middle_up_2",
+    "stream": false
+   },
+   {
+    "name": "peregrine-client:click/mouse_middle_up_3",
+    "stream": false
+   }
+  ]
+ },
+ "click.mouse_side.down": {
+  "sounds": [
+   {
+    "name": "peregrine-client:click/mouse_side_down_0",
+    "stream": false
+   },
+   {
+    "name": "peregrine-client:click/mouse_side_down_1",
+    "stream": false
+   },
+   {
+    "name": "peregrine-client:click/mouse_side_down_2",
+    "stream": false
+   },
+   {
+    "name": "peregrine-client:click/mouse_side_down_3",
+    "stream": false
+   }
+  ]
+ },
+ "click.mouse_side.up": {
+  "sounds": [
+   {
+    "name": "peregrine-client:click/mouse_side_up_0",
+    "stream": false
+   },
+   {
+    "name": "peregrine-client:click/mouse_side_up_1",
+    "stream": false
+   },
+   {
+    "name": "peregrine-client:click/mouse_side_up_2",
+    "stream": false
+   },
+   {
+    "name": "peregrine-client:click/mouse_side_up_3",
+    "stream": false
+   }
+  ]
+ }
+}
