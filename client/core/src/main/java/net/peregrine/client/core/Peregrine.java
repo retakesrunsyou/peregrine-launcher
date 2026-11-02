@@ -214,6 +214,7 @@ public final class Peregrine {
         modules.add(new net.peregrine.client.core.modules.SkeletonLook());
         modules.add(new net.peregrine.client.core.modules.PickaxeLook());
         modules.add(new net.peregrine.client.core.modules.FrameGeneration());
+        modules.add(new net.peregrine.client.core.modules.Menu3D());
         modules.add(new net.peregrine.client.core.modules.ClickSounds());
         modules.add(new net.peregrine.client.core.modules.HdLook());
         modules.add(new net.peregrine.client.core.modules.Clips());

@@ -131,9 +131,13 @@ drawn in software; real graphics cards usually gain more from Sodium):
 - **Clips** (26.1), like Medal: an always-on replay buffer that records the game (HUD and chat included, and the game's
   sound on Linux) using your graphics card's video encoder when it can. F8 saves the last 30 seconds; its settings save
   the last 1, 2, 5, 10 or 30 minutes, an hour, the whole day or everything since the game started, keep up to 24 hours
-  (or the whole session), pick 720p/1080p/window size at 30 or 60 FPS, and clip by themselves when you die or get a
+  (or the whole session; 30 minutes and at most 10 GB of disk to start with), your microphone mixed in (Linux), pick 720p/1080p/window size at 30 or 60 FPS, and clip by themselves when you die or get a
   kill. The launcher's **Clips** page shows your clips and every instance's screenshots: watch, trim, rename, delete,
   copy screenshots. It sets up ffmpeg (which does the recording) for you
+- **3D menu** (26.1): Peregrine's menu and the pause menu on a floating glass panel: it tilts toward your mouse, or
+  stays put in the world where you opened it while you walk and look around (your crosshair points and clicks). Alt +
+  drag moves the panel (in the world: hold Alt and look where you want it), Ctrl + scroll resizes it. Drag the pause
+  menu's buttons onto each other to rearrange them
 - **Click sounds** (26.1): a soft, deep creamy-keyboard sound for every key you press (and a lighter one as it comes
   back up), a deeper spacebar, chunkier big keys, and muted mouse clicks. Pick your own sound for letters, numbers,
   space, big keys, other keys and each mouse button under Settings → Click sounds in the launcher

@@ -30,7 +30,10 @@ public final class Clips extends Module {
         "1 hour", "Everything kept"};
     public static final long[] CLIP_SECONDS = {30, 60, 120, 300, 600, 1800, 3600, -1};
 
-    public final ChoiceSetting keep = add(new ChoiceSetting("keep", "Keep recording the last", 1, KEEP_NAMES));
+    public final ChoiceSetting keep = add(new ChoiceSetting("keep", "Keep recording the last", 3, KEEP_NAMES));
+    public static final String[] DISK_NAMES = {"5 GB", "10 GB", "20 GB", "50 GB", "No limit"};
+    static final long[] DISK_GB = {5, 10, 20, 50, -1};
+    public final ChoiceSetting disk = add(new ChoiceSetting("disk", "Use at most (disk)", 1, DISK_NAMES));
     public final KeySetting clipKey = add(new KeySetting("clip_key", "Clip key"));
     public final ChoiceSetting clipLength = add(new ChoiceSetting("clip_length", "Clip key saves", 0, CLIP_NAMES));
     public final KeySetting longKey = add(new KeySetting("long_key", "Second clip key"));
@@ -46,6 +49,7 @@ public final class Clips extends Module {
     public final ChoiceSetting frameRate = add(new ChoiceSetting("fps", "Frame rate", 0, "30 FPS", "60 FPS"));
     public final ChoiceSetting quality = add(new ChoiceSetting("quality", "Quality", 1, "Smaller files", "Balanced", "Best"));
     public final BoolSetting sound = add(new BoolSetting("sound", "Record the game's sound (Linux)", true));
+    public final BoolSetting mic = add(new BoolSetting("mic", "Record your microphone (Linux)", true));
     public final BoolSetting onDeath = add(new BoolSetting("on_death", "Clip by itself when you die", true));
     public final BoolSetting onKill = add(new BoolSetting("on_kill", "Clip by itself when you get a kill", false));
     public final ChoiceSetting autoLength = add(new ChoiceSetting("auto_length", "Clips made by themselves are", 0,
@@ -118,6 +122,7 @@ public final class Clips extends Module {
         ensureRecording(p, now);
         if (recorder != null) {
             recorder.keep(KEEP_SECONDS[keep.index]);
+            recorder.maxBytes(diskBytes());
         }
         // auto clips: a moment after it happens, so the clip shows it
         float h = p.health();
@@ -144,8 +149,8 @@ public final class Clips extends Module {
     private void ensureRecording(Platform p, long now) {
         if (recorder != null && recorder.running()) {
             int[] want = size(p);
-            if (want[0] != recorder.width() || want[1] != recorder.height()) {
-                start(p);   // the window changed size
+            if (want[0] != recorder.width() || want[1] != recorder.height() || !how().equals(recordingWith)) {
+                start(p);   // the window changed size, or the recording settings did
             }
             return;
         }
@@ -187,6 +192,18 @@ public final class Clips extends Module {
         start(p);
     }
 
+    private String recordingWith = "";
+
+    /** The settings a running recording was started with. */
+    private String how() {
+        return sound.value + "/" + mic.value + "/" + frameRate.index + "/" + quality.index + "/" + resolution.index;
+    }
+
+    private long diskBytes() {
+        long gb = DISK_GB[disk.index];
+        return gb < 0 ? -1 : gb * 1024L * 1024L * 1024L;
+    }
+
     private int[] size(Platform p) {
         int ww = Math.max(16, p.windowWidth()), wh = Math.max(16, p.windowHeight());
         int target = resolution.index == 0 ? 720 : resolution.index == 1 ? 1080 : wh;
@@ -206,9 +223,12 @@ public final class Clips extends Module {
         int kbps = (int) Math.round(new int[] {3000, 5000, 9000}[quality.index] * px * (fps == 60 ? 1.5 : 1.0));
         boolean linux = System.getProperty("os.name", "").toLowerCase().contains("linux");
         String audio = sound.value && linux && !noSound ? "@DEFAULT_MONITOR@" : null;
+        String voice = mic.value && linux && !noSound ? "@DEFAULT_SOURCE@" : null;
+        recordingWith = how();
         try {
             recorder.keep(KEEP_SECONDS[keep.index]);
-            recorder.start(encoder, s[0], s[1], fps, Math.max(800, kbps), audio);
+            recorder.maxBytes(diskBytes());
+            recorder.start(encoder, s[0], s[1], fps, Math.max(800, kbps), audio, voice);
         } catch (Exception e) {
             setNote("Clips couldn't start ffmpeg: " + e.getMessage());
         }

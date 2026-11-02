@@ -23,8 +23,73 @@ public final class PauseMenu {
         this.pc = pc;
     }
 
+    private static final String[] IDS = {"resume", "modules", "options", "locker", "more", "leave"};
+    /** Dragging a button to a new place: which one, where it was grabbed, and where the mouse is. */
+    private TitleMenu.Button grabbed;
+    private int grabX, grabY, dragX, dragY;
+    private boolean dragging;
+
+    private TitleMenu.Button byId(String id) {
+        switch (id) {
+            case "resume": return resume;
+            case "modules": return modules;
+            case "options": return options;
+            case "locker": return locker;
+            case "more": return more;
+            case "leave": return leave;
+            default: return null;
+        }
+    }
+
+    /** The buttons in their places (your order, any missing ones after). */
     private TitleMenu.Button[] buttons() {
-        return new TitleMenu.Button[] {resume, modules, options, locker, more, leave};
+        TitleMenu.Button[] out = new TitleMenu.Button[6];
+        int n = 0;
+        java.util.Set<String> seen = new java.util.HashSet<String>();
+        for (String id : order().split(",")) {
+            TitleMenu.Button b = byId(id.trim());
+            if (b != null && seen.add(id.trim()) && n < 6) {
+                out[n++] = b;
+            }
+        }
+        for (String id : IDS) {
+            if (seen.add(id)) {
+                out[n++] = byId(id);
+            }
+        }
+        return out;
+    }
+
+    private String order() {
+        net.peregrine.client.core.modules.PauseMenuToggle m = (net.peregrine.client.core.modules.PauseMenuToggle) pc.module("pause_menu");
+        return m == null ? net.peregrine.client.core.modules.PauseMenuToggle.DEFAULT_ORDER : m.order.value;
+    }
+
+    private String idOf(TitleMenu.Button b) {
+        for (String id : IDS) {
+            if (byId(id) == b) {
+                return id;
+            }
+        }
+        return "";
+    }
+
+    /** Swaps two buttons' places and saves it. */
+    private void swap(TitleMenu.Button a, TitleMenu.Button b) {
+        TitleMenu.Button[] bs = buttons();
+        StringBuilder sb = new StringBuilder();
+        for (TitleMenu.Button x : bs) {
+            TitleMenu.Button put = x == a ? b : x == b ? a : x;
+            if (sb.length() > 0) {
+                sb.append(',');
+            }
+            sb.append(idOf(put));
+        }
+        net.peregrine.client.core.modules.PauseMenuToggle m = (net.peregrine.client.core.modules.PauseMenuToggle) pc.module("pause_menu");
+        if (m != null) {
+            m.order.value = sb.toString();
+            pc.markDirty();
+        }
     }
 
     public void shown() {
@@ -45,16 +110,17 @@ public final class PauseMenu {
         box[2] = w;
         box[3] = h;
         int x = box[0] + PAD, y = box[1] + PAD + 30;
-        resume.place(x, y, inner, 24);
+        TitleMenu.Button[] bs = buttons();   // places: a wide one, four tiles, a bar at the bottom
+        bs[0].place(x, y, inner, 24);
         y += 24 + GAP;
         int half = (inner - GAP) / 2;
-        modules.place(x, y, half, TILE_H);
-        options.place(x + half + GAP, y, inner - half - GAP, TILE_H);
+        bs[1].place(x, y, half, TILE_H);
+        bs[2].place(x + half + GAP, y, inner - half - GAP, TILE_H);
         y += TILE_H + GAP;
-        locker.place(x, y, half, TILE_H);
-        more.place(x + half + GAP, y, inner - half - GAP, TILE_H);
+        bs[3].place(x, y, half, TILE_H);
+        bs[4].place(x + half + GAP, y, inner - half - GAP, TILE_H);
         y += TILE_H + GAP;
-        leave.place(x, y, inner, 18);
+        bs[5].place(x, y, inner, 18);
     }
 
     public void render(Draw raw, int mx, int my) {
@@ -69,8 +135,10 @@ public final class PauseMenu {
         lastFrame = now;
         int sw = p.screenWidth(), sh = p.screenHeight();
         // the game dims, a little more at the edges
-        d.rect(0, 0, sw, sh, 0x48000000);
-        Glass.vignette(d, sw, sh, 0x90);
+        if (net.peregrine.client.core.modules.Menu3D.get() == null || !p.supports("menu_3d")) {   // a 3D panel doesn't dim the world
+            d.rect(0, 0, sw, sh, 0x48000000);
+            Glass.vignette(d, sw, sh, 0x90);
+        }
 
         // the card rises into place with a little overshoot
         int rise = Math.round((1f - Glass.backOut(t)) * 14);
@@ -107,7 +175,12 @@ public final class PauseMenu {
             float ti = shownAt < 0 ? 1f : FadeDraw.progress(shownAt + 60 + i++ * 40L, 260);
             Draw bd = ti < 1f ? new FadeDraw(d, Math.max(0.02f, Math.min(1f, ti * 1.4f))) : d;
             int by = b.y + rise + Math.round((1f - Glass.backOut(ti)) * 8);
-            boolean hover = b.contains(mx, my - rise);
+            int bx0 = b.x;
+            if (dragging && b == grabbed) {   // the button you're moving follows the mouse
+                b.x += dragX - grabX;
+                by += dragY - grabY;
+            }
+            boolean hover = b.contains(mx, my - rise) || (dragging && b == grabbed);
             b.glow = Glass.ease(b.glow, hover, dt);
             if (b == resume) {
                 Glass.pill(bd, b.x, by, b.w, b.h, true, b.glow, a);
@@ -138,6 +211,7 @@ public final class PauseMenu {
                 String sub = b == modules ? "Right Shift" : b == options ? "Video, sound..." : b == locker ? "Capes, skins" : "Stats, LAN...";
                 bd.text(bd.trim(sub, b.w - 40), b.x + 35, by - lift + b.h / 2 + 3, Theme.FAINT, false);
             }
+            b.x = bx0;
         }
     }
 
@@ -145,24 +219,66 @@ public final class PauseMenu {
         if (button != 0) {
             return false;
         }
-        Platform p = pc.platform();
-        layout(p);
+        layout(pc.platform());
         for (TitleMenu.Button b : buttons()) {
             if (b.contains(mx, my)) {
-                if (b.action == null) {
-                    p.leaveWorld();
-                } else {
-                    if (b == locker) {
-                        pc.menu().choose("locker");
-                    } else if (b == modules) {
-                        pc.menu().choose("cat:all");
-                    }
-                    p.openScreen(b.action);
-                }
+                grabbed = b;
+                grabX = dragX = mx;
+                grabY = dragY = my;
+                dragging = false;
                 return true;
             }
         }
         return false;
+    }
+
+    /** Dragging a button: once it's moved a few pixels it follows the mouse. */
+    public boolean mouseDragged(int mx, int my) {
+        if (grabbed == null) {
+            return false;
+        }
+        dragX = mx;
+        dragY = my;
+        if (!dragging && Math.abs(mx - grabX) + Math.abs(my - grabY) > 5) {
+            dragging = true;
+        }
+        return true;
+    }
+
+    /** Letting go: dropped on another button swaps them; a plain click does what the button does. */
+    public boolean mouseReleased(int mx, int my) {
+        TitleMenu.Button b = grabbed;
+        grabbed = null;
+        if (b == null) {
+            return false;
+        }
+        if (dragging) {
+            dragging = false;
+            layout(pc.platform());
+            for (TitleMenu.Button o : buttons()) {
+                if (o != b && o.contains(mx, my)) {
+                    swap(b, o);
+                    break;
+                }
+            }
+            return true;
+        }
+        return press(b);
+    }
+
+    private boolean press(TitleMenu.Button b) {
+        Platform p = pc.platform();
+        if (b.action == null) {
+            p.leaveWorld();
+        } else {
+            if (b == locker) {
+                pc.menu().choose("locker");
+            } else if (b == modules) {
+                pc.menu().choose("cat:all");
+            }
+            p.openScreen(b.action);
+        }
+        return true;
     }
 
     /** For the self-test: centre of a button, by what it opens (null: Leave). */

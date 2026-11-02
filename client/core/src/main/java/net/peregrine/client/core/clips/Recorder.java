@@ -49,6 +49,7 @@ public final class Recorder {
     private long startedAt;
     private long lastCapture;
     private volatile long keepSeconds = 300;
+    private volatile long maxBytes = -1;
 
     public Recorder(String ffmpeg, Path dir) {
         this.ffmpeg = ffmpeg;
@@ -72,6 +73,11 @@ public final class Recorder {
         return lastError;
     }
 
+    /** The most disk the buffer may use (bytes, -1 for no limit): the oldest pieces go first. */
+    public void maxBytes(long bytes) {
+        maxBytes = bytes;
+    }
+
     /** How long to keep: seconds, or -1 for everything since the game started. */
     public void keep(long seconds) {
         keepSeconds = seconds;
@@ -84,6 +90,11 @@ public final class Recorder {
 
     /** Starts ffmpeg for frames of this size (the pieces already on disk are kept). */
     public synchronized void start(Encoders.Choice enc, int w, int h, int frameRate, int kbps, String audioInput) throws IOException {
+        start(enc, w, h, frameRate, kbps, audioInput, null);
+    }
+
+    /** Also records a microphone (mixed with the game's sound) when mic isn't null. */
+    public synchronized void start(Encoders.Choice enc, int w, int h, int frameRate, int kbps, String audioInput, String mic) throws IOException {
         stop();
         Files.createDirectories(dir);
         width = w;
@@ -116,6 +127,23 @@ public final class Recorder {
             cmd.add("-i");
             cmd.add(audioInput);
         }
+        int audios = (audioInput != null ? 1 : 0) + (mic != null ? 1 : 0);
+        if (mic != null) {
+            cmd.add("-f");
+            cmd.add("pulse");
+            cmd.add("-thread_queue_size");
+            cmd.add("2048");
+            cmd.add("-i");
+            cmd.add(mic);
+        }
+        if (audios == 2) {   // the game and your voice in one track
+            cmd.add("-filter_complex");
+            cmd.add("[1:a][2:a]amix=inputs=2:duration=longest:dropout_transition=0:normalize=0[a]");
+            cmd.add("-map");
+            cmd.add("0:v");
+            cmd.add("-map");
+            cmd.add("[a]");
+        }
         cmd.addAll(enc.filter);
         cmd.add("-c:v");
         cmd.add(enc.codec);
@@ -128,7 +156,7 @@ public final class Recorder {
         cmd.add((kbps * 2) + "k");
         cmd.add("-g");
         cmd.add(String.valueOf(frameRate * 2));
-        if (audioInput != null) {
+        if (audios > 0) {
             cmd.add("-c:a");
             cmd.add("aac");
             cmd.add("-b:a");
@@ -330,12 +358,29 @@ public final class Recorder {
     /** Deletes pieces older than the buffer length. */
     void tidy() {
         long keep = keepSeconds;
-        if (keep < 0) {
-            return;
-        }
         List<Path> ps = pieces();
-        int allowed = (int) (keep / PIECE) + 2;
-        for (int i = 0; i < ps.size() - allowed; i++) {
+        int first = 0;
+        if (keep >= 0) {
+            int allowed = (int) (keep / PIECE) + 2;
+            first = Math.max(0, ps.size() - allowed);
+        }
+        // and within the disk limit, newest first (the piece being written is always kept)
+        long cap = maxBytes;
+        if (cap > 0) {
+            long total = 0;
+            for (int i = ps.size() - 1; i >= first; i--) {
+                try {
+                    total += Files.size(ps.get(i));
+                } catch (IOException e) {
+                    continue;
+                }
+                if (total > cap && i < ps.size() - 1) {
+                    first = i + 1;
+                    break;
+                }
+            }
+        }
+        for (int i = 0; i < first; i++) {
             try {
                 Files.deleteIfExists(ps.get(i));
             } catch (IOException ignored) {
