@@ -402,7 +402,7 @@ public final class KnifeView {
         if (net.peregrine.client.core.modules.SkeletonLook.arm()) {
             // Skeleton look: the arm is bone (the bone arm's own space is the player model's arm)
             float c = f.slim ? -0.5f : -1f;
-            M4 bm = new M4(arm).translate(-c, 2, 0);
+            M4 bm = new M4(arm).translate(-c, 2 - 2.6f, 0);   // a real arm is longer: its hand where the fist is
             final int a2 = alpha;
             out.begin(Out.LIT, net.peregrine.client.core.skeleton.Skeleton.TEXTURE);
             net.peregrine.client.core.skeleton.Skeleton.arm(true, f.slim, net.peregrine.client.core.skeleton.Skeleton.lod(0), bm,

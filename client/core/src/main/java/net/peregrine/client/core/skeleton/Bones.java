@@ -29,6 +29,9 @@ public final class Bones {
 
     static Sdf.Node lastBody;
 
+    /** The skull's size against a Minecraft head, and where its base sits on the neck. */
+    static final float SKULL = 0.68f, SKULL_Y = -2.45f, SKULL_Z = 0.62f;
+
     private Bones() {
     }
 
@@ -83,17 +86,18 @@ public final class Bones {
 
         // neck: seven vertebrae down to the shoulders
         List<Sdf.Node> neck = new ArrayList<Sdf.Node>();
-        for (int i = 0; i < 6; i++) {
-            float y = -2.25f + i * 0.4f, z = 0.75f + i * 0.02f;
-            neck.add(egg(0f, y, z, 0.42f, 0.2f, 0.36f));
-            neck.add(rod(0f, y, z + 0.2f, 0f, y + 0.12f, z + 0.75f, 0.11f, 0.08f));
-            neck.add(rod(-0.7f, y + 0.02f, z + 0.05f, 0.7f, y + 0.02f, z + 0.05f, 0.08f, 0.08f));
+        for (int i = 0; i < 7; i++) {
+            float y = -2.3f + i * 0.34f, z = 0.62f + i * 0.04f;
+            float w = 0.34f + i * 0.015f;
+            neck.add(egg(0f, y, z, w, 0.15f, w * 0.85f));
+            neck.add(rod(0f, y, z + 0.15f, 0f, y + 0.12f, z + 0.62f, 0.09f, 0.07f));
+            neck.add(rod(-0.6f, y + 0.02f, z + 0.05f, 0.6f, y + 0.02f, z + 0.05f, 0.07f, 0.07f));
         }
         Sdf.Node spine = Sdf.union(0.08f, neck);
 
-        Sdf.Node all = Sdf.union(0.02f, cranium, mandible, spine);
+        Sdf.Node skullAll = Sdf.union(0.02f, cranium, mandible);
         Geo g = new Geo();
-        Nets.mesh(all, new float[] {-2.6f, -7.6f, -2.8f}, new float[] {2.6f, 0.2f, 3.5f}, CELL[lod] * 1.15f, 1f, g);
+        Nets.mesh(skullAll, new float[] {-2.6f, -7.6f, -2.8f}, new float[] {2.6f, -0.3f, 3.5f}, CELL[lod] * 1.1f, 1f, g);
         // teeth: upper and lower rows round the front of the jaws, growing out of the gums
         int ta = Math.max(4, AROUND[lod]);
         for (int row = 0; row < 2; row++) {
@@ -114,6 +118,14 @@ public final class Bones {
                         null, TOOTH, ta, molar ? 0.85f : 0.6f, along, 0);
             }
         }
+        // real proportions: the skull is about an eighth of a person's height, on a neck you can see
+        for (int i = 0; i < g.verts; i++) {
+            int o = i * Geo.STRIDE;
+            g.v[o] = g.v[o] * SKULL;
+            g.v[o + 1] = SKULL_Y + (g.v[o + 1] + 2.6f) * SKULL;
+            g.v[o + 2] = SKULL_Z + (g.v[o + 2] - 0.75f) * SKULL;
+        }
+        Nets.mesh(spine, new float[] {-0.9f, -2.7f, -0.2f}, new float[] {0.9f, 0.3f, 1.7f}, CELL[lod] * 0.8f, 1f, g);
         return g.pack();
     }
 
@@ -238,42 +250,70 @@ public final class Bones {
         List<Sdf.Node> p = new ArrayList<Sdf.Node>();
         p.add(ball(c + in * 0.2f, -1.25f, 0.1f, 0.55f * k));                                 // head of the upper arm
         p.add(egg(c - in * 0.25f, -0.95f, -0.15f, 0.38f * k, 0.4f, 0.35f * k));              // its knob
-        p.add(rod(c, -0.8f, 0.05f, c + in * 0.05f, 3.8f, 0.1f, 0.34f * k, 0.3f * k));
-        p.add(egg(c, 4.05f, 0.05f, 0.62f * k, 0.32f, 0.4f * k));                             // elbow end
-        p.add(egg(c + in * 0.1f, 4.2f, 0.45f, 0.28f * k, 0.36f, 0.26f * k));                 // the elbow point
-        p.add(rod(c + in * 0.2f, 4.4f, 0.25f, c + in * 0.25f, 8.55f, 0.12f, 0.22f * k, 0.15f * k));   // ulna
-        p.add(rod(c - in * 0.2f, 4.5f, -0.05f, c - in * 0.3f, 8.55f, -0.18f, 0.17f * k, 0.27f * k));  // radius
+        // real proportions: the upper arm reaches about the bottom of the ribs, the fingertips the middle of the thigh
+        p.add(rod(c, -0.8f, 0.05f, c + in * 0.05f, 4.45f, 0.1f, 0.34f * k, 0.3f * k));
+        p.add(egg(c, 4.7f, 0.05f, 0.62f * k, 0.32f, 0.4f * k));                             // elbow end
+        p.add(egg(c + in * 0.1f, 4.85f, 0.45f, 0.28f * k, 0.36f, 0.26f * k));                // the elbow point
+        p.add(rod(c + in * 0.2f, 5.05f, 0.25f, c + in * 0.25f, 9.55f, 0.12f, 0.22f * k, 0.15f * k));   // ulna
+        p.add(rod(c - in * 0.2f, 5.15f, -0.05f, c - in * 0.3f, 9.55f, -0.18f, 0.17f * k, 0.27f * k));  // radius
         // wrist: two rows of small bones
         for (int i = 0; i < 4; i++) {
             float z = -0.36f + i * 0.24f;
-            p.add(egg(c, 8.85f, z, 0.24f * k, 0.17f, 0.15f));
-            p.add(egg(c + in * 0.03f, 9.2f, z * 1.1f, 0.22f * k, 0.17f, 0.15f));
+            p.add(egg(c, 9.85f, z, 0.24f * k, 0.17f, 0.15f));
+            p.add(egg(c + in * 0.03f, 10.2f, z * 1.1f, 0.22f * k, 0.17f, 0.15f));
         }
         Sdf.Node arm = Sdf.union(0.16f, p);
         Geo g = new Geo();
-        Nets.mesh(arm, new float[] {c - 1.2f, -2f, -1.2f}, new float[] {c + 1.2f, 9.5f, 1.2f}, CELL[lod] * 1.2f, 1f, g);
-        // the hand: palm bones fanning out from the wrist, fingers curled toward the palm (which
-        // faces the body), the thumb forward
+        Nets.mesh(arm, new float[] {c - 1.2f, -2f, -1.2f}, new float[] {c + 1.2f, 10.5f, 1.2f}, CELL[lod] * 1.2f, 1f, g);
+        // the hand, relaxed: palm bones fanning out from the wrist, fingers hanging with a slight
+        // curl toward the palm (which faces the body), the thumb forward
         int around = Math.max(4, AROUND[lod] - 1), smooth = SMOOTH[lod];
-        float[] fz = {-0.46f, -0.16f, 0.14f, 0.42f};
+        float[] fz = {-0.5f, -0.17f, 0.15f, 0.45f};
         float[] len = {1.0f, 1.1f, 1.04f, 0.82f};
         for (int f = 0; f < 4; f++) {
             float z0 = fz[f] * 0.6f, z1 = fz[f];
             float L = len[f];
             float r = (f == 3 ? 0.095f : 0.11f) * k;
-            float ky = 9.35f + 0.85f * L;                      // knuckle
+            float ky = 10.35f + 1.15f * L;                     // knuckle
             Tube.build(g, new float[][] {
-                {c, 9.3f, z0, r * 1.15f}, {c, (9.3f + ky) / 2, (z0 + z1) / 2, r * 0.85f}, {c, ky, z1, r * 1.3f},     // palm bone and knuckle
-                {c + in * 0.12f, ky + 0.42f * L, z1, r * 0.95f}, {c + in * 0.2f, ky + 0.48f * L, z1, r * 1.05f},  // first bone, middle joint
-                {c + in * 0.45f, ky + 0.66f * L, z1, r * 0.85f}, {c + in * 0.52f, ky + 0.68f * L, z1, r * 0.9f},  // second bone
-                {c + in * 0.72f, ky + 0.62f * L, z1, r * 0.75f}, {c + in * 0.82f, ky + 0.55f * L, z1, r * 0.55f}},
+                {c, 10.3f, z0, r * 1.15f}, {c, (10.3f + ky) / 2, (z0 + z1) / 2, r * 0.85f}, {c, ky, z1, r * 1.3f},   // palm bone and knuckle
+                {c + in * 0.06f, ky + 0.62f * L, z1, r * 0.95f}, {c + in * 0.09f, ky + 0.7f * L, z1, r * 1.05f},  // first bone, middle joint
+                {c + in * 0.2f, ky + 1.1f * L, z1, r * 0.85f}, {c + in * 0.24f, ky + 1.16f * L, z1, r * 0.9f},    // second bone
+                {c + in * 0.34f, ky + 1.42f * L, z1, r * 0.75f}, {c + in * 0.38f, ky + 1.5f * L, z1, r * 0.55f}},
                     null, BONE, around, 1f, new float[] {0, 0, 1}, smooth);
         }
         Tube.build(g, new float[][] {
-            {c - in * 0.05f, 9.15f, -0.45f, 0.14f * k}, {c, 9.5f, -0.72f, 0.11f * k}, {c + in * 0.08f, 9.85f, -0.9f, 0.13f * k},
-            {c + in * 0.25f, 10.2f, -0.95f, 0.1f * k}, {c + in * 0.42f, 10.45f, -0.88f, 0.09f * k}, {c + in * 0.55f, 10.55f, -0.78f, 0.07f * k}},
+            {c - in * 0.05f, 10.15f, -0.45f, 0.14f * k}, {c, 10.55f, -0.75f, 0.11f * k}, {c + in * 0.06f, 10.95f, -0.95f, 0.13f * k},
+            {c + in * 0.15f, 11.4f, -1.02f, 0.1f * k}, {c + in * 0.25f, 11.75f, -1.0f, 0.09f * k}, {c + in * 0.32f, 11.95f, -0.92f, 0.07f * k}},
                 null, BONE, around, 1f, new float[] {1, 0, 0}, smooth);
+        // a real arm hangs close to the ribs: the shoulder end leans in toward the body, the hand
+        // stays about where Minecraft puts held items
+        for (int i = 0; i < g.verts; i++) {
+            int o = i * Geo.STRIDE;
+            float y = g.v[o + 1];
+            g.v[o] += in * lean(y);
+            float slope = (lean(y + 0.05f) - lean(y - 0.05f)) / 0.1f;
+            g.v[o + 4] -= in * slope * g.v[o + 3];
+            float l = (float) Math.sqrt(g.v[o + 3] * g.v[o + 3] + g.v[o + 4] * g.v[o + 4] + g.v[o + 5] * g.v[o + 5]);
+            g.v[o + 3] /= l;
+            g.v[o + 4] /= l;
+            g.v[o + 5] /= l;
+        }
         return g.pack();
+    }
+
+    /** How far the arm bones lean in toward the body at a height along the arm (pixels). */
+    static float lean(float y) {
+        if (y <= -1.2f) {
+            return 1.3f;
+        }
+        if (y <= 4.7f) {
+            return 1.3f + (0.55f - 1.3f) * (y + 1.2f) / 5.9f;
+        }
+        if (y <= 9.6f) {
+            return 0.55f + (0.2f - 0.55f) * (y - 4.7f) / 4.9f;
+        }
+        return 0.2f;
     }
 
     // ------------------------------------------------------------------ legs
