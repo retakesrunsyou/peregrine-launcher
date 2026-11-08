@@ -18,8 +18,11 @@ MODS = [
     ("not-enough-animations", "Not Enough Animations", "third-person animations for eating, maps, bows and more"),
     ("continuity", "Continuity", "connected textures for glass and more"),
     ("simple-voice-chat", "Simple Voice Chat", "proximity voice chat on servers that have it"),
+    ("3dskinlayers", "3D Skin Layers", "the outer layer of every skin as real 3D pixels"),
 ]   # Iris is one of the performance mods now (performance.MODS)
 SLUGS = [m[0] for m in MODS]
+# Bump when MODS gains a mod: instances check for it at their next Play instead of within a day.
+SET_VERSION = 2
 
 # The shader pack set up (switched off) the first time: MakeUp Ultra Fast, light and quick;
 # or Complementary Reimagined if that can't be had.
@@ -65,6 +68,9 @@ def sync(inst, progress=None, force: bool = False) -> dict:
                     tracked.pop(key)
             inst.update(extra_files=tracked, extra_checked=0)
             force = True
+    if inst.data.get("extra_set", 1) < SET_VERSION:
+        inst.update(extra_set=SET_VERSION)
+        force = True
     mc = inst.data.get("mc_version")
     skip = inst.data.get("extra_skip") or {}
     if isinstance(skip, dict) and any(skip.get(slug) != mc for slug in KNOWN_BAD.get(mc, [])):

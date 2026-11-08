@@ -22,7 +22,7 @@ play: more FPS, smoother frames and fewer lag spikes, out of the box.
 - **Home** for your instances, **Mods & packs** for mods, resource packs, shaders and modpacks, and a side panel
   that tucks away with the button at the bottom
 - **Peregrine extras on every Fabric instance**: AppleSkin, Enchantment Descriptions, Not Enough Animations,
-  Continuity and Simple Voice Chat, kept up to date like the performance mods, plus the MakeUp Ultra Fast shader pack
+  Continuity, Simple Voice Chat and 3D Skin Layers (skins with real 3D outer layers), kept up to date like the performance mods, plus the MakeUp Ultra Fast shader pack
   ready to switch on (shaders start off). Turn the whole set off in Settings, or one mod off in Content
 - **One launcher at a time**: opening Peregrine again brings the open window to the front instead of starting a second copy
 - **Recommended mods** in one click: 3D Skin Layers, LambDynamicLights and Wavey Capes
