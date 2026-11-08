@@ -576,6 +576,28 @@ def sync_accent(cfg: dict) -> None:
         print(f"[peregrine] couldn't share the accent colour with the game: {e}")
 
 
+def accent_from_game() -> bool:
+    """The other way round: a colour picked in the game's menu becomes the launcher's accent.
+    Returns True when the launcher's colour changed."""
+    import json
+    from . import config
+    try:
+        data = json.loads(paths.CLIENT_SETTINGS.read_text())
+        game = str(data.get("accent", "")).lower()
+    except (OSError, ValueError):
+        return False
+    game = game[-6:] if len(game) >= 6 else ""
+    if not re.fullmatch(r"[0-9a-f]{6}", game):
+        return False
+    cfg = config.load()
+    if game == str(cfg.get("accent_synced", "")) or game == str(cfg.get("accent", "")).lstrip("#").lower():
+        return False
+    cfg["accent"] = "#" + game
+    cfg["accent_synced"] = game
+    config.save(cfg)
+    return True
+
+
 def jvm_tuning(cfg: dict, java_major: int) -> list:
     """Memory and garbage-collector settings that cut stutter in Minecraft."""
     from .config import MAX_MEMORY_MB, MIN_MEMORY_MB

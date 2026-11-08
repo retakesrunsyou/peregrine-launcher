@@ -500,6 +500,12 @@ class MainWindow(QMainWindow):
         self._start(task, inst, done=lambda code: self.game_closed(inst, code))
 
     def game_closed(self, inst, code):
+        try:
+            from .. import game as game_mod
+            if game_mod.accent_from_game():   # a colour picked in the game's menu: the launcher's too
+                self.apply_theme()
+        except Exception as e:
+            print(f"[peregrine] couldn't read the game's colour: {e}")
         if code == 0:
             self.say("Minecraft closed")
             return
@@ -957,6 +963,11 @@ def main():
         print("[peregrine] already open; showing that window")
         sys.exit(0)
     install_crash_handler(app)
+    try:
+        from .. import game as game_mod
+        game_mod.accent_from_game()   # a colour picked in game last time
+    except Exception as e:
+        print(f"[peregrine] couldn't read the game's colour: {e}")
     cfg = config.load()
     Theme.set(cfg["theme"], cfg["accent"])
     try:
