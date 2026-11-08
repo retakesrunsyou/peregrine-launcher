@@ -64,7 +64,15 @@ public final class Encoders {
 
     /** The first candidate that works with this ffmpeg (null if none, which means ffmpeg itself is broken). */
     public static Choice pick(String ffmpeg) {
+        return pick(ffmpeg, java.util.Collections.<String>emptySet());
+    }
+
+    /** The first working candidate that isn't one of these codecs (ones that failed while recording). */
+    public static Choice pick(String ffmpeg, java.util.Set<String> skip) {
         for (Choice c : candidates()) {
+            if (skip.contains(c.codec)) {
+                continue;
+            }
             if (works(ffmpeg, c)) {
                 System.out.println("[Peregrine] clips: encoding with " + c.name);
                 return c;
@@ -93,13 +101,35 @@ public final class Encoders {
         cmd.addAll(c.options);
         Collections.addAll(cmd, "-b:v", "1000k", "-f", "null", "-");
         try {
-            Process p = new ProcessBuilder(cmd).redirectErrorStream(true).redirectOutput(ProcessBuilder.Redirect.DISCARD).start();
+            Process p = new ProcessBuilder(cmd).redirectErrorStream(true).start();
+            StringBuilder out = new StringBuilder();
+            Thread reader = new Thread(() -> {
+                try (java.io.BufferedReader r = new java.io.BufferedReader(new java.io.InputStreamReader(p.getInputStream(),
+                        java.nio.charset.StandardCharsets.UTF_8))) {
+                    String line;
+                    while ((line = r.readLine()) != null) {
+                        if (out.length() < 2000) {
+                            out.append(line).append('\n');
+                        }
+                    }
+                } catch (java.io.IOException ignored) {
+                    // finished
+                }
+            });
+            reader.setDaemon(true);
+            reader.start();
             if (!p.waitFor(15, TimeUnit.SECONDS)) {
                 p.destroyForcibly();
                 return false;
             }
+            reader.join(1000);
+            if (p.exitValue() != 0 && c.codec.equals("libx264")) {
+                // even the processor encoder failed: say why in the game log
+                System.out.println("[Peregrine] clips: ffmpeg test failed (" + ffmpeg + "): " + out.toString().trim());
+            }
             return p.exitValue() == 0;
         } catch (Exception e) {
+            System.out.println("[Peregrine] clips: couldn't run ffmpeg (" + ffmpeg + "): " + e.getMessage());
             return false;
         }
     }

@@ -334,9 +334,26 @@ public final class Recorder {
         }
     }
 
+    /** What went wrong: the most telling line ffmpeg printed (an error, not its final summary). */
     private String errorText(String what) {
         synchronized (errorLines) {
-            return errorLines.isEmpty() ? what : what + ": " + errorLines.get(errorLines.size() - 1);
+            if (errorLines.isEmpty()) {
+                return what;
+            }
+            String best = errorLines.get(errorLines.size() - 1);
+            for (String line : errorLines) {
+                String l = line.toLowerCase();
+                if (l.contains("error") || l.contains("failed") || l.contains("invalid") || l.contains("not found")
+                        || l.contains("no such") || l.contains("unknown") || l.contains("cannot") || l.contains("unable")
+                        || l.contains("refused") || l.contains("denied")) {
+                    if (!l.contains("conversion failed") && !l.contains("error while filtering")) {
+                        best = line;
+                        break;
+                    }
+                }
+            }
+            best = best.replaceAll("^\\[[^\\]]*\\]\\s*", "");   // drop "[h264_vaapi @ 0x...] "
+            return what + ": " + best;
         }
     }
 

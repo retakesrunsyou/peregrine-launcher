@@ -172,16 +172,24 @@ public final class Clips extends Module {
                 sessionCleared = true;
             }
         } else if (recorder.lastError() != null) {
+            String err = recorder.lastError();
+            System.out.println("[Peregrine] clips: recording stopped: " + err);
             if (!noSound && (sound.value || mic.value)) {
                 noSound = true;   // most likely a sound input: try without them
                 System.out.println("[Peregrine] clips: trying again without sound");
+            } else if (encoder != null && !encoder.codec.equals("libx264")) {
+                // the graphics card's encoder took the test but not the real thing: try the next one
+                failedCodecs.add(encoder.codec);
+                System.out.println("[Peregrine] clips: " + encoder.name + " failed, trying the next encoder");
+                encoder = null;
+                startTries = 0;
             }
-            setNote("Clips: " + recorder.lastError());
+            setNote("Clips: " + err);
         }
         if (encoder == null) {
             probing = true;
             Thread t = new Thread(() -> {
-                encoder = Encoders.pick(ff);
+                encoder = Encoders.pick(ff, failedCodecs);
                 probing = false;
                 if (encoder == null) {
                     setNote("Clips: ffmpeg can't encode video here");
@@ -197,6 +205,7 @@ public final class Clips extends Module {
 
     private String recordingWith = "";
     private String recorderFfmpeg;
+    private final java.util.Set<String> failedCodecs = new java.util.HashSet<String>();
     private String[] windowsDevices;
 
     /** The settings a running recording was started with. */
