@@ -17,6 +17,8 @@ DEFAULTS = {
     # Appearance
     "theme": "dusk",          # dusk, midnight, light
     "accent": "#7c5cff",      # violet since 1.1
+    "featured_server": "bunnymc.org",   # Home's big Play button joins this server ("" for none)
+    "featured_name": "BunnyMC",
     "look_1_1": True,         # set once settings have seen the 1.1 look (see load)
     "rail_open": True,        # the side panel
     "seasonal": True,         # bats in October, snow in December

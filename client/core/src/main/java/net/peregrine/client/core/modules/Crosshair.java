@@ -7,6 +7,7 @@ import net.peregrine.client.core.Peregrine;
 import net.peregrine.client.core.Platform;
 import net.peregrine.client.core.settings.BoolSetting;
 import net.peregrine.client.core.settings.ChoiceSetting;
+import net.peregrine.client.core.settings.ColorSetting;
 import net.peregrine.client.core.settings.SliderSetting;
 
 /** Your own crosshair: shape, size, gap, thickness, color and outline. Drawn in real pixels. */
@@ -16,16 +17,21 @@ public final class Crosshair extends Module {
     static final int[] COLORS = {0xFFFFFF, 0, 0xFF3B3B, 0x3BFF5A, 0x2BE7FF, 0xFFE23B, 0xFF5FD7, 0x000000};
 
     private final ChoiceSetting style = add(new ChoiceSetting("style", "Shape", 0,
-            "Cross", "Cross + dot", "Dot", "Circle", "T", "Square"));
+            "Cross", "Cross + dot", "Dot", "Circle", "T", "Square", "Drawn by you"));
     private final SliderSetting size = add(new SliderSetting("size", "Size", 2f, 20f, 1f, 7f, "%.0f"));
     private final SliderSetting gap = add(new SliderSetting("gap", "Gap", 0f, 10f, 1f, 2f, "%.0f"));
     private final SliderSetting thickness = add(new SliderSetting("thickness", "Thickness", 1f, 6f, 1f, 2f, "%.0f"));
-    private final ChoiceSetting color = add(new ChoiceSetting("color", "Color", 0, COLOR_NAMES));
+    private final ColorSetting color = add(new ColorSetting("color", "Color", 0xFFFFFFFF, false,
+            0xFFFFFF, -1, 0xFF3B3B, 0x3BFF5A, 0x2BE7FF, 0xFFE23B, 0xFF5FD7, 0x000001));
     private final SliderSetting opacity = add(new SliderSetting("opacity", "Opacity", 20f, 100f, 5f, 100f, "%.0f%%"));
     private final BoolSetting outline = add(new BoolSetting("outline", "Dark outline", true));
     private final BoolSetting hitTiming = add(new BoolSetting("hit_timing", "Hit timing: turns your ready color when your hit lands best", false));
-    private final ChoiceSetting ready = add(new ChoiceSetting("ready_color", "Ready color", 3, COLOR_NAMES));
+    private final ColorSetting ready = add(new ColorSetting("ready_color", "Ready color", 0xFF3BFF5A, false,
+            0xFFFFFF, -1, 0xFF3B3B, 0x3BFF5A, 0x2BE7FF, 0xFFE23B, 0xFF5FD7, 0x000001));
     private final SliderSetting reaction = add(new SliderSetting("reaction", "Your reaction time (turns ready this early)", 0f, 400f, 5f, 200f, "%.0f ms"));
+    /** "Drawn by you": click pixels to make your own crosshair. */
+    private final net.peregrine.client.core.settings.PixelGridSetting pixels = add(
+            new net.peregrine.client.core.settings.PixelGridSetting("pixels", "Your crosshair (pick \"Drawn by you\")"));
     private final net.peregrine.client.core.settings.ActionSetting test = add(new net.peregrine.client.core.settings.ActionSetting(
             "reaction_test", "Find your reaction time", () -> "Take the test", () -> Peregrine.get().menu().showReactionTest()));
 
@@ -55,17 +61,14 @@ public final class Crosshair extends Module {
     }
 
     private int argb() {
-        int which = color.index;
+        ColorSetting which = color;
         if (hitTiming.value) {
             int left = platform().attackCooldownMs();
             if (left >= 0 && left <= reaction.value) {
-                which = ready.index;   // by the time you react, the hit is at full strength
+                which = ready;   // by the time you react, the hit is at full strength
             }
         }
-        int rgb = COLORS[which];
-        if (which == 1) {
-            rgb = Peregrine.get().accent() & 0xFFFFFF;
-        }
+        int rgb = which.value() & 0xFFFFFF;
         return Math.round(opacity.value / 100f * 255f) << 24 | rgb;
     }
 
@@ -108,6 +111,28 @@ public final class Crosshair extends Module {
             case 3:
                 circle(d, cx, cy, Math.max(2, len / 2 + gp), t, c, oc);
                 break;
+            case 6: {
+                int n = net.peregrine.client.core.settings.PixelGridSetting.N;
+                int cell = Math.max(1, Math.round(size.value / 7f * (float) Math.max(1, g / 2)));
+                int ox = cx - n * cell / 2, oy = cy - n * cell / 2;
+                if (outline.value) {
+                    for (int yy = 0; yy < n; yy++) {
+                        for (int xx = 0; xx < n; xx++) {
+                            if (pixels.get(xx, yy)) {
+                                d.rect(ox + xx * cell - 1, oy + yy * cell - 1, cell + 2, cell + 2, oc);
+                            }
+                        }
+                    }
+                }
+                for (int yy = 0; yy < n; yy++) {
+                    for (int xx = 0; xx < n; xx++) {
+                        if (pixels.get(xx, yy)) {
+                            d.rect(ox + xx * cell, oy + yy * cell, cell, cell, c);
+                        }
+                    }
+                }
+                break;
+            }
             default:
                 int half = len / 2 + gp;
                 ring(d, cx - half, cy - half, half * 2 + t, half * 2 + t, t, c, oc);

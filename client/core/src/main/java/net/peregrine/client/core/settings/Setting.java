@@ -18,4 +18,9 @@ public abstract class Setting {
     public abstract void load(String value);
 
     public abstract void reset();
+
+    /** Whether it's as it came (no reset arrow then). */
+    public boolean isDefault() {
+        return true;
+    }
 }

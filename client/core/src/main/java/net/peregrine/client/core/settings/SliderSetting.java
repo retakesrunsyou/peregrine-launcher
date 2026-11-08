@@ -59,4 +59,9 @@ public final class SliderSetting extends Setting {
     public void reset() {
         value = def;
     }
+
+    @Override
+    public boolean isDefault() {
+        return Math.abs(value - def) < 1e-4f;
+    }
 }

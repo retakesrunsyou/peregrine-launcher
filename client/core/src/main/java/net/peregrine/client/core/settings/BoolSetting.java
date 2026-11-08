@@ -25,4 +25,9 @@ public final class BoolSetting extends Setting {
     public void reset() {
         value = def;
     }
+
+    @Override
+    public boolean isDefault() {
+        return value == def;
+    }
 }

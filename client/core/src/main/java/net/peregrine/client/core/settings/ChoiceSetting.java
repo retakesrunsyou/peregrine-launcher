@@ -43,4 +43,9 @@ public final class ChoiceSetting extends Setting {
     public void reset() {
         index = def;
     }
+
+    @Override
+    public boolean isDefault() {
+        return index == def;
+    }
 }

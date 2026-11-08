@@ -3,6 +3,7 @@ package net.peregrine.client.core.modules;
 import net.peregrine.client.core.Module;
 import net.peregrine.client.core.Platform;
 import net.peregrine.client.core.settings.ChoiceSetting;
+import net.peregrine.client.core.settings.ColorSetting;
 import net.peregrine.client.core.settings.SliderSetting;
 
 /** Changes the red flash on mobs and players when they take damage. */
@@ -11,7 +12,7 @@ public final class HitColor extends Module {
     static final String[] NAMES = {"Red", "Orange", "Yellow", "Green", "Cyan", "Blue", "Purple", "Pink", "White"};
     static final int[] RGB = {0xFF0000, 0xFF8A00, 0xFFE600, 0x2BFF4A, 0x00E5FF, 0x2F6BFF, 0x9B3BFF, 0xFF4FD8, 0xFFFFFF};
 
-    private final ChoiceSetting color = add(new ChoiceSetting("color", "Color", 6, NAMES));
+    private final ColorSetting color = add(new ColorSetting("color", "Color", 0xFF9B3BFF, false, RGB));
     private final SliderSetting strength = add(new SliderSetting("strength", "Strength", 10f, 100f, 5f, 70f, "%.0f%%"));
     private final ChoiceSetting crit = add(new ChoiceSetting("crit", "Crit sparks", 1,
             "Minecraft's", "Same as hit color", "Red", "Gold", "Green", "Cyan", "Purple", "White"));
@@ -25,13 +26,13 @@ public final class HitColor extends Module {
     /** The overlay color as ARGB (alpha = how strongly it tints). */
     public int argb() {
         int a = Math.round(strength.value / 100f * 255f);
-        return a << 24 | RGB[color.index];
+        return a << 24 | (color.value() & 0xFFFFFF);
     }
 
     @Override
     public void tick(Platform p) {
         net.peregrine.client.core.Hooks.critColor = crit.index == 0 ? 0
-                : (crit.index == 1 ? RGB[color.index] : CRIT_RGB[crit.index]) | 0xFF000000;
+                : (crit.index == 1 ? (color.value() & 0xFFFFFF) : CRIT_RGB[crit.index]) | 0xFF000000;
         int want = argb();
         if (want != applied) {
             applied = want;

@@ -18,6 +18,7 @@ import net.peregrine.client.core.WorldLabels;
 import net.peregrine.client.core.settings.ActionSetting;
 import net.peregrine.client.core.settings.BoolSetting;
 import net.peregrine.client.core.settings.ChoiceSetting;
+import net.peregrine.client.core.settings.ColorSetting;
 import net.peregrine.client.core.settings.KeySetting;
 import net.peregrine.client.core.settings.SliderSetting;
 import net.peregrine.client.core.settings.TextSetting;
@@ -44,7 +45,7 @@ public final class Waypoints extends Module {
     }
 
     private final TextSetting name = add(new TextSetting("name", "Name for the next one", "", 24, "Home"));
-    private final ChoiceSetting color = add(new ChoiceSetting("color", "Its color", 0, COLOR_NAMES));
+    private final ColorSetting color = add(new ColorSetting("color", "Its color", COLORS[0], false, COLORS));
     private final ActionSetting addHere = add(new ActionSetting("add", "Add a waypoint where you stand", () -> "Add",
             this::addHere));
     private final KeySetting quickKey = add(new KeySetting("key", "Key to add one where you stand"));
@@ -144,7 +145,7 @@ public final class Waypoints extends Module {
             }
         }
         String label = name.value.trim().isEmpty() ? "Waypoint " + n : name.value.trim();
-        add(p, label, COLORS[color.index], false);
+        add(p, label, color.color | 0xFF000000, false);
         name.value = "";
     }
 

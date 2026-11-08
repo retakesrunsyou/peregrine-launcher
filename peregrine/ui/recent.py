@@ -7,7 +7,7 @@ from PySide6.QtCore import QRectF, Qt, QTimer, Signal
 from PySide6.QtGui import QColor, QFont, QImage, QLinearGradient, QPainter, QPixmap
 from PySide6.QtWidgets import QFrame, QHBoxLayout, QLabel, QSizePolicy, QVBoxLayout, QWidget
 
-from .. import instances, servers
+from .. import config, instances, servers
 from . import workers
 from .modern import (
     ONLINE, OFFLINE, Chip, CountUp, PillButton, big_title, count_text, fade_in, heavy_font,
@@ -17,6 +17,20 @@ from .pages import last_played
 from .theme import Theme, icon_pixmap
 
 PING_EVERY_MS = 60_000
+
+
+def featured_picture():
+    """The featured server's picture shipped with the app (assets/featured/<address>.png/.jpg), or None."""
+    import sys
+    address = str(config.load().get("featured_server") or "").lower()
+    if not address:
+        return None
+    base = Path(getattr(sys, "_MEIPASS", Path(__file__).resolve().parent.parent.parent))
+    for ext in (".png", ".jpg", ".jpeg", ".webp"):
+        p = base / "assets" / "featured" / (address + ext)
+        if p.is_file():
+            return p
+    return None
 
 
 def newest_screenshot(inst):
@@ -196,11 +210,24 @@ class RecentPage(QWidget):
     # ------------------------------------------------------------ data
 
     def refresh(self):
+        insts = instances.all_instances()
         try:
-            self.entries = servers.recent_servers(instances.all_instances())
+            self.entries = servers.recent_servers(insts)
         except Exception as e:  # never let a damaged file break the page
             print(f"[peregrine] couldn't read recent servers: {e}")
             self.entries = []
+        # The featured server always leads: Home's Play button takes you straight into it.
+        cfg = config.load()
+        featured = str(cfg.get("featured_server") or "").strip()
+        if featured and insts:
+            seen = next((e for e in self.entries if e["address"].lower() == featured.lower()), None)
+            last = max(insts, key=lambda i: i.data.get("last_played") or 0)
+            entry = {"address": featured, "name": cfg.get("featured_name") or featured, "icon": seen and seen.get("icon"),
+                     "last_played": seen["last_played"] if seen else 0, "inst": seen["inst"] if seen else last,
+                     "featured": True}
+            self.entries = [entry] + [e for e in self.entries if e is not seen]
+            if self.entry is None or self.entry.get("featured"):
+                self.entry = entry
         keep = self.entry["address"].lower() if self.entry else None
         pick = next((e for e in self.entries if e["address"].lower() == keep), None)
         self.show_entry(pick or (self.entries[0] if self.entries else None), animate=False)
@@ -247,8 +274,8 @@ class RecentPage(QWidget):
         if entry is None:
             self._show_empty(insts)
         else:
-            self.chip.set_text("Recent")
-            self.title.setText(servers.display_name(entry))
+            self.chip.set_text("Featured server" if entry.get("featured") else "Recent")
+            self.title.setText(entry["name"] if entry.get("featured") else servers.display_name(entry))
             self.icon.setPixmap(server_icon(entry.get("icon"), 30))
             self.icon.show()
             inst = entry["inst"]
@@ -258,7 +285,7 @@ class RecentPage(QWidget):
             self.count.set_value(0)
             self.count.setText("–")
             self.last.setText(last_played(entry["last_played"]).replace("Played ", "").capitalize())
-            self.last_label.setText("last played")
+            self.last_label.setText("last played here")
             self.last_box.show()
             self.play_btn.setText("PLAY")
             self.play_btn.icon_name = "s_play"
@@ -266,7 +293,7 @@ class RecentPage(QWidget):
             self.second_btn.show()
             self.play_btn.updateGeometry()
             self._show_status()
-            self._set_backdrop(inst)
+            self._set_backdrop(inst, featured_picture() if entry.get("featured") else None)
         self._fill_more()
         if animate:
             for n, w in enumerate((self.chip, self.title, self.text, self.play_btn, self.second_btn)):
@@ -345,8 +372,8 @@ class RecentPage(QWidget):
             self.more.addWidget(card)
         self.more.addStretch()
 
-    def _set_backdrop(self, inst):
-        shot = newest_screenshot(inst) if inst is not None else None
+    def _set_backdrop(self, inst, picture=None):
+        shot = picture or (newest_screenshot(inst) if inst is not None else None)
         if shot == self._backdrop_src:
             return
         self._backdrop_src = shot
@@ -354,7 +381,8 @@ class RecentPage(QWidget):
         if shot is not None:
             img = QImage(str(shot))
             if not img.isNull():
-                self.backdrop = soft_blur(img, 1280)
+                # the featured server's own picture stays sharp; screenshots are softened
+                self.backdrop = img.scaledToWidth(1600, Qt.SmoothTransformation) if picture else soft_blur(img, 1280)
         self.update()
 
     def current_inst(self):

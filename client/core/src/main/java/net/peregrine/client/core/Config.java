@@ -29,7 +29,12 @@ public final class Config {
 
     @SuppressWarnings("deprecation")
     static void load(Peregrine p) {
-        Path file = p.configPath();
+        loadFrom(p, p.configPath());
+    }
+
+    /** Loads settings from another file (a saved profile). */
+    @SuppressWarnings("deprecation")
+    static void loadFrom(Peregrine p, Path file) {
         if (!Files.isRegularFile(file)) {
             return;
         }
@@ -152,6 +157,21 @@ public final class Config {
             if (o.has("valueColors")) {
                 h.valueColors = o.get("valueColors").getAsBoolean();
             }
+            if (o.has("backgroundColor")) {
+                h.backgroundColor = (int) Long.parseLong(o.get("backgroundColor").getAsString(), 16);
+            }
+            if (o.has("borderColor")) {
+                h.borderColor = (int) Long.parseLong(o.get("borderColor").getAsString(), 16);
+            }
+            if (o.has("borderWidth")) {
+                h.borderWidth = Math.max(1, Math.min(3, o.get("borderWidth").getAsInt()));
+            }
+            if (o.has("brackets")) {
+                h.brackets = o.get("brackets").getAsBoolean();
+            }
+            if (o.has("customLabel")) {
+                h.customLabel = o.get("customLabel").getAsString();
+            }
         }
         if (o.has("key")) {
             m.key = o.get("key").getAsInt();
@@ -170,6 +190,11 @@ public final class Config {
     }
 
     static void save(Peregrine p) {
+        saveTo(p, p.configPath());
+    }
+
+    /** Saves the settings to another file too (a profile). */
+    static void saveTo(Peregrine p, Path target) {
         JsonObject root = new JsonObject();
         root.addProperty("version", VERSION);
         root.addProperty("accent", Integer.toHexString(p.accent()));
@@ -222,6 +247,21 @@ public final class Config {
                 if (h.valueColors) {
                     o.addProperty("valueColors", true);
                 }
+                if (h.backgroundColor != 0) {
+                    o.addProperty("backgroundColor", Integer.toHexString(h.backgroundColor));
+                }
+                if (h.borderColor != 0) {
+                    o.addProperty("borderColor", Integer.toHexString(h.borderColor));
+                }
+                if (h.borderWidth != 1) {
+                    o.addProperty("borderWidth", h.borderWidth);
+                }
+                if (h.brackets) {
+                    o.addProperty("brackets", true);
+                }
+                if (!h.customLabel.isEmpty()) {
+                    o.addProperty("customLabel", h.customLabel);
+                }
             }
             JsonObject so = new JsonObject();
             for (net.peregrine.client.core.settings.Setting s : m.settings()) {
@@ -247,7 +287,7 @@ public final class Config {
             root.add("lastServer", last);
         }
 
-        Path file = p.configPath();
+        Path file = target;
         try {
             Files.createDirectories(file.getParent());
             Path tmp = file.resolveSibling(file.getFileName() + ".tmp");

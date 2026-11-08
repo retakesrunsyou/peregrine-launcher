@@ -76,7 +76,7 @@ class MainWindow(QMainWindow):
 
         # ---- top bar: you (and friends online) on the left, your server in the middle
         top = QWidget()
-        top.setFixedHeight(66)
+        top.setFixedHeight(78)
         t = QHBoxLayout(top)
         t.setContentsMargins(40, 12, 32, 4)
         t.setSpacing(16)

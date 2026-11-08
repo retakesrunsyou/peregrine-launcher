@@ -41,4 +41,9 @@ public final class KeySetting extends Setting {
     public void reset() {
         key = def;
     }
+
+    @Override
+    public boolean isDefault() {
+        return key == def;
+    }
 }

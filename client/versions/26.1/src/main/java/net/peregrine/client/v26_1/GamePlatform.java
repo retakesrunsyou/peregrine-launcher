@@ -648,6 +648,28 @@ final class GamePlatform implements Platform {
         return mc().options.getCameraType().ordinal();
     }
 
+    private double savedChatBg = -1;
+    private boolean savedChatOnly;
+
+    @Override
+    public void setChatBackground(float opacity) {
+        var o = mc().options;
+        if (opacity < 0) {
+            if (savedChatBg >= 0) {
+                o.textBackgroundOpacity().set(savedChatBg);
+                o.backgroundForChatOnly().set(savedChatOnly);
+                savedChatBg = -1;
+            }
+            return;
+        }
+        if (savedChatBg < 0) {
+            savedChatBg = o.textBackgroundOpacity().get();
+            savedChatOnly = o.backgroundForChatOnly().get();
+        }
+        o.backgroundForChatOnly().set(true);   // only the chat: name tags keep theirs
+        o.textBackgroundOpacity().set((double) Math.max(0f, Math.min(1f, opacity)));
+    }
+
     @Override
     public void setCameraMode(int mode) {
         net.minecraft.client.CameraType[] all = net.minecraft.client.CameraType.values();

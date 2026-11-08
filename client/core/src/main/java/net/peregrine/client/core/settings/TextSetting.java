@@ -44,4 +44,9 @@ public final class TextSetting extends Setting {
     public void reset() {
         value = def;
     }
+
+    @Override
+    public boolean isDefault() {
+        return value.equals(def);
+    }
 }

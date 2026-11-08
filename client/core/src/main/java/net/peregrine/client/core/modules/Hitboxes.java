@@ -4,7 +4,7 @@ import net.peregrine.client.core.Hooks;
 import net.peregrine.client.core.OptionModule;
 import net.peregrine.client.core.Platform;
 import net.peregrine.client.core.settings.BoolSetting;
-import net.peregrine.client.core.settings.ChoiceSetting;
+import net.peregrine.client.core.settings.ColorSetting;
 
 /** Hitboxes without F3+B, with a choice of what shows them, their color and the look line. */
 public final class Hitboxes extends OptionModule {
@@ -19,7 +19,8 @@ public final class Hitboxes extends OptionModule {
     private final BoolSetting projectiles = add(new BoolSetting("projectiles", "Arrows and thrown things", true));
     private final BoolSetting other = add(new BoolSetting("other", "Everything else", true));
     private final BoolSetting look = add(new BoolSetting("look", "Line showing where they look", false));
-    private final ChoiceSetting color = add(new ChoiceSetting("color", "Color", 0, COLORS));
+    private final ColorSetting color = add(new ColorSetting("color", "Color", 0xFFFFFFFF, false,
+            0xFFFFFF, -1, 0xFF4040, 0x40FF60, 0x30E0FF, 0xFFE040, 0xFF60D0));
 
     public Hitboxes() {
         super("hitboxes", "Hitboxes", "Hitboxes without F3+B: pick what shows them, their color and the look line",
@@ -31,8 +32,8 @@ public final class Hitboxes extends OptionModule {
         super.tick(p);
         Hooks.hitboxKinds = new boolean[] {players.value, mobs.value, items.value, xp.value, projectiles.value, other.value};
         Hooks.hitboxLookLine = look.value;
-        int c = RGB[color.index];
-        Hooks.hitboxColor = c == -1 ? (net.peregrine.client.core.Peregrine.get().accent() & 0xFFFFFF) : c;
+        int c = color.value() & 0xFFFFFF;
+        Hooks.hitboxColor = c == 0xFFFFFF && !color.chroma ? 0 : c;   // white: Minecraft's own
     }
 
     @Override

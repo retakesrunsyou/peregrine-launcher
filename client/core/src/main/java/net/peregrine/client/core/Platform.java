@@ -323,6 +323,10 @@ public interface Platform {
         return false;
     }
 
+    /** How see-through the chat's background is (0 - 1), or -1 for Minecraft's own setting. */
+    default void setChatBackground(float opacity) {
+    }
+
     /** 0 = first person, 1 = third person behind, 2 = third person in front. */
     default int cameraMode() {
         return 0;

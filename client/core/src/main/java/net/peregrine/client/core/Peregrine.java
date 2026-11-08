@@ -152,6 +152,9 @@ public final class Peregrine {
         // Performance
         modules.add(new StableFps());
         modules.add(new SmoothJoin());
+        modules.add(new net.peregrine.client.core.modules.ChatTweaks());
+        modules.add(new net.peregrine.client.core.modules.Snaplook());
+        modules.add(new net.peregrine.client.core.modules.CleanOverlays());
         // Batch 5: render hooks
         modules.add(new AntiLeak());
         modules.add(new Crosshair());
@@ -354,6 +357,10 @@ public final class Peregrine {
 
     public int accent() {
         return accent;
+    }
+
+    {
+        net.peregrine.client.core.settings.ColorSetting.accent = this::accent;
     }
 
     public void setAccent(int argb) {

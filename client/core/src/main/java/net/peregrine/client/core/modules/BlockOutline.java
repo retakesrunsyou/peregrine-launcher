@@ -4,7 +4,7 @@ import net.peregrine.client.core.Hooks;
 import net.peregrine.client.core.Module;
 import net.peregrine.client.core.Peregrine;
 import net.peregrine.client.core.Platform;
-import net.peregrine.client.core.settings.ChoiceSetting;
+import net.peregrine.client.core.settings.ColorSetting;
 import net.peregrine.client.core.settings.SliderSetting;
 
 /** Block outline: the color and thickness of the box around the block you're looking at. */
@@ -17,7 +17,7 @@ public final class BlockOutline extends Module {
         0xFF4FD8E0, 0xFF4C7CF0, 0xFF9C62F0, 0xFFF07AC8, -2};
     static final int RAINBOW = 12;
 
-    private final ChoiceSetting color = add(new ChoiceSetting("color", "Outline color", RAINBOW, COLORS));
+    private final ColorSetting color = add(new ColorSetting("color", "Outline color", 0xFFFFFFFF, true, false, RGB));
     private final SliderSetting speed = add(new SliderSetting("speed", "Rainbow speed", 1f, 10f, 1f, 4f, "%.0f"));
     private final SliderSetting opacity = add(new SliderSetting("opacity", "Opacity", 20f, 100f, 5f, 85f, "%.0f%%"));
     private final SliderSetting width = add(new SliderSetting("width", "Thickness", 1f, 6f, 0.5f, 1.5f, "%.1fx"));
@@ -29,10 +29,8 @@ public final class BlockOutline extends Module {
 
     private void apply() {
         boolean on = enabled();
-        int c = RGB[color.index];
-        if (c == -1) {
-            c = Peregrine.get().accent();
-        } else if (c == -2) {  // the colors flow round, like RGB text
+        int c = color.color;
+        if (color.chroma) {  // the colors flow round, like RGB text
             float hue = (System.currentTimeMillis() % 100000L) / 1000f * speed.value * 0.05f;
             c = java.awt.Color.HSBtoRGB(hue - (float) Math.floor(hue), 0.75f, 1f);
         }
@@ -50,7 +48,7 @@ public final class BlockOutline extends Module {
 
     @Override
     public void renderWorld(net.peregrine.client.core.Draw d, Platform p) {
-        if (color.index == RAINBOW) {
+        if (color.chroma) {
             apply();  // every frame, so the colors flow smoothly
         }
     }

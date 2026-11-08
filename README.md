@@ -14,6 +14,7 @@ play: more FPS, smoother frames and fewer lag spikes, out of the box.
 - **Library**: one instance at a glance. Its version, loader and performance status, Play / Update All / Add Mods,
   and its optimization mods with their icons and versions, each with a checkbox to switch it for that instance.
   After you play it shows how the game ran: your average FPS and how low it dipped
+- **Home** leads with the featured server, **BunnyMC** (bunnymc.org): Play starts Minecraft straight into it
 - **Recent**: the server you played last, big, with its live player count, MOTD and ping, and a Play
   button that starts Minecraft straight into it. Your other recent servers sit underneath
 - **Friends**: your Xbox friends (the list Minecraft uses for Realms and Bedrock), who's online, and
@@ -81,6 +82,14 @@ drawn in software; real graphics cards usually gain more from Sodium):
 - Press **Right Shift** in game for the Peregrine menu, a frosted glass window with a sidebar that drops down:
   - **Modules** (HUD, Utility, Visuals, Performance): every built-in mod as a tile with its icon, a green
     **Enabled** / red **Disabled** bar to switch it and a gear for its options; star your favourites to keep them first
+  - Every feature's page works like Lunar's: search its settings, a small arrow resets any one of them, and colours
+    come from a full picker (any colour, opacity, or RGB) — block outline, hitboxes, hit color, glint, fog, crosshair
+    and waypoints included. HUD items have their whole look on their page too: size, text, label, background and
+    border colours, border thickness, corners, shadow, outline, [brackets] and your own label text
+  - **Style all** (Settings): one look for every HUD item at once. **Profiles**: save every feature's settings as a
+    profile (PvP, building...) and switch between them. The accent colour can be any colour, and the launcher takes it too
+  - New: **Chat** (timestamps, repeated messages stacked with a count, background opacity), **Snaplook** (hold V to look
+    behind you), **Clean overlays** (no pumpkin mask or powder snow frost) and a crosshair you **draw pixel by pixel**
   - **Edit HUD**: drag items (they snap to the centre, the edges and each other), resize from the corner or with the
     scroll wheel, right-click for colours (any colour from the picker, or RGB), background, shadow and more; the
     **Mods** button in the middle goes back

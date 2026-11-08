@@ -8,7 +8,9 @@ import java.util.Map;
 import net.peregrine.client.core.settings.ActionSetting;
 import net.peregrine.client.core.settings.BoolSetting;
 import net.peregrine.client.core.settings.ChoiceSetting;
+import net.peregrine.client.core.settings.ColorSetting;
 import net.peregrine.client.core.settings.KeySetting;
+import net.peregrine.client.core.settings.PixelGridSetting;
 import net.peregrine.client.core.settings.Setting;
 import net.peregrine.client.core.settings.SliderSetting;
 import net.peregrine.client.core.settings.TextSetting;
@@ -78,6 +80,26 @@ public final class Menu {
     private float sideSlide = -1;
     private int sideX, sideY, sideW, sideH;
     private boolean onlyOn;       // the ≡ button: show only what's switched on
+    private final ColorPicker picker = new ColorPicker();
+    private String listSearch = "";
+    private final Map<HudModule, List<Setting>> styleRows = new IdentityHashMap<HudModule, List<Setting>>();
+    /** "All HUD items": a page whose look applies to every HUD item at once. */
+    private final HudModule allHud = new HudModule("all_hud", "All HUD items",
+            "One look for every HUD item at once. Change single items on their own pages afterwards.", false, 0f, 0f) {
+        @Override
+        public int width(Draw d, Platform p) {
+            return 0;
+        }
+
+        @Override
+        public int height(Draw d, Platform p) {
+            return 0;
+        }
+
+        @Override
+        public void render(Draw d, Platform p, int x, int y) {
+        }
+    };
     private int tabsY, tabX0, tabW, menuBtnX;
 
     /** Something clickable on a settings page, from the last frame (menu pixels). */
@@ -139,6 +161,9 @@ public final class Menu {
         rowGlow.clear();
         tabSlide = -1;
         page = null;
+        search = listSearch;
+        listSearch = "";
+        picker.close();
         draggingSlider = null;
         hits.clear();
         sideSlide = -1;
@@ -216,6 +241,7 @@ public final class Menu {
 
     /** Chooses something in the sidebar. */
     void choose(String id) {
+        picker.close();
         if (page != null) {
             closePage();
         }
@@ -299,6 +325,11 @@ public final class Menu {
 
     /** Opens a feature's settings page (the gear on its row, or right-click). */
     void openPage(Module m) {
+        if (page == null) {
+            listSearch = search;   // the modules search comes back when the page closes
+        }
+        search = "";
+        picker.close();
         page = m;
         pageOpenedAt = System.currentTimeMillis();
         scroll = 0;
@@ -490,6 +521,7 @@ public final class Menu {
     }
 
     private static final int GEAR = 14;
+    private static final int GRID_H = 15 * 7 + 26;   // the crosshair pixel grid's row
 
     /** A tile's options button: x, y (GEAR square), right of the on/off bar. */
     private int[] gearAt(int[] c) {
@@ -593,7 +625,8 @@ public final class Menu {
             d.roundRect(searchX, searchY, searchW, TABBAR_H, 8, 0x50000000);
             d.roundOutline(searchX, searchY, searchW, TABBAR_H, 8, searching ? Theme.withAlpha(a, 0xC0) : 0x22FFFFFF);
             boolean caret = (now / 500) % 2 == 0;
-            String shown = searching ? search + (caret ? "_" : "") : pn != null ? pn.placeholder() : "Search modules...";
+            String shown = searching ? search + (caret ? "_" : "") : pn != null ? pn.placeholder()
+                    : page != null ? "Search settings..." : "Search modules...";
             MenuIcons.draw(d, "search", searchX + 5, searchY + 4, searching ? a : Theme.FAINT);
             d.text(d.trim(shown, searchW - 22), searchX + 17, searchY + 4, searching ? Theme.TEXT : Theme.FAINT, false);
         }
@@ -998,13 +1031,33 @@ public final class Menu {
         if (maxScroll > 0) {
             scrollbar(d, listY, listH, in(mx, my, listX, listY, listW + 8, listH), a);
         }
+        picker.render(d, mx, my, a);
     }
 
     private int settingsRows(Draw d, int mx, int my, float dt, int a, int x, int y, int w) {
         heading(d, "Look", x, y);
         y += 14;
         d.text("Accent color", x + 6, y + 7, Theme.MUTED, false);
-        int sx = x + w - 6 - ACCENTS.length * 14 + 2;
+        int sx = x + w - 6 - (ACCENTS.length + 1) * 14 + 2;
+        {   // the last one: any colour, from the picker (the launcher takes it too)
+            int cx = sx + ACCENTS.length * 14;
+            boolean custom = true;
+            for (int c : ACCENTS) {
+                custom &= (c & 0xFFFFFF) != (a & 0xFFFFFF);
+            }
+            boolean hv = in(mx, my, cx - 1, y + 4, 12, 12);
+            if (custom || hv) {
+                d.roundOutline(cx - 2, y + 3, 14, 14, custom ? 0xFFFFFFFF : 0x80FFFFFF);
+            }
+            if (custom) {
+                d.roundRect(cx, y + 5, 10, 10, a);
+            } else {
+                for (int i = 0; i < 10; i++) {
+                    d.rect(cx + i, y + 5, 1, 10, 0xFF000000 | java.awt.Color.HSBtoRGB(i / 10f, 0.8f, 1f));
+                }
+            }
+            hit("accent-pick", cx - 1, y + 4, 12, 12, null);
+        }
         for (int i = 0; i < ACCENTS.length; i++) {
             int cx = sx + i * 14;
             boolean chosen = (ACCENTS[i] & 0xFFFFFF) == (a & 0xFFFFFF);
@@ -1037,6 +1090,38 @@ public final class Menu {
         y = moduleRow(d, mx, my, dt, a, "main_menu", "Peregrine main menu", x, y, w);
         y = moduleRow(d, mx, my, dt, a, "pause_menu", "Peregrine pause menu", x, y, w);
         y = moduleRow(d, mx, my, dt, a, "clean_menus", "Keep resource packs out of menus", x, y, w);
+        y += 8;
+        heading(d, "HUD", x, y);
+        y += 16;
+        y = buttonRow(d, mx, my, a, "all-hud", "One look for every HUD item", "Style all", x, y, w);
+        y += 8;
+        heading(d, "Profiles", x, y);
+        y += 16;
+        d.text(d.trim("Save every feature's settings as a profile (PvP, building...) and switch between them.", w - 12),
+                x + 6, y + 2, Theme.FAINT, false);
+        y += 14;
+        for (String name : Profiles.list(pc)) {
+            boolean cur = name.equals(Profiles.current(pc));
+            d.text(d.trim(name, w / 2), x + 6, y + 7, cur ? a : Theme.TEXT, false);
+            if (cur) {
+                d.text("in use", x + 12 + Math.min(d.width(name), w / 2), y + 7, Theme.FAINT, false);
+            }
+            int pbx = x + w - 6;
+            String[][] btns = {{"del", "Delete"}, {"save", "Update"}, {"load", "Use"}};
+            for (String[] b : btns) {
+                int bw = d.width(b[1]) + 14;
+                pbx -= bw;
+                boolean bh = in(mx, my, pbx, y + 3, bw, 16);
+                boolean danger = b[0].equals("del");
+                d.roundRect(pbx, y + 3, bw, 16, bh ? (danger ? Theme.withAlpha(Theme.BAD, 0x50) : Theme.withAlpha(a, 0x50)) : Theme.CARD);
+                d.roundOutline(pbx, y + 3, bw, 16, bh ? (danger ? Theme.BAD : a) : Theme.HAIRLINE);
+                d.text(b[1], pbx + 7, y + 7, bh ? Theme.TEXT : Theme.MUTED, false);
+                hit("profile-" + b[0] + ":" + name, pbx, y + 3, bw, 16, null);
+                pbx -= 4;
+            }
+            y += SET_H + 2;
+        }
+        y = buttonRow(d, mx, my, a, "profile-new", "Save what you have now", "New profile", x, y, w);
         y += 8;
         heading(d, "Game", x, y);
         y += 16;
@@ -1071,6 +1156,19 @@ public final class Menu {
         d.text(label, x + 6, y + 7, rh ? Theme.TEXT : Theme.MUTED, false);
         switchKnob(d, x + w - 30, y + 5, animate(m, dt), a, rh);
         hit("module:" + id, x, y, w, SET_H, null);
+        return y + SET_H + 2;
+    }
+
+    /** A row with a label and an accent button on the right. */
+    private int buttonRow(Draw d, int mx, int my, int a, String id, String label, String button, int x, int y, int w) {
+        d.text(label, x + 6, y + 7, Theme.MUTED, false);
+        int bw = d.width(button) + 16;
+        int bx = x + w - 6 - bw;
+        boolean bh = in(mx, my, bx, y + 3, bw, 16);
+        d.roundRect(bx, y + 3, bw, 16, Theme.withAlpha(a, bh ? 0xFF : 0x2A));
+        d.roundOutline(bx, y + 3, bw, 16, Theme.withAlpha(a, 0xA0));
+        d.text(button, bx + 8, y + 7, bh ? Theme.onColor(a) : Theme.withAlpha(a, 0xFF), false);
+        hit(id, bx, y + 3, bw, 16, null);
         return y + SET_H + 2;
     }
 
@@ -1157,19 +1255,29 @@ public final class Menu {
         hit("back", x, listY + 3, 16, 16, null);
         d.text(d.trim(m.name, w - 66), x + 22, listY + 2, Theme.TEXT, false);
         d.text(d.trim(m.description, w - 66), x + 22, listY + 13, Theme.FAINT, false);
-        boolean th = in(mx, my, x + w - 30, listY + 6, 22, 10);
-        switchKnob(d, x + w - 32, listY + 6, animate(m, dt), a, th);
-        hit("toggle", x + w - 32, listY + 3, 26, 16, null);
+        if (m != allHud) {
+            boolean th = in(mx, my, x + w - 30, listY + 6, 22, 10);
+            switchKnob(d, x + w - 32, listY + 6, animate(m, dt), a, th);
+            hit("toggle", x + w - 32, listY + 3, 26, 16, null);
+        }
         d.rect(x, listY + 25, w - 4, 1, Theme.HAIRLINE);
 
         int top = listY + 28;
         int viewH = listH - 28;
-        int contentH = SET_H + 6;  // the keybind row
-        if (m instanceof HudModule) {
+        boolean global = m == allHud;
+        List<Setting> list = pageRows(m);
+        int nOwn = ownCount(m, list);
+        int contentH = global ? 0 : SET_H + 6;  // the keybind row
+        if (m instanceof HudModule && !global) {
             contentH += 40;
         }
-        contentH += m.settings().size() * (SET_H + 1);
-        if (!m.settings().isEmpty()) {
+        contentH += list.size() * (SET_H + 1) + (nOwn < list.size() ? 18 : 0);
+        for (Setting st : list) {
+            if (st instanceof PixelGridSetting) {
+                contentH += GRID_H - SET_H;
+            }
+        }
+        if (!list.isEmpty()) {
             contentH += 24;
         }
         maxScroll = Math.max(0, contentH - viewH);
@@ -1186,7 +1294,7 @@ public final class Menu {
         int y = top + 2 - Math.round(smoothScroll);
 
         // Keybind: a key that switches this feature while playing.
-        {
+        if (!global) {
             boolean waiting = binding == m;
             boolean rh = inView && in(mx, my, x, y, w - 4, SET_H);
             if (rh || waiting) {
@@ -1222,7 +1330,7 @@ public final class Menu {
             y += 5;
         }
 
-        if (m instanceof HudModule) {
+        if (m instanceof HudModule && !global) {
             String label = "Customize look & position";
             int bw = Math.min(w - 8, d.width(label) + 26);
             boolean ch = inView && in(mx, my, x, y, bw, 18);
@@ -1236,9 +1344,15 @@ public final class Menu {
             y += 40;
         }
 
-        List<Setting> list = m.settings();
+        if (list.isEmpty() && !search.isEmpty()) {
+            d.text("No settings match \"" + d.trim(search, w - 80) + "\"", x + 6, y + 6, Theme.MUTED, false);
+        }
         for (int i = 0; i < list.size(); i++) {
             Setting st = list.get(i);
+            if (i == nOwn) {   // the HUD item's look, under its own settings
+                heading(d, "Style", x, y + 2);
+                y += 18;
+            }
             boolean rh = inView && in(mx, my, x, y, w - 4, SET_H);
             if (rh) {
                 d.roundRect(x, y, w - 4, SET_H, Theme.withAlpha(0xFFFFFF, 0x0E));
@@ -1246,6 +1360,12 @@ public final class Menu {
             d.text(d.trim(st.label, w / 2), x + 6, y + 7, rh ? Theme.TEXT : Theme.MUTED, false);
             int right = x + w - 8;
             String id = "set:" + st.id;
+            if (!st.isDefault()) {   // a small arrow back to how it came, like Lunar's
+                int rx = x + 10 + Math.min(d.width(st.label), w / 2);
+                boolean rhv = inView && in(mx, my, rx - 2, y + 4, 13, 13);
+                MenuIcons.draw(d, "reset", rx, y + 6, rhv ? a : Theme.withAlpha(Theme.FAINT, 0xC0));
+                hit("rs:" + i, rx - 2, y + 4, 13, 13, st);
+            }
             if (st instanceof BoolSetting) {
                 BoolSetting b = (BoolSetting) st;
                 float target = b.value ? 1f : 0f;
@@ -1298,6 +1418,65 @@ public final class Menu {
                 d.roundOutline(bx, y + 3, bw2, 16, waiting || bhv ? Theme.withAlpha(a, 0xC0) : Theme.HAIRLINE);
                 d.text(val, bx + (bw2 - d.width(val)) / 2, y + 7, waiting ? a : ks.key >= 0 ? Theme.TEXT : Theme.FAINT, false);
                 hit(id, bx, y + 3, bw2, 16, st);
+            } else if (st instanceof PixelGridSetting) {
+                // a grid of pixels to click, with the result at real size beside it
+                PixelGridSetting pg = (PixelGridSetting) st;
+                int n = PixelGridSetting.N, cell = 7;
+                int gx = x + 6, gy = y + 18;
+                d.roundRect(gx - 3, gy - 3, n * cell + 6, n * cell + 6, 3, 0x60000000);
+                for (int yy = 0; yy < n; yy++) {
+                    for (int xx = 0; xx < n; xx++) {
+                        boolean onPx = pg.get(xx, yy);
+                        boolean hv = inView && in(mx, my, gx + xx * cell, gy + yy * cell, cell, cell);
+                        int c = onPx ? (hv ? Theme.mix(a, 0xFFFFFFFF, 0.3f) : a)
+                                : hv ? 0x50FFFFFF : ((xx + yy) % 2 == 0 ? 0x18FFFFFF : 0x0CFFFFFF);
+                        d.rect(gx + xx * cell, gy + yy * cell, cell - 1, cell - 1, c);
+                        hit("px:" + (yy * n + xx), gx + xx * cell, gy + yy * cell, cell, cell, st);
+                    }
+                }
+                d.rect(gx + n * cell / 2 - 1, gy - 6, 1, 3, Theme.FAINT);   // marks for the centre
+                d.rect(gx - 6, gy + n * cell / 2 - 1, 3, 1, Theme.FAINT);
+                int px2 = gx + n * cell + 16;
+                d.text("Preview", px2, gy, Theme.FAINT, false);
+                d.roundRect(px2, gy + 12, 40, 40, 4, 0xFF6B8F4E);
+                for (int yy = 0; yy < n; yy++) {
+                    for (int xx = 0; xx < n; xx++) {
+                        if (pg.get(xx, yy)) {
+                            d.rect(px2 + 20 - n + xx * 2, gy + 32 - n + yy * 2, 2, 2, 0xFFFFFFFF);
+                        }
+                    }
+                }
+                String clr = "Clear";
+                int cw2 = d.width(clr) + 14;
+                boolean ch = inView && in(mx, my, px2, gy + 60, cw2, 14);
+                d.roundRect(px2, gy + 60, cw2, 14, ch ? Theme.ROW_HOVER : Theme.FIELD);
+                d.roundOutline(px2, gy + 60, cw2, 14, ch ? Theme.MUTED : Theme.HAIRLINE);
+                d.text(clr, px2 + 7, gy + 63, Theme.TEXT, false);
+                hit("pxclear", px2, gy + 60, cw2, 14, st);
+                y += GRID_H - SET_H;
+            } else if (st instanceof ColorSetting) {
+                ColorSetting cs = (ColorSetting) st;
+                String val = cs.chroma ? "RGB" : cs.hex();
+                int pw2 = d.width(val) + 30;
+                int bx = right - pw2;
+                boolean ph2 = inView && in(mx, my, bx, y + 3, pw2, 16);
+                boolean editing = picker.open() && picker.target() instanceof SettingTarget
+                        && ((SettingTarget) picker.target()).setting == cs;
+                d.roundRect(bx, y + 3, pw2, 16, ph2 ? Theme.ROW_HOVER : Theme.FIELD);
+                d.roundOutline(bx, y + 3, pw2, 16, ph2 || editing ? Theme.withAlpha(a, 0xC0) : Theme.HAIRLINE);
+                // the swatch: the colour over a checker (so see-through shows), or a rainbow
+                d.rect(bx + 4, y + 6, 10, 10, 0xFF888888);
+                d.rect(bx + 4, y + 6, 5, 5, 0xFF555555);
+                d.rect(bx + 9, y + 11, 5, 5, 0xFF555555);
+                if (cs.chroma) {
+                    for (int c = 0; c < 10; c++) {
+                        d.rect(bx + 4 + c, y + 6, 1, 10, cs.value(c / 10.0));
+                    }
+                } else {
+                    d.rect(bx + 4, y + 6, 10, 10, cs.color);
+                }
+                d.text(val, bx + 19, y + 7, Theme.TEXT, false);
+                hit(id, bx, y + 3, pw2, 16, st);
             } else if (st instanceof ChoiceSetting || st instanceof ActionSetting) {
                 boolean action = st instanceof ActionSetting;
                 String val = action ? ((ActionSetting) st).button() : ((ChoiceSetting) st).text();
@@ -1322,7 +1501,7 @@ public final class Menu {
             y += 1;
         }
         if (!list.isEmpty()) {
-            String reset = "Reset options";
+            String reset = global ? "Reset every item's look" : "Reset options";
             int rw = d.width(reset) + 14;
             int ry = y + 6;
             boolean rh = inView && in(mx, my, x, ry, rw, 14);
@@ -1345,6 +1524,7 @@ public final class Menu {
             }
         }
         scrollbar(d, top, viewH, inView, a);
+        picker.render(d, mx, my, a);
 
     }
 
@@ -1371,6 +1551,11 @@ public final class Menu {
     }
 
     private boolean pageClicked(int mx, int my) {
+        if (picker.open()) {
+            picker.click(mx, my);
+            pc.markDirty();
+            return true;
+        }
         if (typing != null || bindingKey != null) {
             boolean onIt = false;
             for (Hit h : hits) {
@@ -1408,13 +1593,47 @@ public final class Menu {
                 editingHud = true;
                 editor.openFor(hm);
             } else if (h.id.equals("reset")) {
-                for (Setting st : page.settings()) {
-                    st.reset();
+                if (page == allHud) {
+                    for (Module mm : pc.modules()) {
+                        if (mm instanceof HudModule) {
+                            HudModule hm = (HudModule) mm;
+                            float fx = hm.fx, fy = hm.fy;
+                            hm.resetStyle();   // the look, not where it is
+                            hm.fx = fx;
+                            hm.fy = fy;
+                        }
+                    }
+                    allHud.resetStyle();
+                } else {
+                    for (Setting st : page.settings()) {
+                        st.reset();
+                    }
+                    if (page instanceof HudModule) {
+                        HudModule hm = (HudModule) page;
+                        float fx = hm.fx, fy = hm.fy, sc = hm.scale;
+                        hm.resetStyle();
+                        hm.fx = fx;
+                        hm.fy = fy;
+                        hm.scale = sc;
+                    }
                 }
+            } else if (h.id.startsWith("px:")) {
+                int i = Integer.parseInt(h.id.substring(3));
+                ((PixelGridSetting) h.setting).toggle(i % PixelGridSetting.N, i / PixelGridSetting.N);
+            } else if (h.id.equals("pxclear")) {
+                ((PixelGridSetting) h.setting).clear();
+            } else if (h.id.startsWith("rs:")) {
+                h.setting.reset();
+                styleChanged(h.setting);
             } else if (h.setting instanceof BoolSetting) {
                 ((BoolSetting) h.setting).value = !((BoolSetting) h.setting).value;
+                styleChanged(h.setting);
             } else if (h.setting instanceof ChoiceSetting) {
                 ((ChoiceSetting) h.setting).next();
+            } else if (h.setting instanceof ColorSetting) {
+                ColorSetting cs = (ColorSetting) h.setting;
+                picker.show(new SettingTarget(cs), h.x + h.w - ColorPicker.W, h.y + h.h + 3,
+                        Math.round(pc.platform().screenWidth() / k), Math.round(pc.platform().screenHeight() / k));
             } else if (h.setting instanceof TextSetting) {
                 typing = typing == h.setting ? null : (TextSetting) h.setting;
                 bindingKey = null;
@@ -1428,11 +1647,227 @@ public final class Menu {
             } else if (h.setting instanceof SliderSetting) {
                 draggingSlider = (SliderSetting) h.setting;
                 slideTo(draggingSlider, mx);
+                styleChanged(draggingSlider);
             }
             pc.markDirty();
             return true;
         }
         return false;
+    }
+
+    // ------------------------------------------------------------ page rows: own settings, then the look
+
+    /** What a page lists: the feature's settings that match the search, then (HUD items) its look. */
+    private List<Setting> pageRows(Module m) {
+        List<Setting> out = new ArrayList<Setting>();
+        String q = search.trim().toLowerCase();
+        if (m != allHud) {
+            for (Setting st : m.settings()) {
+                if (q.isEmpty() || st.label.toLowerCase().contains(q)) {
+                    out.add(st);
+                }
+            }
+        }
+        if (m instanceof HudModule) {
+            for (Setting st : styleOf((HudModule) m)) {
+                if (q.isEmpty() || st.label.toLowerCase().contains(q)) {
+                    out.add(st);
+                }
+            }
+        }
+        return out;
+    }
+
+    private int ownCount(Module m, List<Setting> rows) {
+        if (!(m instanceof HudModule)) {
+            return rows.size();
+        }
+        List<Setting> style = styleOf((HudModule) m);
+        int n = 0;
+        for (Setting st : rows) {
+            if (!style.contains(st)) {
+                n++;
+            }
+        }
+        return n;
+    }
+
+    /** A HUD item's look as settings (kept in step with the item every frame). */
+    private List<Setting> styleOf(HudModule h) {
+        List<Setting> rows = styleRows.get(h);
+        if (rows == null) {
+            rows = new ArrayList<Setting>();
+            rows.add(new SliderSetting("st_size", "Size", 40, 300, 5, 50, "%.0f%%"));
+            rows.add(new ColorSetting("st_text", "Text color", Theme.TEXT, false));
+            rows.add(new ColorSetting("st_label", "Label color", Theme.AMBER, false));
+            rows.add(new TextSetting("st_name", "Label text", "", 24, "Its usual label"));
+            rows.add(new BoolSetting("st_brackets", "[Brackets]", false));
+            rows.add(new BoolSetting("st_shadow", "Text shadow", true));
+            rows.add(new BoolSetting("st_outline", "Text outline", false));
+            rows.add(new BoolSetting("st_bg", "Background", true));
+            rows.add(new ColorSetting("st_bgcolor", "Background color", Theme.HUD_BG, true));
+            rows.add(new SliderSetting("st_radius", "Corners", 0, HudModule.MAX_RADIUS, 1, HudModule.DEFAULT_RADIUS, "%.0f px"));
+            rows.add(new BoolSetting("st_border", "Border", false));
+            rows.add(new ColorSetting("st_bordercolor", "Border color", Theme.AMBER, true));
+            rows.add(new SliderSetting("st_borderwidth", "Border thickness", 1, 3, 1, 1, "%.0f px"));
+            if (h.hasValueColors()) {
+                rows.add(new BoolSetting("st_values", "Color-coded values", false));
+            }
+            styleRows.put(h, rows);
+        }
+        pullStyle(h, rows);
+        return rows;
+    }
+
+    private static Setting find(List<Setting> rows, String id) {
+        for (Setting s : rows) {
+            if (s.id.equals(id)) {
+                return s;
+            }
+        }
+        return null;
+    }
+
+    /** The item's look into its rows. */
+    private void pullStyle(HudModule h, List<Setting> rows) {
+        int acc = pc.accent();
+        ((SliderSetting) find(rows, "st_size")).value = Math.round(h.scale * 100);
+        ColorSetting text = (ColorSetting) find(rows, "st_text");
+        text.color = h.textColor != 0 ? h.textColor : Theme.TEXT;
+        text.chroma = h.chroma;
+        ((ColorSetting) find(rows, "st_label")).color = h.labelColor != 0 ? h.labelColor : acc;
+        TextSetting name = (TextSetting) find(rows, "st_name");
+        if (typing != name) {
+            name.value = h.customLabel;
+        }
+        ((BoolSetting) find(rows, "st_brackets")).value = h.brackets;
+        ((BoolSetting) find(rows, "st_shadow")).value = h.shadow;
+        ((BoolSetting) find(rows, "st_outline")).value = h.outline;
+        ((BoolSetting) find(rows, "st_bg")).value = h.background;
+        ((ColorSetting) find(rows, "st_bgcolor")).color = (h.backgroundAlpha << 24)
+                | ((h.backgroundColor != 0 ? h.backgroundColor : Theme.HUD_BG) & 0xFFFFFF);
+        ((SliderSetting) find(rows, "st_radius")).value = h.radius;
+        ((BoolSetting) find(rows, "st_border")).value = h.border;
+        ((ColorSetting) find(rows, "st_bordercolor")).color = h.borderColor != 0 ? h.borderColor
+                : Theme.withAlpha(h.labelColor != 0 ? h.labelColor : acc, 0xD0);
+        ((SliderSetting) find(rows, "st_borderwidth")).value = h.borderWidth;
+        Setting v = find(rows, "st_values");
+        if (v != null) {
+            ((BoolSetting) v).value = h.valueColors;
+        }
+    }
+
+    /** One row of an item's look back into the item (or, on "All HUD items", into every item). */
+    private void pushStyle(HudModule h, Setting st) {
+        int acc = pc.accent();
+        switch (st.id) {
+            case "st_size":
+                h.scale = Math.max(HudModule.MIN_SCALE, Math.min(HudModule.MAX_SCALE, ((SliderSetting) st).value / 100f));
+                break;
+            case "st_text": {
+                ColorSetting c = (ColorSetting) st;
+                h.textColor = c.color == Theme.TEXT ? 0 : c.color;
+                h.chroma = c.chroma;
+                break;
+            }
+            case "st_label": {
+                int c = ((ColorSetting) st).color;
+                h.labelColor = (c & 0xFFFFFF) == (acc & 0xFFFFFF) || c == Theme.AMBER ? 0 : c;
+                break;
+            }
+            case "st_name":
+                h.customLabel = ((TextSetting) st).value.trim();
+                h.mainLabel = null;
+                break;
+            case "st_brackets":
+                h.brackets = ((BoolSetting) st).value;
+                break;
+            case "st_shadow":
+                h.shadow = ((BoolSetting) st).value;
+                break;
+            case "st_outline":
+                h.outline = ((BoolSetting) st).value;
+                break;
+            case "st_bg":
+                h.background = ((BoolSetting) st).value;
+                break;
+            case "st_bgcolor": {
+                int c = ((ColorSetting) st).color;
+                h.backgroundAlpha = (c >>> 24) & 0xFF;
+                h.backgroundColor = (c & 0xFFFFFF) == (Theme.HUD_BG & 0xFFFFFF) ? 0 : (0xFF000000 | c);
+                break;
+            }
+            case "st_radius":
+                h.radius = Math.round(((SliderSetting) st).value);
+                break;
+            case "st_border":
+                h.border = ((BoolSetting) st).value;
+                break;
+            case "st_bordercolor": {
+                int c = ((ColorSetting) st).color;
+                h.borderColor = c == Theme.AMBER ? 0 : c;
+                break;
+            }
+            case "st_borderwidth":
+                h.borderWidth = Math.round(((SliderSetting) st).value);
+                break;
+            case "st_values":
+                h.valueColors = ((BoolSetting) st).value;
+                break;
+            default:
+                break;
+        }
+    }
+
+    /** A setting on the page changed: if it's part of a HUD item's look, apply it. */
+    private void styleChanged(Setting st) {
+        if (!(page instanceof HudModule) || st == null || !st.id.startsWith("st_")) {
+            return;
+        }
+        if (page == allHud) {
+            pushStyle(allHud, st);
+            for (Module mm : pc.modules()) {
+                if (mm instanceof HudModule) {
+                    pushStyle((HudModule) mm, st);
+                }
+            }
+        } else {
+            pushStyle((HudModule) page, st);
+        }
+        pc.markDirty();
+    }
+
+    /** The picker editing a colour setting. */
+    private final class SettingTarget implements ColorPicker.Target {
+        final ColorSetting setting;
+
+        SettingTarget(ColorSetting s) {
+            setting = s;
+        }
+
+        public int get() {
+            return setting.color;
+        }
+
+        public void set(int argb) {
+            setting.color = setting.alpha ? argb : (0xFF000000 | argb);
+            styleChanged(setting);
+            pc.markDirty();
+        }
+
+        public boolean chroma() {
+            return setting.chroma;
+        }
+
+        public void setChroma(boolean on) {
+            setting.chroma = on;
+            styleChanged(setting);
+            pc.markDirty();
+        }
+
+        public boolean alpha() {
+            return setting.alpha;
+        }
     }
 
     private void closePage() {
@@ -1653,9 +2088,42 @@ public final class Menu {
     }
 
     private void viewClicked(int mx, int my) {
+        if (picker.open()) {
+            picker.click(mx, my);
+            pc.markDirty();
+            return;
+        }
         for (Hit h : new ArrayList<Hit>(hits)) {
             if (!in(mx, my, h.x, h.y, h.w, h.h)) {
                 continue;
+            }
+            if (h.id.equals("accent-pick")) {
+                picker.show(new ColorPicker.Target() {
+                    public int get() {
+                        return pc.accent();
+                    }
+
+                    public void set(int argb) {
+                        pc.setAccent(argb);
+                    }
+
+                    public boolean chroma() {
+                        return false;
+                    }
+
+                    public void setChroma(boolean on) {
+                    }
+
+                    public boolean alpha() {
+                        return false;
+                    }
+
+                    public boolean chromaAllowed() {
+                        return false;
+                    }
+                }, h.x - ColorPicker.W + 12, h.y + h.h + 3, Math.round(pc.platform().screenWidth() / k),
+                        Math.round(pc.platform().screenHeight() / k));
+                return;
             }
             if (h.id.startsWith("accent:")) {
                 pc.setAccent(ACCENTS[Integer.parseInt(h.id.substring(7))]);
@@ -1670,6 +2138,18 @@ public final class Menu {
                         ((HudModule) m).resetStyle();
                     }
                 }
+            } else if (h.id.equals("all-hud")) {
+                openPage(allHud);
+                return;
+            } else if (h.id.equals("profile-new")) {
+                Profiles.saveNew(pc);
+            } else if (h.id.startsWith("profile-load:")) {
+                Profiles.use(pc, h.id.substring(13));
+                styleRows.clear();
+            } else if (h.id.startsWith("profile-save:")) {
+                Profiles.save(pc, h.id.substring(13));
+            } else if (h.id.startsWith("profile-del:")) {
+                Profiles.delete(pc, h.id.substring(12));
             } else if (h.id.equals("clear-keys")) {
                 for (Module m : pc.modules()) {
                     m.key = Keys.NONE;
@@ -1698,8 +2178,12 @@ public final class Menu {
         if (pn instanceof LockerPanel && ((LockerPanel) pn).dragged(Math.round(screenMx / k))) {
             return true;
         }
+        if (!editingHud && picker.drag(Math.round(screenMx / k), Math.round(screenMy / k))) {
+            return true;
+        }
         if (draggingSlider != null && !editingHud) {
             slideTo(draggingSlider, Math.round(screenMx / k));
+            styleChanged(draggingSlider);
             return true;
         }
         return editingHud && editor.mouseDragged(screenMx, screenMy);
@@ -1710,7 +2194,9 @@ public final class Menu {
         if (pn instanceof LockerPanel && ((LockerPanel) pn).released(Math.round(lastMx / k))) {
             return true;
         }
+        picker.release();
         if (draggingSlider != null) {
+            styleChanged(draggingSlider);
             draggingSlider = null;
             pc.markDirty();
             return true;
@@ -1749,6 +2235,7 @@ public final class Menu {
         if (typing != null) {
             if (key == KEY_BACKSPACE) {
                 typing.backspace();
+                styleChanged(typing);
             } else if (key == KEY_ESCAPE || key == KEY_ENTER) {
                 typing = null;
                 pc.markDirty();
@@ -1774,7 +2261,15 @@ public final class Menu {
             return false;
         }
         if (page != null) {
-            if (key == KEY_ESCAPE || (key == KEY_BACKSPACE && search.isEmpty())) {
+            if (key == KEY_ESCAPE && picker.open()) {
+                picker.close();
+                return true;
+            }
+            if (key == KEY_BACKSPACE && !search.isEmpty()) {
+                search = search.substring(0, search.length() - 1);
+                return true;
+            }
+            if (key == KEY_ESCAPE || key == KEY_BACKSPACE) {
                 closePage();
                 return true;
             }
@@ -1815,6 +2310,7 @@ public final class Menu {
         }
         if (typing != null) {
             typing.type(c);
+            styleChanged(typing);
             return true;
         }
         if (editingHud || Character.isISOControl(c) || search.length() >= 24) {
@@ -1823,8 +2319,11 @@ public final class Menu {
         if (search.isEmpty() && c == ' ') {
             return true;
         }
-        if (page != null) {  // typing goes back to the list to search
-            closePage();
+        if (page != null) {  // on a feature's page, typing searches its settings
+            search += c;
+            scroll = 0;
+            smoothScroll = 0;
+            return true;
         }
         MenuPanel pn = panel();
         if (pn != null && pn.typed(c)) {
