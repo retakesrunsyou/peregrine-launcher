@@ -26,6 +26,16 @@ def _version_of(filename: str, mc: str) -> str:
     return ""
 
 
+def _stats(inst):
+    """What the game saved about its last session (average and 1% low FPS), or None."""
+    import json
+    try:
+        s = json.loads((inst.game_dir / "peregrine-stats.json").read_text())
+        return s if int(s.get("avg_fps", 0)) > 0 else None
+    except (OSError, ValueError, TypeError):
+        return None
+
+
 class _Underline(QWidget):
     """The accent line under the page title, fading out to the right."""
 
@@ -280,12 +290,16 @@ class LibraryPage(QWidget):
             perf, color = f"Good · {active} mods active", "#facc15"
         else:
             perf, color = "Mods download on the next Play", Theme.p["muted"]
-        bench = data.get("benchmark_fps")
-        if bench and on:
-            perf += f" · {int(bench)} FPS"
+        stats = _stats(inst)
+        if stats and on and active:
+            perf = ("Excellent" if stats["avg_fps"] >= 120 else "Good" if stats["avg_fps"] >= 60 else "Fair") \
+                + f" · {stats['avg_fps']} FPS"
+            color = "#4ade80" if stats["avg_fps"] >= 120 else "#facc15" if stats["avg_fps"] >= 60 else "#fb923c"
         for label, value, col in (("Game Version", data.get("mc_version", "?"), None),
                                   ("Mod Loader", loader_text, None),
                                   ("Performance Status", perf, color),
+                                  *([("Last Session", f"{stats['avg_fps']} FPS average · {stats['low_fps']} at its lowest", None)]
+                                    if stats else []),
                                   ("Last Played", last_played(data.get("last_played")).replace("Played ", "").capitalize(), None)):
             box = QVBoxLayout()
             box.setSpacing(1)

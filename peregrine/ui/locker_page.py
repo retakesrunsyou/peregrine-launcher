@@ -17,7 +17,7 @@ from PySide6.QtWidgets import QFileDialog, QGridLayout, QHBoxLayout, QLabel, QVB
 
 from .. import auth, custom_cape, locker
 from . import workers
-from .modern import Chip, PillButton, animations_on, big_title, section_label
+from .modern import PillButton, animations_on, big_title, section_label
 from .pages import clear, scroll
 from .theme import Theme, icon_pixmap
 from .widgets import Segmented
@@ -603,7 +603,6 @@ class LockerPage(QWidget):
         head = QHBoxLayout()
         col = QVBoxLayout()
         col.setSpacing(10)
-        col.addWidget(Chip("Your look"))
         col.addWidget(big_title("Locker"))
         head.addLayout(col)
         head.addStretch()

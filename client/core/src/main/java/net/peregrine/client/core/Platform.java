@@ -333,6 +333,14 @@ public interface Platform {
 
     // ---- performance (Stable FPS)
 
+    /**
+     * Whether the world around you has finished building (every chunk in view has its mesh).
+     * True where a version can't tell, which turns the smooth join screen off there.
+     */
+    default boolean terrainReady() {
+        return true;
+    }
+
     /** Render distance in chunks, or -1 if unknown. */
     default int renderDistance() {
         return -1;

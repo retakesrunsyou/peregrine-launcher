@@ -248,7 +248,7 @@ class RecentPage(QWidget):
             self._show_empty(insts)
         else:
             self.chip.set_text("Recent")
-            self.title.setText(servers.display_name(entry).upper())
+            self.title.setText(servers.display_name(entry))
             self.icon.setPixmap(server_icon(entry.get("icon"), 30))
             self.icon.show()
             inst = entry["inst"]
@@ -279,7 +279,7 @@ class RecentPage(QWidget):
         self.players_box.hide()
         if insts:
             last = max(insts, key=lambda i: i.data.get("last_played") or 0)
-            self.title.setText("NO SERVERS YET")
+            self.title.setText("No servers yet")
             self.meta.setText(f"{last.name}   ·   {last.subtitle()}")
             self.text.setText("Join a server in Minecraft and it shows up here with its live player "
                               "count, ready to jump back into with one click.")
@@ -292,7 +292,7 @@ class RecentPage(QWidget):
             self.second_btn.show()
             self._set_backdrop(last)
         else:
-            self.title.setText("WELCOME")
+            self.title.setText("Welcome")
             self.meta.setText("")
             self.text.setText("Make an instance: pick a Minecraft version and Peregrine sets up Fabric, "
                               "performance mods and the in-game menu for you.")

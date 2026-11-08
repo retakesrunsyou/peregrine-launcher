@@ -7,7 +7,7 @@ from PySide6.QtWidgets import (QCheckBox, QComboBox, QFrame, QHBoxLayout, QLabel
 
 from .. import auth, instances, profiles
 from . import workers
-from .modern import Chip, PillButton, big_title, section_label
+from .modern import PillButton, big_title, section_label
 from .pages import clear, empty_state, scroll
 
 
@@ -23,7 +23,6 @@ class ProfilesPage(QWidget):
         v.setSpacing(14)
         col = QVBoxLayout()
         col.setSpacing(12)
-        col.addWidget(Chip("Profiles"))
         col.addWidget(big_title("Profiles"))
         sub = QLabel("Share your setup under your Minecraft name, or grab a friend's: their mods, "
                      "resource packs, shaders and in-game settings.", objectName="muted")

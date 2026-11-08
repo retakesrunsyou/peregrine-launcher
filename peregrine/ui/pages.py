@@ -80,7 +80,7 @@ def icon_button(name: str, tip: str, color: str = None) -> QPushButton:
 
 def page_header(title: str, sub: str = "", back=None, chip: str = None) -> QHBoxLayout:
     """A page's top: a small chip ('● HOME'), a big heavy title and a line under it."""
-    from .modern import Chip, big_title
+    from .modern import big_title
     row = QHBoxLayout()
     if back:
         b = icon_button("back", "Back", Theme.p["text"])
@@ -90,8 +90,6 @@ def page_header(title: str, sub: str = "", back=None, chip: str = None) -> QHBox
         row.addSpacing(6)
     col = QVBoxLayout()
     col.setSpacing(10)
-    if chip:
-        col.addWidget(Chip(chip, Theme.accent))
     col.addWidget(big_title(title))
     if sub:
         s = QLabel(sub, objectName="muted")
@@ -780,9 +778,9 @@ class SettingsPage(QWidget):
         # ---- game
         gamesec = Section("Game")
         mem = QHBoxLayout()
-        slider = QSlider(Qt.Horizontal, minimum=2, maximum=32)  # in half-GB steps
+        slider = QSlider(Qt.Horizontal, minimum=4, maximum=11)  # in half-GB steps, 2 to 5.5 GB
         slider.setFixedWidth(220)
-        slider.setValue(max(2, min(32, round(cfg["max_memory_mb"] / 512))))
+        slider.setValue(max(4, min(11, round(cfg["max_memory_mb"] / 512))))
         mem_label = QLabel(f"{slider.value() / 2:g} GB")
         mem_label.setFixedWidth(52)
         slider.valueChanged.connect(lambda v: mem_label.setText(f"{v / 2:g} GB"))
@@ -791,7 +789,7 @@ class SettingsPage(QWidget):
                                     else self.save("max_memory_mb", v * 512))
         mem.addWidget(slider)
         mem.addWidget(mem_label)
-        gamesec.row("Memory", mem, "4 GB suits most packs. More isn't always faster.")
+        gamesec.row("Memory", mem, "5 GB suits almost everything. Past 5.5 GB Minecraft gets slower, not faster, so that's the most it gets.")
 
         gamesec.row("Window size", self._window_sizes(cfg),
                     "Fit my screen fills your monitor but leaves the taskbar and other apps usable.")

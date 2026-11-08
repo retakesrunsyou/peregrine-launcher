@@ -28,6 +28,8 @@ MODS = [
     ("lithium", "Lithium", "faster game logic: mobs, physics, block ticks"),
     ("ferrite-core", "FerriteCore", "less memory, so fewer garbage-collector stutters"),
     ("iris", "Iris Shaders", "shader packs, fast (with Sodium)"),
+    ("entityculling", "Entity Culling", "skips mobs and chests hidden behind walls"),
+    ("scalablelux", "ScalableLux", "faster lighting while chunks load: smoother joining"),
     ("clumps", "Clumps", "groups XP orbs together, so piles of XP don't drag FPS down"),
 ]
 SLUGS = [m[0] for m in MODS]
@@ -35,7 +37,7 @@ SLUGS = [m[0] for m in MODS]
 # Bump when MODS changes: instances set up with an older list are moved to this one the
 # next time they're checked (mods dropped from the list are taken out; the player's own
 # copies are never touched, since only files we put there are tracked).
-SET_VERSION = 2
+SET_VERSION = 3
 # Mods that used to come with the extras and now come from here: their files move over
 # instead of being downloaded again.
 FROM_EXTRAS = ("iris",)

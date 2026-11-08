@@ -16,7 +16,7 @@ from PySide6.QtWidgets import (QDialog, QFrame, QGridLayout, QHBoxLayout, QInput
 
 from .. import ffmpeg_tool, instances, paths
 from . import workers
-from .modern import Chip, big_title, section_label
+from .modern import big_title, section_label
 from .pages import clear, scroll
 from .theme import Theme, icon_pixmap
 from .widgets import Segmented
@@ -373,7 +373,6 @@ class ClipsPage(QWidget):
         head = QHBoxLayout()
         col = QVBoxLayout()
         col.setSpacing(10)
-        col.addWidget(Chip("Your moments"))
         col.addWidget(big_title("Clips"))
         head.addLayout(col)
         head.addStretch()

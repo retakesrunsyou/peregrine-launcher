@@ -18,7 +18,7 @@ import java.util.List;
  */
 final class HudEditor {
 
-    private enum Drag { NONE, MOVE, RESIZE, SIZE_SLIDER, ALPHA_SLIDER, SPEED_SLIDER, RADIUS_SLIDER }
+    private enum Drag { NONE, MOVE, RESIZE, SIZE_SLIDER, ALPHA_SLIDER, SPEED_SLIDER, RADIUS_SLIDER, PICK_SV, PICK_HUE }
 
     /** Colour choices; 0 means "default" (white text, accent labels). */
     static final int[] COLORS = {
@@ -29,7 +29,7 @@ final class HudEditor {
     private static final int SNAP = 4;
     private static final int HANDLE = 6;
     private static final int PANEL_W = 136;
-    private static final int SW = 10;      // colour swatch size
+    private static final int SW = 9;       // colour swatch size (the last one opens the colour picker)
     private static final int SW_GAP = 2;
 
     private final Peregrine pc;
@@ -73,6 +73,11 @@ final class HudEditor {
     }
 
     private long openedAt;
+    // The colour picker: which colour it edits ("text" / "label", null when closed) and the colour as HSV.
+    private String picking;
+    private float pickH, pickS = 1f, pickV = 1f;
+    private int pickX, pickY;
+    private static final int PICK_W = 112, PICK_H = 92, SV_W = 80, SV_H = 60;
     private float modsGlow;
     private int modsX, modsY, modsW, modsH;   // the "Mods" button in the middle (UI units)
 
@@ -212,6 +217,11 @@ final class HudEditor {
         }
         if (styleOpen()) {
             renderPanel(d, mx, my, a, sw, sh);
+            if (picking != null) {
+                renderPicker(d, ui(mx), ui(my), a);
+            }
+        } else {
+            picking = null;
         }
         if (menuOpen) {
             renderMenu(d, mx, my, a);
@@ -423,6 +433,131 @@ final class HudEditor {
                 d.rect(sx + SW / 2 - 1, sy + SW / 2 - 1, 2, 2, 0xFF15171C);
             }
         }
+        // the last swatch: any colour you like (a rainbow; your own colour once picked)
+        int sx = sliderX + COLORS.length * (SW + SW_GAP);
+        boolean custom = current != 0 && !isPreset(current);
+        boolean hover = in(umx, umy, sx, sy, SW, SW);
+        if (custom || hover) {
+            d.roundOutline(sx - 1, sy - 1, SW + 2, SW + 2, custom ? 0xFFFFFFFF : 0x80FFFFFF);
+        }
+        if (custom) {
+            d.rect(sx + 1, sy + 1, SW - 2, SW - 2, current);
+        } else {
+            for (int i = 0; i < SW - 2; i++) {
+                d.rect(sx + 1 + i, sy + 1, 1, SW - 2, hsv(i / (float) (SW - 2), 0.85f, 1f));
+            }
+        }
+    }
+
+    private static boolean isPreset(int c) {
+        for (int p : COLORS) {
+            if (p == c) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    static int hsv(float h, float s, float v) {
+        return 0xFF000000 | (java.awt.Color.HSBtoRGB(h, s, v) & 0xFFFFFF);
+    }
+
+    // ------------------------------------------------------------ colour picker
+
+    private void openPicker(String which) {
+        int c = which.equals("text") ? selected.textColor : selected.labelColor;
+        if (c == 0) {
+            c = which.equals("text") ? 0xFFFFFFFF : pc.accent();
+        }
+        float[] hsb = java.awt.Color.RGBtoHSB((c >> 16) & 0xFF, (c >> 8) & 0xFF, c & 0xFF, null);
+        pickH = hsb[0];
+        pickS = hsb[1];
+        pickV = hsb[2];
+        picking = which;
+        pickY = Math.max(4, (which.equals("text") ? textY : labelY) - 10);
+        pickX = panelX + PANEL_W + 6;
+        if (pickX + PICK_W > ui(pc.platform().screenWidth()) - 4) {
+            pickX = panelX - PICK_W - 6;
+        }
+    }
+
+    private void applyPick() {
+        int c = hsv(pickH, pickS, pickV);
+        if (isPreset(c)) {
+            c ^= 0x000001;   // a picked colour is never mistaken for one of the swatches
+        }
+        if ("text".equals(picking)) {
+            selected.textColor = c;
+        } else if ("label".equals(picking)) {
+            selected.labelColor = c;
+        }
+        pc.markDirty();
+    }
+
+    private void renderPicker(Draw d, int umx, int umy, int a) {
+        int x = pickX, y = pickY;
+        d.shadow(x, y, PICK_W, PICK_H);
+        d.roundRect(x, y, PICK_W, PICK_H, Theme.PANEL);
+        d.roundOutline(x, y, PICK_W, PICK_H, Theme.HAIRLINE);
+        int sx = x + 6, sy = y + 6;
+        // saturation across, brightness down, in small cells
+        int cell = 2;
+        for (int cx = 0; cx < SV_W; cx += cell) {
+            for (int cy = 0; cy < SV_H; cy += cell) {
+                d.rect(sx + cx, sy + cy, cell, cell, hsv(pickH, cx / (float) SV_W, 1f - cy / (float) SV_H));
+            }
+        }
+        int kx = sx + Math.round(pickS * (SV_W - 1)), ky = sy + Math.round((1f - pickV) * (SV_H - 1));
+        d.outline(kx - 2, ky - 2, 5, 5, 0xFFFFFFFF);
+        d.outline(kx - 3, ky - 3, 7, 7, 0x90000000);
+        // hue, top to bottom
+        int hx = sx + SV_W + 6;
+        for (int cy = 0; cy < SV_H; cy += cell) {
+            d.rect(hx, sy + cy, 12, cell, hsv(cy / (float) SV_H, 1f, 1f));
+        }
+        int hy = sy + Math.round(pickH * (SV_H - 1));
+        d.rect(hx - 1, hy - 1, 14, 3, 0xFFFFFFFF);
+        d.rect(hx, hy, 12, 1, 0xFF000000);
+        // the colour and its code, and Done
+        int c = hsv(pickH, pickS, pickV);
+        int by = sy + SV_H + 6;
+        d.roundRect(sx, by, 14, 14, 3, c);
+        d.roundOutline(sx, by, 14, 14, 3, 0x40FFFFFF);
+        d.text(String.format("#%06X", c & 0xFFFFFF), sx + 19, by + 3, Theme.TEXT, false);
+        int dw = 30, dx = x + PICK_W - 6 - dw;
+        boolean dh = in(umx, umy, dx, by, dw, 14);
+        d.roundRect(dx, by, dw, 14, 4, dh ? Theme.withAlpha(a, 0xF0) : Theme.withAlpha(a, 0xB0));
+        d.text("Done", dx + (dw - d.width("Done")) / 2, by + 3, Theme.onColor(a), false);
+    }
+
+    /** A click while the picker is open: true if the picker used it. */
+    private boolean clickPicker(int umx, int umy) {
+        if (!in(umx, umy, pickX, pickY, PICK_W, PICK_H)) {
+            picking = null;   // a click elsewhere closes it (and is used for nothing else)
+            return true;
+        }
+        int sx = pickX + 6, sy = pickY + 6;
+        if (in(umx, umy, sx - 2, sy - 2, SV_W + 4, SV_H + 4)) {
+            drag = Drag.PICK_SV;
+            pickTo(umx, umy);
+        } else if (in(umx, umy, sx + SV_W + 4, sy - 2, 16, SV_H + 4)) {
+            drag = Drag.PICK_HUE;
+            pickTo(umx, umy);
+        } else if (in(umx, umy, pickX + PICK_W - 36, sy + SV_H + 6, 30, 14)) {
+            picking = null;
+        }
+        return true;
+    }
+
+    private void pickTo(int umx, int umy) {
+        int sx = pickX + 6, sy = pickY + 6;
+        if (drag == Drag.PICK_SV) {
+            pickS = Math.max(0f, Math.min(1f, (umx - sx) / (float) (SV_W - 1)));
+            pickV = 1f - Math.max(0f, Math.min(1f, (umy - sy) / (float) (SV_H - 1)));
+        } else {
+            pickH = Math.max(0f, Math.min(0.999f, (umy - sy) / (float) (SV_H - 1)));
+        }
+        applyPick();
     }
 
     private void toggleRow(Draw d, String label, int y, boolean on, int a) {
@@ -480,6 +615,10 @@ final class HudEditor {
                     pc.markDirty();
                 }
             }
+            return true;
+        }
+        if (styleOpen() && picking != null && button == 0) {
+            clickPicker(umx, umy);
             return true;
         }
         if (styleOpen() && in(umx, umy, panelX, panelY, PANEL_W, panelH)) {
@@ -556,12 +695,20 @@ final class HudEditor {
             return;
         }
         int swatch = swatchAt(umx, umy, textY);
+        if (swatch == COLORS.length) {
+            openPicker("text");
+            return;
+        }
         if (swatch >= 0) {
             s.textColor = COLORS[swatch];
             pc.markDirty();
             return;
         }
         swatch = swatchAt(umx, umy, labelY);
+        if (swatch == COLORS.length) {
+            openPicker("label");
+            return;
+        }
         if (swatch >= 0) {
             s.labelColor = COLORS[swatch];
             pc.markDirty();
@@ -613,7 +760,7 @@ final class HudEditor {
 
     private int swatchAt(int umx, int umy, int rowY) {
         int sy = rowY + 10;
-        for (int i = 0; i < COLORS.length; i++) {
+        for (int i = 0; i <= COLORS.length; i++) {   // the extra one is the colour picker
             if (in(umx, umy, sliderX + i * (SW + SW_GAP) - 1, sy - 1, SW + 2, SW + 2)) {
                 return i;
             }
@@ -725,6 +872,10 @@ final class HudEditor {
         }
         if (drag == Drag.SIZE_SLIDER || drag == Drag.ALPHA_SLIDER || drag == Drag.SPEED_SLIDER || drag == Drag.RADIUS_SLIDER) {
             sliderTo(ui(mx));
+            return true;
+        }
+        if ((drag == Drag.PICK_SV || drag == Drag.PICK_HUE) && picking != null) {
+            pickTo(ui(mx), ui(my));
             return true;
         }
         return false;

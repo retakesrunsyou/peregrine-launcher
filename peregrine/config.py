@@ -8,7 +8,7 @@ from . import CLIENT_ID, paths
 DEFAULTS = {
     # Override for the built-in client ID (developers only). Empty = use the built-in one.
     "client_id": "",
-    "max_memory_mb": 4096,
+    "max_memory_mb": 5120,
     "min_memory_mb": 1024,
     "use_gamemode": True,
     "java_path": "",          # empty = let Peregrine pick (Mojang runtime, then system java)
@@ -50,6 +50,12 @@ DEFAULTS = {
 }
 
 
+# Minecraft gets no more than this: past about 5 GB the garbage collector has more to sweep
+# each time, and the pauses get longer rather than rarer.
+MAX_MEMORY_MB = 5632
+MIN_MEMORY_MB = 2048
+
+
 def load() -> dict:
     cfg = dict(DEFAULTS)
     try:
@@ -59,8 +65,12 @@ def load() -> dict:
             cfg["window_mode"] = "size" if saved.get("width") else "screen"
         if not saved.get("look_1_1") and saved.get("accent", "").lower() == "#e8a33d":
             cfg["accent"] = DEFAULTS["accent"]  # the old default amber moves to the new violet once
+        if not saved.get("memory_5g") and saved.get("max_memory_mb") == 4096:
+            cfg["max_memory_mb"] = DEFAULTS["max_memory_mb"]  # the old 4 GB default moves to 5 GB once
     except (FileNotFoundError, json.JSONDecodeError):
         pass
+    cfg["memory_5g"] = True
+    cfg["max_memory_mb"] = max(MIN_MEMORY_MB, min(MAX_MEMORY_MB, int(cfg.get("max_memory_mb") or DEFAULTS["max_memory_mb"])))
     if not cfg["client_id"]:
         cfg["client_id"] = CLIENT_ID  # the one built into this release
     return cfg

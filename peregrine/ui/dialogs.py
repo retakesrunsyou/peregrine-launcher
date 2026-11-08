@@ -150,7 +150,7 @@ class NewInstanceDialog(Sheet):
         loaders.addWidget(self.loader)
         loaders.addStretch()
 
-        perf_row = _toggle_row("Performance mode: Sodium, C2ME, Lithium, FerriteCore, Iris and Clumps, picked for this "
+        perf_row = _toggle_row("Performance mode: Sodium, C2ME, Lithium, FerriteCore, Iris, Entity Culling, ScalableLux and Clumps, picked for this "
                                "version, plus fast game settings", True)
         self.perf, self.perf_row = perf_row.toggle, perf_row
         self.version.currentTextChanged.connect(self.update_options)
@@ -255,9 +255,9 @@ class InstanceSettingsDialog(Sheet):
         self.description = QLineEdit(inst.data.get("description", ""))
         self.memory = QComboBox()
         self.memory.addItem("Same as Settings", 0)
-        for gb in (2, 3, 4, 6, 8, 10, 12, 16):
-            self.memory.addItem(f"{gb} GB", gb * 1024)
-        current = inst.data.get("memory_mb") or 0
+        for gb in (2, 3, 4, 4.5, 5, 5.5):
+            self.memory.addItem(f"{gb:g} GB", int(gb * 1024))
+        current = min(inst.data.get("memory_mb") or 0, 5632)
         found = self.memory.findData(current)
         if found < 0:  # an older custom value: keep it selectable
             self.memory.addItem(f"{current / 1024:g} GB", current)

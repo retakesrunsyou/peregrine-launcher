@@ -7,6 +7,7 @@ import java.util.Deque;
 import java.util.List;
 
 import net.peregrine.client.core.modules.ArmorHud;
+import net.peregrine.client.core.modules.SmoothJoin;
 import net.peregrine.client.core.modules.ParticleControl;
 import net.peregrine.client.core.modules.Hitboxes;
 import net.peregrine.client.core.modules.OwnNameTag;
@@ -75,6 +76,8 @@ public final class Peregrine {
     private final Deque<Long> leftClicks = new ArrayDeque<Long>();
     private final Deque<Long> rightClicks = new ArrayDeque<Long>();
     private int accent = Theme.AMBER;
+    private final SessionStats stats = new SessionStats();
+    private final JoinScreen joinScreen = new JoinScreen();
     private boolean dirty;
     private int saveCountdown;
 
@@ -148,6 +151,7 @@ public final class Peregrine {
         modules.add(new LightHud());
         // Performance
         modules.add(new StableFps());
+        modules.add(new SmoothJoin());
         // Batch 5: render hooks
         modules.add(new AntiLeak());
         modules.add(new Crosshair());
@@ -492,6 +496,11 @@ public final class Peregrine {
         if (SelfTest.ACTIVE) {
             SelfTest.tick(this);
         }
+        try {
+            stats.tick(platform);
+        } catch (RuntimeException e) {
+            // never stop the game over this
+        }
         pollKeys();
         announce();
         if (platform.inWorld()) {
@@ -537,6 +546,8 @@ public final class Peregrine {
         }
         renderToast(d);
         UpdateNotice.render(d, platform, -1, -1, accent);
+        Module sj = module("smooth_join");
+        joinScreen.render(d, platform, accent, sj != null && sj.enabled());
     }
 
     /** While F3 is open: Peregrine's own debug panel, if Better F3 is on. Returns true if it drew. */
@@ -596,6 +607,7 @@ public final class Peregrine {
     }
 
     public void shutdown() {
+        stats.write(platform);
         for (Module m : modules) {
             m.shutdown(platform);
         }

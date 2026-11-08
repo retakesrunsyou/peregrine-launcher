@@ -522,6 +522,7 @@ def build_command(profile: dict, info: dict, java: str, account: dict,
         tuned.append("-XX:+UseCompactObjectHeaders")
     if info.get("log_arg"):
         tuned.append(info["log_arg"])
+    sync_accent(cfg)
     tuned.append(f"-Dperegrine.config={paths.CLIENT_SETTINGS}")
     tuned.append(f"-Dperegrine.data={paths.DATA}")  # your skin and main menu picture, for the game's Locker
     try:  # Clips record with ffmpeg
@@ -548,9 +549,37 @@ def build_command(profile: dict, info: dict, java: str, account: dict,
 
 # ------------------------------------------------------------- performance
 
+def sync_accent(cfg: dict) -> None:
+    """The launcher's accent colour becomes the game's too, whenever it's changed in the launcher
+    (a colour picked in the game's own menu stays until then)."""
+    import json
+    from . import config
+    accent = str(cfg.get("accent", "")).lstrip("#").lower()
+    if len(accent) != 6:
+        return
+    try:
+        if config.load().get("accent_synced") == accent:
+            return
+        try:
+            data = json.loads(paths.CLIENT_SETTINGS.read_text())
+        except (OSError, ValueError):
+            data = {}
+        data["accent"] = "ff" + accent
+        paths.CLIENT_SETTINGS.parent.mkdir(parents=True, exist_ok=True)
+        tmp = paths.CLIENT_SETTINGS.with_suffix(".tmp")
+        tmp.write_text(json.dumps(data, indent=2))
+        tmp.replace(paths.CLIENT_SETTINGS)
+        saved = config.load()
+        saved["accent_synced"] = accent
+        config.save(saved)
+    except Exception as e:
+        print(f"[peregrine] couldn't share the accent colour with the game: {e}")
+
+
 def jvm_tuning(cfg: dict, java_major: int) -> list:
     """Memory and garbage-collector settings that cut stutter in Minecraft."""
-    mx = int(cfg["max_memory_mb"])
+    from .config import MAX_MEMORY_MB, MIN_MEMORY_MB
+    mx = max(MIN_MEMORY_MB, min(MAX_MEMORY_MB, int(cfg["max_memory_mb"])))
     # The whole heap from the start. A smaller starting heap has to grow while you join a
     # world (the busiest moment: every chunk arriving at once), and each growth step is a
     # garbage collection pause: the stutter in the first minute or two of playing.

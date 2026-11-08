@@ -426,6 +426,12 @@ final class GamePlatform implements Platform {
     }
 
     @Override
+    public boolean terrainReady() {
+        // Sodium answers this for its own renderer too ("is the terrain render complete")
+        return mc().level == null || mc().levelRenderer.hasRenderedAllSections();
+    }
+
+    @Override
     public void setRenderDistance(int chunks) {
         mc().options.renderDistance().set(chunks);
     }

@@ -12,7 +12,8 @@ play: more FPS, smoother frames and fewer lag spikes, out of the box.
 - A **side panel** with every page by name (Home, Library, Instances, Mods, Clips, Locker, Friends, Profiles,
   Settings) and you at the bottom; hide it with the button next to the name
 - **Library**: one instance at a glance. Its version, loader and performance status, Play / Update All / Add Mods,
-  and its optimization mods with their icons and versions, each with a checkbox to switch it for that instance
+  and its optimization mods with their icons and versions, each with a checkbox to switch it for that instance.
+  After you play it shows how the game ran: your average FPS and how low it dipped
 - **Recent**: the server you played last, big, with its live player count, MOTD and ping, and a Play
   button that starts Minecraft straight into it. Your other recent servers sit underneath
 - **Friends**: your Xbox friends (the list Minecraft uses for Realms and Bedrock), who's online, and
@@ -38,11 +39,13 @@ play: more FPS, smoother frames and fewer lag spikes, out of the box.
 - **Seasonal touches**: bats and a harvest moon in October, snow in December
 
 **Makes the game faster**
-- **Performance mode, on for every instance**: Sodium, C2ME, Lithium, FerriteCore, Iris and
-  Clumps (one mod for each job, none doing the same thing twice), picked for the instance's exact
+- **Performance mode, on for every instance**: Sodium, C2ME, Lithium, FerriteCore, Iris,
+  Entity Culling, ScalableLux and Clumps (one mod for each job, none doing the same thing twice), picked for the instance's exact
   Minecraft version, checked for updates daily, and swapped automatically when you change version
-- **Smooth joining**: the game gets all its memory up front and more JIT compiler threads, so the first minutes
-  in a world don't stutter while memory grows and the game's code warms up
+- **Smooth joining**: the game gets all its memory up front (5 GB, never more than 5.5 GB: more makes Minecraft
+  slower, not faster) and more JIT compiler threads, and on 26.1 a short loading screen stays up after you join
+  until the chunks around you are built, so the first minutes in a world don't stutter
+- **One accent colour**: the colour you pick in the launcher is the in-game menu's colour too
 - **Fast game settings** the first time you play: Fast graphics, no clouds or entity shadows,
   smooth lighting and biome blend off, V-Sync off, render distance 10 (your later changes are kept)
 - **Stable FPS** in game: when FPS dips on a busy server, particles, entity distance and then
@@ -79,7 +82,8 @@ drawn in software; real graphics cards usually gain more from Sodium):
   - **Modules** (HUD, Utility, Visuals, Performance): every built-in mod as a tile with its icon, a green
     **Enabled** / red **Disabled** bar to switch it and a gear for its options; star your favourites to keep them first
   - **Edit HUD**: drag items (they snap to the centre, the edges and each other), resize from the corner or with the
-    scroll wheel, right-click for colours, background, shadow and more; the **Mods** button in the middle goes back
+    scroll wheel, right-click for colours (any colour from the picker, or RGB), background, shadow and more; the
+    **Mods** button in the middle goes back
   - **Mods**, **Shaders** and **Resource packs**, each with **Installed** (switch on or off, remove, open the folder)
     and **Browse** (search Modrinth and install, matched to your Minecraft version, with the mods they need)
   - **Locker** (capes and skins, on your turning player) and **Friends** (who's online and what they're playing)

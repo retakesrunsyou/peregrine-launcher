@@ -548,10 +548,26 @@ class Chip(QFrame):
         self.label.setText(text.upper())
 
 
-def big_title(text: str, hero: bool = False) -> QLabel:
-    t = QLabel(text.upper(), objectName="heroTitle" if hero else "pageTitle")
-    t.setFont(heavy_font(64 if hero else 40, QFont.Black, -1.0 if hero else -0.5))
-    return t
+def big_title(text: str, hero: bool = False):
+    """A page's title: bold, with the accent line under it (the hero on Home is bigger, no line)."""
+    if hero:
+        t = QLabel(text, objectName="heroTitle")
+        t.setFont(heavy_font(50, QFont.ExtraBold, -0.8))
+        return t
+    from .profile_page import _Underline
+    box = QWidget()
+    v = QVBoxLayout(box)
+    v.setContentsMargins(0, 0, 0, 0)
+    v.setSpacing(8)
+    t = QLabel(text, objectName="pageTitle")
+    t.setFont(heavy_font(30, QFont.ExtraBold, -0.3))
+    v.addWidget(t, 0, Qt.AlignLeft)
+    line = _Underline()
+    line.setFixedWidth(max(120, t.sizeHint().width() + 40))
+    v.addWidget(line, 0, Qt.AlignLeft)
+    box.setSizePolicy(QSizePolicy.Maximum, QSizePolicy.Fixed)
+    box.label = t
+    return box
 
 
 def section_label(text: str) -> QLabel:
