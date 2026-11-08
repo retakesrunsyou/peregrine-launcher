@@ -28,6 +28,16 @@ public abstract class HudModule extends Module {
     public int radius = DEFAULT_RADIUS;
     /** Values turn green, yellow or red (FPS, ping, memory...), where the item supports it. */
     public boolean valueColors;
+    /** The background's colour (0: the usual dark grey); its opacity is backgroundAlpha. */
+    public int backgroundColor;
+    /** The border's colour (0: the label colour) and how thick it is (1 - 3 px). */
+    public int borderColor;
+    public int borderWidth = 1;
+    /** [Square brackets] around the item, in the label colour. */
+    public boolean brackets;
+    /** Your own text for the item's main label ("" keeps the usual one, like "FPS"). */
+    public String customLabel = "";
+    String mainLabel;   // the label customLabel replaces (noticed when it's first drawn)
     public static final int DEFAULT_RADIUS = 2;
     public static final int MAX_RADIUS = 8;
     static final float MIN_CHROMA_SPEED = 0.1f;
@@ -70,12 +80,18 @@ public abstract class HudModule extends Module {
         border = false;
         radius = DEFAULT_RADIUS;
         valueColors = false;
+        backgroundColor = 0;
+        borderColor = 0;
+        borderWidth = 1;
+        brackets = false;
+        customLabel = "";
     }
 
     boolean styled() {
         return scale != DEFAULT_SCALE || textColor != 0 || labelColor != 0 || !background
                 || backgroundAlpha != DEFAULT_BG_ALPHA || !shadow || chroma || outline || border
-                || radius != DEFAULT_RADIUS || valueColors;
+                || radius != DEFAULT_RADIUS || valueColors || backgroundColor != 0 || borderColor != 0
+                || borderWidth != 1 || brackets || !customLabel.isEmpty();
     }
 
     void setScaleKeepingCorner(float s) {
@@ -99,18 +115,25 @@ public abstract class HudModule extends Module {
     }
 
     void renderAt(Draw d, Platform p) {
-        Draw sd = new StyleDraw(d, this);
-        int w = width(sd, p);
+        StyleDraw sd = new StyleDraw(d, this);
+        int bw = brackets ? d.width("[") + 2 : 0;   // room for the brackets on each side
+        int w = width(sd, p) + bw * 2;
         int h = height(sd, p);
         int sw = (int) Math.ceil(w * scale);
         int sh = (int) Math.ceil(h * scale);
         int x = Math.round(fx * Math.max(0, p.screenWidth() - sw));
         int y = Math.round(fy * Math.max(0, p.screenHeight() - sh));
         if (scale == 1f) {
-            render(sd, p, x, y);
+            render(sd, p, x + bw, y);
+            if (brackets) {
+                sd.brackets(x, y, w, h);
+            }
         } else {
             d.pushScale(x, y, scale);
-            render(sd, p, 0, 0);
+            render(sd, p, bw, 0);
+            if (brackets) {
+                sd.brackets(0, 0, w, h);
+            }
             d.popScale();
         }
         lastX = x;

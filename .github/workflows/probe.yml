@@ -22,6 +22,9 @@ jobs:
             echo "== $c" >> out/api.txt; javap -p -cp "$J" "$c" >> out/api.txt 2>&1 || true
           done
           ls client/versions/26.1/.gradle 2>/dev/null >> out/used.txt || true
+          echo "=====USED"; cat out/used.txt; head -20 out/jars.txt
+          echo "=====CLASSES"; grep -iE "chat|chunkborder|debug/|overlay|ScreenEffect|nametag|NameTag|hurt|Gui\.class|GameRenderer|KeyboardInput|ClientInput|Camera|blur" out/classes.txt | head -400
+          echo "=====API"; cat out/api.txt
       - uses: actions/upload-artifact@v4
         with:
           name: api

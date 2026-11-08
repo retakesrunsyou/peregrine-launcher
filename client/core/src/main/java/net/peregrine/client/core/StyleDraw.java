@@ -15,6 +15,30 @@ final class StyleDraw implements Draw {
         this.m = m;
     }
 
+    /** The [ and ] around an item that has brackets on. */
+    void brackets(int x, int y, int w, int h) {
+        int c = m.labelColor != 0 ? m.labelColor : Peregrine.get().accent();
+        int ty = y + (h - d.lineHeight()) / 2 + 1;
+        d.text("[", x, ty, c, m.shadow);
+        d.text("]", x + w - d.width("]"), ty, c, m.shadow);
+    }
+
+
+    private String relabel(String s, int argb) {
+        if (m.customLabel.isEmpty() || argb != Peregrine.get().accent() || s.isEmpty()) {
+            return s;
+        }
+        if (m.mainLabel == null) {
+            m.mainLabel = s;
+        }
+        return s.equals(m.mainLabel) ? m.customLabel : s;
+    }
+
+    private int bg(int argb) {
+        int rgb = m.backgroundColor != 0 ? (m.backgroundColor & 0xFFFFFF) : (argb & 0xFFFFFF);
+        return (m.backgroundAlpha << 24) | rgb;
+    }
+
     private int color(int argb) {
         if (argb == Theme.TEXT && m.textColor != 0) {
             return m.textColor;
@@ -31,7 +55,7 @@ final class StyleDraw implements Draw {
             if (!m.background) {
                 return;
             }
-            argb = Theme.withAlpha(argb, m.backgroundAlpha);
+            argb = bg(argb);
         }
         d.rect(x, y, w, h, argb);
     }
@@ -44,16 +68,19 @@ final class StyleDraw implements Draw {
             return;
         }
         if (m.background) {
-            d.roundRect(x, y, w, h, m.radius, Theme.withAlpha(argb, m.backgroundAlpha));
+            d.roundRect(x, y, w, h, m.radius, bg(argb));
         }
         if (m.border) {
-            int c = m.labelColor != 0 ? m.labelColor : Peregrine.get().accent();
-            d.roundOutline(x, y, w, h, m.radius, Theme.withAlpha(c, 0xD0));
+            int c = m.borderColor != 0 ? m.borderColor : Theme.withAlpha(m.labelColor != 0 ? m.labelColor : Peregrine.get().accent(), 0xD0);
+            for (int i = 0; i < Math.max(1, m.borderWidth); i++) {
+                d.roundOutline(x - i, y - i, w + 2 * i, h + 2 * i, m.radius + i, c);
+            }
         }
     }
 
     @Override
     public void text(String s, int x, int y, int argb, boolean shadow) {
+        s = relabel(s, argb);
         if (m.outline && !s.isEmpty()) {
             // A dark ring one pixel around the letters, then the letters (no shadow needed).
             int o = Theme.withAlpha(0xFF000000, ((argb >>> 24) * 0xC0) / 0xFF);
@@ -129,6 +156,9 @@ final class StyleDraw implements Draw {
 
     @Override
     public int width(String s) {
+        if (!m.customLabel.isEmpty() && m.mainLabel != null && s.equals(m.mainLabel)) {
+            return d.width(m.customLabel);
+        }
         return d.width(s);
     }
 
@@ -154,6 +184,7 @@ final class StyleDraw implements Draw {
 
     @Override
     public void textScaled(String s, int x, int y, int argb, float scale, boolean shadow) {
+        s = relabel(s, argb);
         if (m.chroma && !s.isEmpty()) {
             d.pushScale(x, y, scale);
             chroma(s, 0, 0, argb, shadow && m.shadow);
@@ -179,7 +210,7 @@ final class StyleDraw implements Draw {
             if (!m.background) {
                 return;
             }
-            argb = Theme.withAlpha(argb, m.backgroundAlpha);
+            argb = bg(argb);
         }
         d.texture(id, x, y, w, h, u0, v0, u1, v1, argb);
     }
