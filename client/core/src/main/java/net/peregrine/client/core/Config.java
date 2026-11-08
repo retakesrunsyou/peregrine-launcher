@@ -108,6 +108,7 @@ public final class Config {
     }
 
     private static void loadModule(Module m, JsonObject o, boolean current) {
+        m.favorite = o.has("favorite") && o.get("favorite").getAsBoolean();
         if (o.has("x") && m instanceof HudModule) {
             ((HudModule) m).fx = o.get("x").getAsFloat();
             ((HudModule) m).fy = o.get("y").getAsFloat();
@@ -179,6 +180,9 @@ public final class Config {
             o.addProperty("enabled", m.enabled());
             if (m.key >= 0) {
                 o.addProperty("key", m.key);
+            }
+            if (m.favorite) {
+                o.addProperty("favorite", true);
             }
             if (m instanceof HudModule) {
                 HudModule h = (HudModule) m;

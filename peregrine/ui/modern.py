@@ -5,9 +5,9 @@ from PySide6.QtCore import (
     Property, QEasingCurve, QPointF, QPropertyAnimation, QRect, QRectF, QSize, Qt, QTimer,
     QVariantAnimation, Signal,
 )
-from PySide6.QtGui import QColor, QFont, QPainter, QPainterPath, QPen, QPixmap
+from PySide6.QtGui import QColor, QFont, QIcon, QPainter, QPainterPath, QPen, QPixmap
 from PySide6.QtWidgets import (
-    QAbstractButton, QFrame, QHBoxLayout, QLabel, QPushButton, QSizePolicy, QVBoxLayout, QWidget,
+    QAbstractButton, QFrame, QHBoxLayout, QLabel, QPushButton, QSizePolicy, QToolButton, QVBoxLayout, QWidget,
 )
 
 from .. import config
@@ -194,16 +194,24 @@ class PillButton(QPushButton):
 
 
 class RailButton(QAbstractButton):
-    """A square icon button for the side rail (the sliding highlight is the rail's)."""
+    """One row of the side panel: an icon and a name, with a second line under the name when
+    there is one (Library shows the instance you're on). The sliding highlight is the rail's."""
 
-    def __init__(self, icon_name: str, tip: str, parent=None):
+    def __init__(self, icon_name: str, label: str, parent=None):
         super().__init__(parent)
         self.icon_name = icon_name
+        self.label = label
+        self.sub = ""
         self.setCheckable(True)
-        self.setToolTip(tip)
+        self.setToolTip(label)
         self.setCursor(Qt.PointingHandCursor)
-        self.setFixedSize(54, 54)
+        self.setFixedHeight(40)
         self._hover = False
+
+    def set_sub(self, text: str):
+        self.sub = text or ""
+        self.setFixedHeight(48 if self.sub else 40)
+        self.update()
 
     def enterEvent(self, e):
         self._hover = True
@@ -218,20 +226,38 @@ class RailButton(QAbstractButton):
     def paintEvent(self, _):
         p = QPainter(self)
         p.setRenderHint(QPainter.Antialiasing)
-        if self.isChecked():
-            color = Theme.accent
-        elif self._hover:
-            color = Theme.p["text"]
+        if self._hover and not self.isChecked():
+            path = QPainterPath()
+            path.addRoundedRect(QRectF(self.rect()).adjusted(2, 1, -2, -1), 10, 10)
+            p.fillPath(path, QColor(255, 255, 255, 12) if dark() else QColor(0, 0, 0, 10))
+        on = self.isChecked()
+        color = Theme.p["text"] if on or self._hover else (Theme.p["muted"] if dark() else Theme.p["faint"])
+        size = 20
+        pm = icon_pixmap(self.icon_name, Theme.accent if on else color, size)
+        p.drawPixmap(16, (self.height() - size) // 2, pm)
+        f = QFont(self.font())
+        f.setPixelSize(14)
+        f.setWeight(QFont.DemiBold if on else QFont.Medium)
+        p.setFont(f)
+        p.setPen(QColor(color))
+        x = 16 + size + 12
+        w = self.width() - x - 10
+        if self.sub:
+            p.drawText(QRectF(x, 6, w, 20), Qt.AlignLeft | Qt.AlignVCenter, self.label)
+            f2 = QFont(f)
+            f2.setPixelSize(11)
+            f2.setWeight(QFont.Normal)
+            p.setFont(f2)
+            p.setPen(QColor(Theme.p["muted"]))
+            sub = p.fontMetrics().elidedText(self.sub, Qt.ElideRight, int(w))
+            p.drawText(QRectF(x, 25, w, 16), Qt.AlignLeft | Qt.AlignVCenter, sub)
         else:
-            color = Theme.p["muted"] if dark() else Theme.p["faint"]
-        size = 26
-        pm = icon_pixmap(self.icon_name, color, size)
-        p.drawPixmap((self.width() - size) // 2, (self.height() - size) // 2, pm)
+            p.drawText(QRectF(x, 0, w, self.height()), Qt.AlignLeft | Qt.AlignVCenter, self.label)
         p.end()
 
 
 class _Highlight(QWidget):
-    """The soft square that slides to the selected rail button."""
+    """The soft bar that slides to the selected row, with an accent stripe on its left."""
 
     def __init__(self, parent):
         super().__init__(parent)
@@ -240,48 +266,157 @@ class _Highlight(QWidget):
     def paintEvent(self, _):
         p = QPainter(self)
         p.setRenderHint(QPainter.Antialiasing)
+        r = QRectF(self.rect()).adjusted(2, 1, -2, -1)
         c = QColor(Theme.accent)
-        c.setAlpha(40)
+        c.setAlpha(34)
         path = QPainterPath()
-        path.addRoundedRect(QRectF(self.rect()).adjusted(2, 2, -2, -2), 16, 16)
+        path.addRoundedRect(r, 10, 10)
         p.fillPath(path, c)
+        edge = QColor(Theme.accent)
+        edge.setAlpha(70)
+        p.setPen(QPen(edge, 1))
+        p.drawPath(path)
+        bar = QPainterPath()
+        bar.addRoundedRect(QRectF(r.left(), r.top() + 8, 3.5, r.height() - 16), 1.75, 1.75)
+        p.fillPath(bar, QColor(Theme.accent))
+        p.end()
+
+
+class AccountCard(QAbstractButton):
+    """You, at the bottom of the side panel: face, name and how you're signed in."""
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setCursor(Qt.PointingHandCursor)
+        self.setFixedHeight(54)
+        self.face = None
+        self.name = "Sign in"
+        self.sub = "No account yet"
+        self.online = False
+        self._hover = False
+
+    def set(self, face, name: str, sub: str, online: bool):
+        self.face, self.name, self.sub, self.online = face, name, sub, online
+        self.update()
+
+    def enterEvent(self, e):
+        self._hover = True
+        self.update()
+
+    def leaveEvent(self, e):
+        self._hover = False
+        self.update()
+
+    def paintEvent(self, _):
+        p = QPainter(self)
+        p.setRenderHint(QPainter.Antialiasing)
+        r = QRectF(self.rect()).adjusted(1, 1, -1, -1)
+        path = QPainterPath()
+        path.addRoundedRect(r, 12, 12)
+        p.fillPath(path, QColor(255, 255, 255, 18 if self._hover else 10) if dark() else QColor(0, 0, 0, 12))
+        s = 34
+        y = (self.height() - s) // 2
+        if self.face is not None:
+            clip = QPainterPath()
+            clip.addRoundedRect(QRectF(10, y, s, s), 9, 9)
+            p.save()
+            p.setClipPath(clip)
+            p.drawPixmap(10, y, s, s, self.face)
+            p.restore()
+        dot = QColor("#4ade80") if self.online else QColor(Theme.p["faint"])
+        p.setPen(QPen(QColor(Theme.p["bg"]), 2))
+        p.setBrush(dot)
+        p.drawEllipse(QRectF(10 + s - 9, y + s - 9, 11, 11))
+        x = 10 + s + 10
+        w = self.width() - x - 10
+        f = QFont(self.font())
+        f.setPixelSize(13)
+        f.setWeight(QFont.Bold)
+        p.setFont(f)
+        p.setPen(QColor(Theme.p["text"]))
+        p.drawText(QRectF(x, 8, w, 20), Qt.AlignLeft | Qt.AlignVCenter, p.fontMetrics().elidedText(self.name, Qt.ElideRight, int(w)))
+        f.setPixelSize(11)
+        f.setWeight(QFont.Normal)
+        p.setFont(f)
+        p.setPen(QColor(Theme.p["muted"]))
+        p.drawText(QRectF(x, 27, w, 18), Qt.AlignLeft | Qt.AlignVCenter, p.fontMetrics().elidedText(self.sub, Qt.ElideRight, int(w)))
         p.end()
 
 
 class Rail(QFrame):
-    """The left side rail: logo on top, a pill of page buttons in the middle and
-    the collapse button at the bottom. Collapses to nothing with a slide."""
+    """The side panel: the falcon and name on top, the pages with their names, and you at the
+    bottom. Collapses to nothing with a slide."""
     picked = Signal(str)
-    WIDTH = 92
+    WIDTH = 224
 
     def __init__(self, logo: QLabel, items: list, parent=None):
-        """items: [(key, icon_name, tooltip)]"""
+        """items: [(key, icon_name, name)]; None makes a divider."""
         super().__init__(parent, objectName="rail")
         self.setFixedWidth(self.WIDTH)
         v = QVBoxLayout(self)
-        v.setContentsMargins(0, 22, 0, 22)
+        v.setContentsMargins(14, 20, 14, 16)
         v.setSpacing(0)
-        v.addWidget(logo, 0, Qt.AlignHCenter)
-        v.addStretch(1)
-        self.group = QFrame(objectName="railGroup")
-        self.group.setFixedWidth(64)
+        brand = QHBoxLayout()
+        brand.setContentsMargins(8, 0, 0, 0)
+        brand.setSpacing(10)
+        brand.addWidget(logo)
+        self.brand = QLabel("PEREGRINE", objectName="railBrand")
+        brand.addWidget(self.brand)
+        brand.addStretch(1)
+        self.collapse = QToolButton(objectName="iconBtn")
+        self.collapse.setCursor(Qt.PointingHandCursor)
+        self.collapse.setToolTip("Hide the side panel")
+        self.collapse.setIcon(QIcon(icon_pixmap("s_panel", Theme.p["muted"], 18)))
+        self.collapse.setIconSize(QSize(18, 18))
+        self.collapse.setAutoRaise(True)
+        brand.addWidget(self.collapse)
+        v.addLayout(brand)
+        v.addSpacing(16)
+        line = QFrame(objectName="railLine")
+        line.setFixedHeight(1)
+        v.addWidget(line)
+        v.addSpacing(12)
+        self.group = QWidget()
         g = QVBoxLayout(self.group)
-        g.setContentsMargins(5, 7, 5, 7)
-        g.setSpacing(4)
+        g.setContentsMargins(0, 0, 0, 0)
+        g.setSpacing(3)
         self.highlight = _Highlight(self.group)
         self.highlight.hide()
         self.buttons = {}
-        for key, icon_name, tip in items:
+        for item in items:
+            if item is None:
+                g.addSpacing(6)
+                div = QFrame(objectName="railLine")
+                div.setFixedHeight(1)
+                g.addWidget(div)
+                g.addSpacing(6)
+                continue
+            key, icon_name, tip = item
             b = RailButton(icon_name, tip)
             b.clicked.connect(lambda _=False, k=key: self.picked.emit(k))
-            g.addWidget(b, 0, Qt.AlignHCenter)
+            g.addWidget(b)
             self.buttons[key] = b
-        v.addWidget(self.group, 0, Qt.AlignHCenter)
+        v.addWidget(self.group)
         v.addStretch(1)
-        v.addSpacing(72)  # room for the collapse button, which floats so it stays when collapsed
+        line2 = QFrame(objectName="railLine")
+        line2.setFixedHeight(1)
+        v.addWidget(line2)
+        v.addSpacing(10)
+        self.account = AccountCard()
+        v.addWidget(self.account)
         self._anim = None
         self._width_anim = None
         self.current = None
+
+    def set_sub(self, key, text):
+        b = self.buttons.get(key)
+        if b is not None:
+            b.set_sub(text)
+            if self.current == key:
+                QTimer.singleShot(0, lambda: self._move_highlight(b))
+
+    def refresh_icons(self):
+        self.collapse.setIcon(QIcon(icon_pixmap("s_panel", Theme.p["muted"], 18)))
 
     def select(self, key):
         self.current = key

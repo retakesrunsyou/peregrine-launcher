@@ -388,8 +388,8 @@ public final class Menu {
             }
             if (mods.get(i).id.equals(what)) {  // its switch
                 int[] tg = toggleAt(c);
-                int y = tg[1] + 5;
-                return y > listY && y < listY + listH ? new int[] {s(tg[0] + 9), s(y)} : null;
+                int y = tg[1] + tg[3] / 2;
+                return y > listY && y < listY + listH ? new int[] {s(tg[0] + tg[2] / 2), s(y)} : null;
             }
         }
         return null;
@@ -422,6 +422,9 @@ public final class Menu {
         }
         java.util.Collections.sort(out, new java.util.Comparator<Module>() {  // A to Z, like a shelf
             public int compare(Module x, Module y) {
+                if (x.favorite != y.favorite) {
+                    return x.favorite ? -1 : 1;  // starred ones first
+                }
                 return x.name.compareToIgnoreCase(y.name);
             }
         });
@@ -470,9 +473,9 @@ public final class Menu {
         listY = bodyY;
         listW = px + pw - 12 - listX;
         listH = py + ph - 8 - bodyY;
-        cols = Math.max(2, (listW + TILE_GAP) / (104 + TILE_GAP));
+        cols = Math.max(2, (listW + TILE_GAP) / (86 + TILE_GAP));
         tileW = (listW - TILE_GAP * (cols - 1)) / cols;
-        tileH = 60;
+        tileH = 76;
     }
 
     /** Tile i of the grid: x, y, width (menu pixels, scrolled). */
@@ -481,9 +484,21 @@ public final class Menu {
         return new int[] {listX + col * (tileW + TILE_GAP), listY + row * (tileH + TILE_GAP) - Math.round(smoothScroll), tileW};
     }
 
-    /** A tile's switch: x, y (18 x 10), in its top right corner. */
+    /** A tile's on/off bar along its bottom: x, y, width, height (the options button sits right of it). */
     private int[] toggleAt(int[] c) {
-        return new int[] {c[0] + c[2] - 25, c[1] + 8};
+        return new int[] {c[0] + 5, c[1] + tileH - 19, c[2] - 10 - GEAR - 3, 14};
+    }
+
+    private static final int GEAR = 14;
+
+    /** A tile's options button: x, y (GEAR square), right of the on/off bar. */
+    private int[] gearAt(int[] c) {
+        return new int[] {c[0] + c[2] - 5 - GEAR, c[1] + tileH - 19};
+    }
+
+    /** A tile's star (favourite), top right: x, y (11 square). */
+    private int[] starAt(int[] c) {
+        return new int[] {c[0] + c[2] - 15, c[1] + 4};
     }
 
     private int tabY(int i) {
@@ -646,41 +661,7 @@ public final class Menu {
             float on = animate(m, dt);
             cy -= Math.round(g * 1.5f);
             c = new int[] {cx, cy, cw};
-            Glass.pane(cd, cx, cy, cw, tileH, 5, Theme.mix(Glass.PANE, Glass.PANE_HOVER, g));
-            if (on > 0.01f) {  // switched on: a warm wash of the accent
-                cd.roundRect(cx + 1, cy + 1, cw - 2, tileH - 2, 4, Theme.withAlpha(a, Math.round(0x16 * on)));
-            }
-            if (g > 0.01f) {
-                cd.roundOutline(cx, cy, cw, tileH, 5, Theme.withAlpha(a, Math.round(0xA0 * g)));
-            }
-            // the icon in a soft round light
-            int ix = cx + 7, iy = cy + 7;
-            cd.roundRect(ix, iy, 24, 24, 12, Theme.mix(0x24FFFFFF, Theme.withAlpha(a, 0x50), on));
-            Object stack = p.icon(Icons.of(m));
-            if (stack != null) {
-                cd.item(stack, ix + 4, iy + 4);
-            } else {
-                categoryIcon(cd, m.category, ix + 8, iy + 8, Theme.TEXT);
-            }
-            int[] tg = toggleAt(c);
-            Glass.toggle(cd, tg[0], tg[1], on, a, hover && in(mx, my, tg[0] - 3, tg[1] - 3, 24, 16));
-            boolean warn = hover && m.warning() != null;
-            String title = cd.trim(m.name, cw - 14);
-            cd.text(title, cx + 8, cy + tileH - 23, warn ? Theme.OK : Theme.TEXT, false);
-            String sub = warn ? cd.trim(m.warning(), cw - 14) : m.category.label;
-            if (m.key >= 0 && !warn) {
-                sub = Keys.name(m.key);
-                int kw = cd.width(sub) + 6;
-                cd.roundRect(cx + 7, cy + tileH - 13, kw, 10, 3, 0x40000000);
-                cd.text(sub, cx + 10, cy + tileH - 12, Theme.MUTED, false);
-            } else {
-                cd.text(sub, cx + 8, cy + tileH - 12, warn ? Theme.withAlpha(Theme.OK, 0xC0) : Theme.FAINT, false);
-            }
-            // a line of light along the bottom that fills in when it's on
-            int lw = Math.round((cw - 12) * on);
-            if (lw > 0) {
-                cd.rect(cx + 6, cy + tileH - 2, lw, 1, Theme.withAlpha(a, 0xE0));
-            }
+            drawTile(cd, m, c, mx, my, hover, g, on, a, p);
         }
         unclipArea(d);
 
@@ -691,6 +672,70 @@ public final class Menu {
             d.text(hint, listX + (listW - d.width(hint)) / 2, listY + listH / 2 + 4, Theme.FAINT, false);
         }
         scrollbar(d, listY, listH, in(mx, my, listX, listY, listW + 8, listH), a);
+    }
+
+    /**
+     * One feature's tile: its icon in the middle, its name under it, and along the bottom a wide
+     * on/off bar (green when on, red when off) with an options button beside it; a star in the
+     * corner keeps favourites first.
+     */
+    private void drawTile(Draw cd, Module m, int[] c, int mx, int my, boolean hover, float g, float on, int a, Platform p) {
+        int cx = c[0], cy = c[1], cw = c[2];
+        Glass.pane(cd, cx, cy, cw, tileH, 5, Theme.mix(Glass.PANE, Glass.PANE_HOVER, g));
+        if (on > 0.01f) {  // switched on: a soft wash of the accent from the top
+            cd.roundRect(cx + 1, cy + 1, cw - 2, tileH - 22, 4, Theme.withAlpha(a, Math.round(0x14 * on)));
+        }
+        cd.roundOutline(cx, cy, cw, tileH, 5, Theme.mix(0x14FFFFFF, Theme.withAlpha(a, 0xB0), g));
+        // the icon, centred, in a soft round light that takes the accent when it's on
+        int ic = 28;
+        int ix = cx + (cw - ic) / 2, iy = cy + 7;
+        cd.roundRect(ix, iy, ic, ic, ic / 2, Theme.mix(0x1CFFFFFF, Theme.withAlpha(a, 0x48), on));
+        if (on > 0.01f) {
+            cd.roundOutline(ix, iy, ic, ic, ic / 2, Theme.withAlpha(a, Math.round(0x90 * on)));
+        }
+        Object stack = p.icon(Icons.of(m));
+        if (stack != null) {
+            cd.item(stack, ix + (ic - 16) / 2, iy + (ic - 16) / 2);
+        } else {
+            categoryIcon(cd, m.category, ix + (ic - 8) / 2, iy + (ic - 8) / 2, Theme.TEXT);
+        }
+        // name (or, while hovered, a warning if it has one)
+        boolean warn = hover && m.warning() != null;
+        String title = cd.trim(warn ? m.warning() : m.name, cw - 10);
+        cd.text(title, cx + (cw - cd.width(title)) / 2, iy + ic + 4, warn ? Theme.OK : Theme.TEXT, false);
+        // its key, small, in the top left
+        if (m.key >= 0) {
+            String key = cd.trim(Keys.name(m.key), cw / 2 - 12);
+            int kw = cd.width(key) + 6;
+            cd.roundRect(cx + 4, cy + 4, kw, 10, 3, 0x48000000);
+            cd.text(key, cx + 7, cy + 5, Theme.MUTED, false);
+        }
+        // the star
+        int[] st = starAt(c);
+        boolean starHover = hover && in(mx, my, st[0] - 2, st[1] - 2, 15, 15);
+        if (m.favorite || hover) {
+            MenuIcons.draw(cd, m.favorite ? "star" : "star_o", st[0] + 1, st[1] + 1,
+                    m.favorite ? a : starHover ? Theme.TEXT : Theme.withAlpha(Theme.MUTED, 0xA0));
+        }
+        // the on/off bar
+        int[] tg = toggleAt(c);
+        boolean barHover = hover && in(mx, my, tg[0], tg[1], tg[2], tg[3]);
+        int onCol = Theme.GOOD, offCol = Theme.BAD;
+        int fill = Theme.mix(Theme.withAlpha(offCol, barHover ? 0x58 : 0x3A), Theme.withAlpha(onCol, barHover ? 0x70 : 0x50), on);
+        cd.roundRect(tg[0], tg[1], tg[2], tg[3], 4, fill);
+        cd.roundOutline(tg[0], tg[1], tg[2], tg[3], 4, Theme.mix(Theme.withAlpha(offCol, 0x90), Theme.withAlpha(onCol, 0xB0), on));
+        String state = on >= 0.5f ? "ENABLED" : "DISABLED";
+        int tc = Theme.mix(Theme.mix(offCol, 0xFFFFFFFF, 0.35f), Theme.mix(onCol, 0xFFFFFFFF, 0.35f), on);
+        if (cd.width(state) > tg[2] - 4) {
+            state = on >= 0.5f ? "ON" : "OFF";
+        }
+        cd.text(state, tg[0] + (tg[2] - cd.width(state)) / 2, tg[1] + 3, tc, false);
+        // the options button
+        int[] gb = gearAt(c);
+        boolean gearHover = hover && in(mx, my, gb[0], gb[1], GEAR, GEAR);
+        cd.roundRect(gb[0], gb[1], GEAR, GEAR, 4, gearHover ? 0x40FFFFFF : 0x22FFFFFF);
+        cd.roundOutline(gb[0], gb[1], GEAR, GEAR, 4, gearHover ? Theme.withAlpha(a, 0xC0) : 0x1AFFFFFF);
+        MenuIcons.draw(cd, "gear", gb[0] + (GEAR - 9) / 2, gb[1] + (GEAR - 9) / 2, gearHover ? Theme.TEXT : Theme.MUTED);
     }
 
     /** Where you are, for the title: "Modules / HUD", "Mods / Browse"... */
@@ -1590,10 +1635,14 @@ public final class Menu {
                 if (in(mx, my, c[0], c[1], c[2], tileH)) {
                     Module m = mods.get(i);
                     int[] tg = toggleAt(c);
-                    if (in(mx, my, tg[0] - 3, tg[1] - 3, 30, 17)) {  // the switch
+                    int[] st = starAt(c);
+                    if (in(mx, my, tg[0], tg[1], tg[2], tg[3])) {  // the on/off bar
                         m.setEnabled(!m.enabled());
                         pc.markDirty();
-                    } else {  // anywhere else on the tile: its options
+                    } else if (in(mx, my, st[0] - 2, st[1] - 2, 15, 15)) {  // the star
+                        m.favorite = !m.favorite;
+                        pc.markDirty();
+                    } else {  // the options button, or anywhere else on the tile: its options
                         openPage(m);
                     }
                     return true;

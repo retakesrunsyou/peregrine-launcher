@@ -189,6 +189,30 @@ def stylesheet() -> str:
     /* ---- 1.1 look: a solid icon rail, floating glass pills, big heavy titles */
     #rail {{ background: {rail}; border: none; }}
     #railGroup {{ background: {glass_pill}; border: 1px solid {glass_edge}; border-radius: 26px; }}
+    #profileTitle {{ font-size: 30px; font-weight: 800; }}
+    #cardTitle {{ font-size: 17px; font-weight: 750; }}
+    #detailLabel {{ font-size: 12px; color: {p['muted']}; }}
+    #detailValue {{ font-size: 14px; font-weight: 600; }}
+    #modRow {{ background: {rgba(p['raised'], 0.55 if dark else 0.9)}; border: 1px solid {edge_hi}; border-radius: 12px; }}
+    #modRow:hover {{ border-color: {rgba(a, 0.45)}; }}
+    #modName {{ font-size: 15px; font-weight: 700; }}
+    #modAbout {{ font-size: 12px; color: {p['muted']}; }}
+    #modVersion {{ font-size: 12px; color: {p['muted']}; }}
+    QPushButton#bigAccent {{ background: {a}; color: {on_a}; border: none; border-radius: 10px;
+        font-size: 15px; font-weight: 700; }}
+    QPushButton#bigAccent:hover {{ background: {hover_a}; }}
+    QPushButton#bigAccent:disabled {{ background: {rgba(a, 0.35)}; }}
+    QPushButton#bigGhost {{ background: {rgba(p['raised'], 0.55 if dark else 0.9)}; color: {p['text']};
+        border: 1px solid {edge_hi}; border-radius: 10px; font-size: 14px; font-weight: 600; }}
+    QPushButton#bigGhost:hover {{ border-color: {rgba(a, 0.6)}; background: {rgba(a, 0.12)}; }}
+    QPushButton#ghostSmall, QPushButton#chipBtn {{ background: {rgba(p['raised'], 0.55 if dark else 0.9)};
+        color: {p['text']}; border: 1px solid {edge_hi}; border-radius: 9px; padding: 6px 12px; font-size: 13px; }}
+    QPushButton#ghostSmall:hover, QPushButton#chipBtn:hover {{ border-color: {rgba(a, 0.6)}; }}
+    #railBrand {{ font-size: 17px; font-weight: 800; letter-spacing: 1px; }}
+    #railLine {{ background: {glass_edge}; border: none; }}
+    #railAccount {{ background: transparent; border: none; }}
+    #railName {{ font-size: 13px; font-weight: 700; }}
+    #railSub {{ font-size: 11px; color: {p['muted']}; }}
     #pill {{ background: {glass_pill}; border: 1px solid {glass_edge}; border-radius: 24px; }}
     #pill:hover {{ border-color: {rgba(a, 0.55)}; background: {glass_hover}; }}
     #chip {{ background: {glass_pill}; border: 1px solid {glass_edge}; border-radius: 14px; }}
@@ -230,6 +254,10 @@ _PATHS = {
              '<path d="M5 17l4.5-4.5 3 3 2.5-2.5L19.5 17"/>',
     "sun": '<circle cx="12" cy="12" r="4"/><path d="M12 2.5v2M12 19.5v2M2.5 12h2M19.5 12h2'
            'M5.3 5.3l1.4 1.4M17.3 17.3l1.4 1.4M5.3 18.7l1.4-1.4M17.3 6.7l1.4-1.4"/>',
+    "library": '<path d="M4 4.5h4v15H4z"/><path d="M10 4.5h4v15h-4z"/><path d="m15.6 5.4 3.8-1 3.1 14.3-3.8 1z"/>',
+    "server": '<rect x="3.5" y="4" width="17" height="6.5" rx="1.8"/><rect x="3.5" y="13.5" width="17" height="6.5" rx="1.8"/>'
+              '<path d="M7.5 7.25h.01M7.5 16.75h.01"/>',
+    "logout": '<path d="M14 4h4.5A1.5 1.5 0 0 1 20 5.5v13a1.5 1.5 0 0 1-1.5 1.5H14"/><path d="M10 16l-4-4 4-4"/><path d="M6 12h10"/>',
     "gauge": '<path d="M4.5 17a8.5 8.5 0 1 1 15 0"/><path d="M12 13l4-4"/><circle cx="12" cy="13" r="1"/>',
     # Solid icons for the side rail.
     "s_user": '<g fill="FILL" stroke="none"><circle cx="12" cy="7.8" r="4.3"/>'

@@ -25,9 +25,11 @@ from .theme import Theme, avatar_pixmap, icon, logo_pixmap, stylesheet, tint
 class MainWindow(QMainWindow):
     # Pages by name. "content" (one instance's mods) lives under Home in the rail,
     # "accounts" under the profile pill, "browse" under Recent's Mods & packs button.
-    RAIL = [("friends", "s_user", "Friends"), ("profiles", "users", "Profiles"), ("locker", "s_shirt", "Locker"), ("home", "s_home", "Instances"),
-            ("recent", "s_grid", "Recent servers"), ("clips", "s_film", "Clips"), ("settings", "s_gear", "Settings")]
-    RAIL_OF = {"content": "home", "accounts": None, "browse": "recent"}
+    RAIL = [("recent", "s_home", "Home"), ("library", "library", "Library"), ("home", "s_grid", "Instances"),
+            ("browse", "s_layers", "Mods"), None,
+            ("clips", "s_film", "Clips"), ("locker", "s_shirt", "Locker"), ("friends", "s_user", "Friends"),
+            ("profiles", "users", "Profiles"), ("settings", "s_gear", "Settings")]
+    RAIL_OF = {"content": "library", "accounts": None}
 
     def __init__(self):
         super().__init__()
@@ -55,12 +57,16 @@ class MainWindow(QMainWindow):
         self.logo.setToolTip(f"{NAME} {VERSION}")
         self.rail = Rail(self.logo, self.RAIL)
         self.rail.picked.connect(self.go)
+        self.rail.account.clicked.connect(lambda: self.go("accounts"))
+        self.rail.collapse.clicked.connect(self.toggle_rail)
         outer.addWidget(self.rail)
         self.rail_open = bool(config.load().get("rail_open", True))
         if not self.rail_open:
             self.rail.setFixedWidth(0)
-        self.toggle = FloatButton("s_panel" if self.rail_open else "s_panel_open", "Hide or show the side panel", root)
+        # brings the side panel back once it's hidden (inside the panel there's its own button)
+        self.toggle = FloatButton("s_panel_open", "Show the side panel", root)
         self.toggle.clicked.connect(self.toggle_rail)
+        self.toggle.setVisible(not self.rail_open)
         root.installEventFilter(self)
 
         main = QVBoxLayout()
@@ -70,9 +76,9 @@ class MainWindow(QMainWindow):
 
         # ---- top bar: you (and friends online) on the left, your server in the middle
         top = QWidget()
-        top.setFixedHeight(108)
+        top.setFixedHeight(66)
         t = QHBoxLayout(top)
-        t.setContentsMargins(40, 26, 32, 10)
+        t.setContentsMargins(40, 12, 32, 4)
         t.setSpacing(16)
         self.profile = Pill()
         self.profile.clicked.connect(lambda: self.go("accounts"))
@@ -90,6 +96,7 @@ class MainWindow(QMainWindow):
         ptext.addWidget(self.chip_kind)
         p.addLayout(ptext)
         t.addWidget(self.profile)
+        self.profile.hide()   # you're at the bottom of the side panel now
         t.addStretch(1)
 
         self.server_pill = Pill()
@@ -135,6 +142,8 @@ class MainWindow(QMainWindow):
         # ---- pages
         self.stack = QStackedWidget()
         self.recent = RecentPage()
+        from .profile_page import LibraryPage
+        self.library = LibraryPage()
         self.home = HomePage()
         self.content = ContentPage()
         self.settings = SettingsPage()
@@ -154,7 +163,7 @@ class MainWindow(QMainWindow):
         self.shaders = BrowsePage("shader", "Shaders", "Shader packs from Modrinth. Iris comes along to run them, "
                                   "and the pack you add is switched on.")
         self.market = MarketPage(self.mods, self.packs, self.modpacks, self.shaders)
-        self.pages = {"recent": self.recent, "home": self.home, "content": self.content,
+        self.pages = {"recent": self.recent, "library": self.library, "home": self.home, "content": self.content,
                       "settings": self.settings, "accounts": self.accounts, "friends": self.friends,
                       "profiles": self.profiles, "locker": self.locker, "clips": self.clips,
                       "browse": self.market}
@@ -168,6 +177,11 @@ class MainWindow(QMainWindow):
         self.recent.browse.connect(lambda: self.go("browse"))
         self.recent.new_instance.connect(self.new_instance)
         self.recent.current_changed.connect(self.show_server)
+        self.library.play.connect(self.play)
+        self.library.add_mods.connect(self.browse_mods)
+        self.library.open_content.connect(self.open_content)
+        self.library.update_all.connect(self.update_all)
+        self.library.all_instances.connect(lambda: self.go("home"))
         self.home.play.connect(self.play)
         self.home.open_content.connect(self.open_content)
         self.home.new_instance.connect(self.new_instance)
@@ -211,6 +225,9 @@ class MainWindow(QMainWindow):
         self.apply_theme()
         self.recent.refresh()
         self.go("recent")
+        last = self.last_instance()
+        if last is not None:
+            self.rail.set_sub("library", last.name)
         self.refresh_accounts()
         if config.load()["check_updates"]:
             self.check_updates()
@@ -233,6 +250,10 @@ class MainWindow(QMainWindow):
                 self.home.animate_in()  # its cards animate themselves
             else:
                 self._fade_in(page)
+        if key == "library":
+            self.library.refresh()
+            if self.library.inst is not None:
+                self.rail.set_sub("library", self.library.inst.name)
         if key == "settings":
             self.settings.build()
         if key == "friends" and changed:
@@ -275,11 +296,24 @@ class MainWindow(QMainWindow):
         slide.start()
         self._page_anim = (anim, slide)
 
+    def update_all(self, inst):
+        """Library's Update All: bring this instance's optimization mods and extras up to date now."""
+        if self.busy():
+            return
+
+        def work(progress=None):
+            from .. import extras, performance
+            performance.sync(inst, progress, force=True)
+            if inst.data.get("loader") == "fabric":
+                extras.sync(inst, progress, force=True)
+        self._start(workers.Task(work, with_progress=True), inst,
+                    done=lambda _: (self.say(f"{inst.name} is up to date"), self.library.refresh()))
+
     def toggle_rail(self):
         self.rail_open = not self.rail_open
         self.rail.set_open(self.rail_open)
-        self.toggle.icon_name = "s_panel" if self.rail_open else "s_panel_open"
-        self.toggle.update()
+        self.toggle.setVisible(not self.rail_open)
+        self.toggle.raise_()
         self.footer_layout.setContentsMargins(40 if self.rail_open else 92, 4, 24, 8)
         cfg = config.load()
         cfg["rail_open"] = self.rail_open
@@ -299,11 +333,12 @@ class MainWindow(QMainWindow):
         from .sky import season
         self.sky.season = season() if cfg.get("seasonal", True) else ""
         self.sky.set_enabled(bool(cfg.get("animations", True)))
-        self.logo.setPixmap(logo_pixmap(40))
+        self.logo.setPixmap(logo_pixmap(32))
         self.banner.setStyleSheet(f"#banner {{ background: {tint(Theme.accent, 0.12)}; }}")
         self.console_btn.setIcon(icon("console", None, 18))
         self.go(self.page or "recent")
         self.rail.update()
+        self.rail.refresh_icons()
         for b in self.rail.buttons.values():
             b.update()
         self.home.refresh()
@@ -372,6 +407,9 @@ class MainWindow(QMainWindow):
             self.chip_name.setText("Sign in")
             self.chip_kind.setText("No account yet")
             self.chip_face.setPixmap(avatar_pixmap(None, "?", 46))
+        # the same, at the bottom of the side panel
+        self.rail.account.set(self.chip_face.pixmap(), self.chip_name.text(), self.chip_kind.text(),
+                              bool(a and a.get("type") == "msa"))
 
     def add_microsoft(self):
         cfg = config.load()
@@ -420,6 +458,8 @@ class MainWindow(QMainWindow):
             self.content.refresh()
 
     def open_content(self, inst):
+        self.library.show_instance(inst)
+        self.rail.set_sub("library", inst.name)
         self.content.open(inst)
         self.go("content")
 

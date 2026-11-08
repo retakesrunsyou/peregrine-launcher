@@ -35,6 +35,7 @@ DEFAULTS = {
     "performance_first": True,  # performance mode for every instance (each can opt out)
     "extras": True,             # AppleSkin, voice chat, Iris and friends on every Fabric instance
     "gc": "auto",             # auto (tuned G1) or zgc
+    "smooth_join": True,      # the whole heap from the start, touched up front: no stutter while joining
     "driver_boost": True,     # threaded OpenGL for Mesa / NVIDIA
     "dedicated_gpu": False,   # laptops with two GPUs
     "fast_start": True,       # Java class snapshot for quicker game startup

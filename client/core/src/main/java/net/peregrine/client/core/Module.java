@@ -21,6 +21,8 @@ public abstract class Module {
     private boolean enabled;
     /** A key that switches this feature on and off while playing (GLFW code), or Keys.NONE. */
     public int key = Keys.NONE;
+    /** Starred in the menu: shown first. */
+    public boolean favorite;
 
     protected Module(String id, String name, String description, Category category, boolean defaultOn) {
         this.id = id;

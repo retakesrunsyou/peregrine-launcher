@@ -9,6 +9,26 @@ public final class MenuIcons {
     private static final Map<String, String[]> ICONS = new HashMap<String, String[]>();
 
     static {
+        ICONS.put("star", new String[] {
+            "....#....",
+            "....#....",
+            "...###...",
+            "#########",
+            ".#######.",
+            "..#####..",
+            "..#####..",
+            ".###.###.",
+            ".#.....#."});
+        ICONS.put("star_o", new String[] {
+            "....#....",
+            "....#....",
+            "...#.#...",
+            "####.####",
+            ".#.....#.",
+            "..#...#..",
+            "..#...#..",
+            ".#..#..#.",
+            ".#.....#."});
         ICONS.put("folder", new String[] {
             ".........",
             "###......",

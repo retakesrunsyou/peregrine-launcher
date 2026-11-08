@@ -551,7 +551,10 @@ def build_command(profile: dict, info: dict, java: str, account: dict,
 def jvm_tuning(cfg: dict, java_major: int) -> list:
     """Memory and garbage-collector settings that cut stutter in Minecraft."""
     mx = int(cfg["max_memory_mb"])
-    ms = min(int(cfg.get("min_memory_mb") or mx), mx)
+    # The whole heap from the start. A smaller starting heap has to grow while you join a
+    # world (the busiest moment: every chunk arriving at once), and each growth step is a
+    # garbage collection pause: the stutter in the first minute or two of playing.
+    ms = mx if cfg.get("smooth_join", True) else min(int(cfg.get("min_memory_mb") or mx), mx)
     gc = cfg.get("gc", "auto")
     common = [
         # A flag one Java version doesn't know must never stop the game from starting.
@@ -564,10 +567,17 @@ def jvm_tuning(cfg: dict, java_major: int) -> list:
         "-XX:-DontCompileHugeMethods",
         "-XX:ReservedCodeCacheSize=400M",
         "-XX:+AlwaysActAsServerClassMachine",
+        # More JIT compiler threads: the game runs slow, half-compiled code until the hot paths
+        # (chunk building, rendering) are compiled, so compile them sooner.
+        f"-XX:CICompilerCount={_compiler_threads()}",
         # Bigger memory pages where the kernel offers them: fewer TLB misses.
     ]
     if not sys.platform == "win32":
         common.append("-XX:+UseTransparentHugePages")  # a Linux kernel feature
+    if cfg.get("smooth_join", True) and ms == mx:
+        # Touch every page of the heap at start-up (a second or so) instead of taking the
+        # page faults in game, while chunks pour in.
+        common.append("-XX:+AlwaysPreTouch")
     # ZGC: tiny pauses even with lots of RAM. Generational ZGC needs Java 21+.
     if gc == "zgc" and java_major >= 21:
         return common + ["-XX:+UseZGC", "-XX:+ZGenerational"]
@@ -578,6 +588,13 @@ def jvm_tuning(cfg: dict, java_major: int) -> list:
         "-XX:G1HeapRegionSize=16M", "-XX:MaxGCPauseMillis=40",
         "-XX:G1MixedGCCountTarget=4", "-XX:InitiatingHeapOccupancyPercent=15",
     ]
+
+
+def _compiler_threads() -> int:
+    """JIT compiler threads: Java picks about log2(cores) * 1.5, which is few on most PCs."""
+    import os
+    cores = os.cpu_count() or 4
+    return max(3, min(12, cores // 2))
 
 
 def has_nvidia() -> bool:

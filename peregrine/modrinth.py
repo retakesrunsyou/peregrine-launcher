@@ -102,3 +102,25 @@ def icon_path(url: str):
         except Exception:
             return None
     return path
+
+
+def project_icon(slug: str):
+    """A project's icon by its slug (looked up once, then kept in the cache). Path or None."""
+    from . import paths
+    note = paths.CACHE / "icons" / f"{slug}.url"
+    url = None
+    try:
+        url = note.read_text().strip() if note.is_file() else None
+    except OSError:
+        pass
+    if not url:
+        try:
+            url = net.get_json(f"{API}/project/{slug}").get("icon_url") or ""
+        except Exception:
+            return None
+        try:
+            note.parent.mkdir(parents=True, exist_ok=True)
+            note.write_text(url)
+        except OSError:
+            pass
+    return icon_path(url) if url else None

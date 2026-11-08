@@ -69,7 +69,12 @@ final class HudEditor {
         drag = Drag.NONE;
         exit = false;
         guideX = guideY = -1;
+        openedAt = System.currentTimeMillis();
     }
+
+    private long openedAt;
+    private float modsGlow;
+    private int modsX, modsY, modsW, modsH;   // the "Mods" button in the middle (UI units)
 
     /** Opens with one item picked and its style panel showing (from its settings page). */
     void openFor(HudModule h) {
@@ -177,6 +182,33 @@ final class HudEditor {
             }
             d.roundRect(tx, ty, tw, 11, Theme.withAlpha(a, 0xEE));
             d.text(text, tx + 4, ty + 2, 0xFF15171C, false);
+        }
+        // In the middle, like Lunar's: a button back to the mods menu (hidden while dragging).
+        modsW = 0;
+        if (drag == Drag.NONE) {
+            int usw = ui(sw), ush = ui(sh);
+            modsW = 70;
+            modsH = 22;
+            modsX = (usw - modsW) / 2;
+            modsY = (ush - modsH) / 2;
+            boolean mh = in(ui(mx), ui(my), modsX, modsY, modsW, modsH);
+            modsGlow += ((mh ? 1f : 0f) - modsGlow) * 0.25f;
+            d.shadow(modsX, modsY, modsW, modsH);
+            d.roundRect(modsX, modsY, modsW, modsH, 11, Theme.mix(Theme.withAlpha(Theme.PANEL, 0xE6), Theme.withAlpha(a, 0xF0), modsGlow));
+            d.roundOutline(modsX, modsY, modsW, modsH, 11, Theme.withAlpha(a, 0xD0));
+            int fg = Theme.mix(Theme.TEXT, Theme.onColor(a), modsGlow);
+            Glass.logo(d, modsX + 9, modsY + 3, 1.3f, Theme.mix(a, fg, modsGlow));
+            d.text("Mods", modsX + 28, modsY + 7, fg, false);
+            // a short how-to that fades away after a few seconds
+            long age = System.currentTimeMillis() - openedAt;
+            if (age < 7000) {
+                float t = age < 5500 ? 1f : 1f - (age - 5500) / 1500f;
+                String tip = "Drag to move  ·  corner or scroll to resize  ·  right-click for style  ·  Esc when done";
+                int tw = d.width(tip) + 14;
+                int ty = modsY + modsH + 8;
+                d.roundRect((usw - tw) / 2, ty, tw, 13, 6, Theme.withAlpha(0xFF0B0D11, Math.round(0xB0 * t)));
+                d.text(tip, (usw - tw) / 2 + 7, ty + 3, Theme.withAlpha(Theme.MUTED, Math.max(4, Math.round(0xFF * t))), false);
+            }
         }
         if (styleOpen()) {
             renderPanel(d, mx, my, a, sw, sh);
@@ -454,6 +486,10 @@ final class HudEditor {
             if (button == 0) {
                 clickPanel(umx, umy);
             }
+            return true;
+        }
+        if (button == 0 && modsW > 0 && in(umx, umy, modsX, modsY, modsW, modsH)) {
+            exit = true;   // back to the mods menu
             return true;
         }
         if (button == 0 && onHandle(mx, my)) {
