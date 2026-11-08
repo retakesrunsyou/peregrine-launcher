@@ -23,7 +23,8 @@ CONTENT_FOLDERS = {
 _ID_TO_SLUG = {"sodium": "sodium", "lithium": "lithium", "ferritecore": "ferrite-core",
                "entityculling": "entityculling", "immediatelyfast": "immediatelyfast",
                "modernfix": "modernfix", "dynamic_fps": "dynamic-fps", "moreculling": "moreculling",
-               "badoptimizations": "badoptimizations", "scalablelux": "scalablelux", "clumps": "clumps"}
+               "badoptimizations": "badoptimizations", "scalablelux": "scalablelux", "clumps": "clumps",
+               "c2me": "c2me-fabric", "iris": "iris"}
 
 
 def _write_json(path: Path, data) -> None:

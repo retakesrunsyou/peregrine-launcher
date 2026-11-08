@@ -465,7 +465,7 @@ class MainWindow(QMainWindow):
             return
         try:
             from .. import extras
-            blamed = performance.after_crash(inst) + extras.after_crash(inst)
+            blamed = performance.after_crash(inst) + extras.after_crash(inst) + extras.iris_after_crash(inst)
         except Exception as e:
             print(f"[peregrine] couldn't check the crash: {e}")
             blamed = []
@@ -923,6 +923,12 @@ def main():
         instances.name_folders()  # folders named like their instances (they were codes before 1.5)
     except Exception as e:
         print(f"[peregrine] couldn't rename instance folders: {e}")
+    try:
+        from .. import performance
+        for inst in instances.all_instances():   # a new set of performance mods: switch over now
+            performance.migrate(inst)            # (the new ones download on the next Play)
+    except Exception as e:
+        print(f"[peregrine] couldn't update the performance mods: {e}")
     win = MainWindow()
     win.make_tray()
     guard = single.Guard(win.bring_back)  # later launches bring this window back  # noqa: F841

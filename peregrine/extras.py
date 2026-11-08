@@ -18,8 +18,7 @@ MODS = [
     ("not-enough-animations", "Not Enough Animations", "third-person animations for eating, maps, bows and more"),
     ("continuity", "Continuity", "connected textures for glass and more"),
     ("simple-voice-chat", "Simple Voice Chat", "proximity voice chat on servers that have it"),
-    ("iris", "Iris Shaders", "shader packs, fast (with Sodium)"),
-]
+]   # Iris is one of the performance mods now (performance.MODS)
 SLUGS = [m[0] for m in MODS]
 
 # The shader pack set up (switched off) the first time: MakeUp Ultra Fast, light and quick;
@@ -45,6 +44,7 @@ def enabled(inst) -> bool:
 def sync(inst, progress=None, force: bool = False) -> dict:
     """Make the instance's extras match its version (or take them out when off)."""
     mods = inst.game_dir / "mods"
+    performance.migrate(inst)   # Iris moves to the performance mods first, so it isn't fetched twice
     on = enabled(inst)
     tracked = dict(inst.data.get("extra_files") or {})
     retired = [slug for slug in RETIRED if slug in tracked]
@@ -125,10 +125,16 @@ def set_enabled(inst, on: bool) -> None:
 
 
 def after_crash(inst) -> list:
-    """After a crash: switch off an extra that caused it (for this Minecraft version).
-    Iris needs OpenGL; on a PC where Minecraft 26.3+ falls back to Vulkan it can't run."""
+    """After a crash: switch off an extra that caused it (for this Minecraft version)."""
     blamed = performance.after_crash(inst, "extra", MODS)
-    tracked = dict(inst.data.get("extra_files") or {})
+    return blamed
+
+
+def iris_after_crash(inst) -> list:
+    """Iris needs OpenGL; on a PC where Minecraft 26.3+ falls back to Vulkan it can't run:
+    switch it off for this Minecraft version."""
+    blamed = []
+    tracked = dict(inst.data.get("perf_files") or {})
     if "iris" in tracked:
         try:
             log = inst.log_file.read_text(errors="replace")[-400000:]
@@ -137,8 +143,10 @@ def after_crash(inst) -> list:
         if "Failed to create backend OpenGL" in log and "No context is current" in log:
             f = inst.game_dir / "mods" / tracked.pop("iris")
             f.unlink(missing_ok=True)
-            skip = inst.data.get("extra_skip") or {}
+            skip = inst.data.get("perf_skip") or {}
+            if isinstance(skip, list):
+                skip = {}
             skip["iris"] = inst.data["mc_version"]
-            inst.update(extra_files=tracked, extra_skip=skip)
+            inst.update(perf_files=tracked, perf_skip=skip)
             blamed.append("Iris Shaders")
     return blamed

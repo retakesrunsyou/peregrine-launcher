@@ -150,7 +150,7 @@ class NewInstanceDialog(Sheet):
         loaders.addWidget(self.loader)
         loaders.addStretch()
 
-        perf_row = _toggle_row("Performance mode: Sodium and 10 more speed-up mods picked for this "
+        perf_row = _toggle_row("Performance mode: Sodium, C2ME, Lithium, FerriteCore, Iris and Clumps, picked for this "
                                "version, plus fast game settings", True)
         self.perf, self.perf_row = perf_row.toggle, perf_row
         self.version.currentTextChanged.connect(self.update_options)

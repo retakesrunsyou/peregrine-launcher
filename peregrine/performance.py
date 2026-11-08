@@ -21,22 +21,24 @@ from pathlib import Path
 
 from . import modrinth, net
 
-# Each mod targets a different bottleneck; all are client-side, work on any
-# server, and are tested together on every supported version by the play test.
+# One mod per job, no two doing the same thing; all client-side and fine on any server.
 MODS = [
     ("sodium", "Sodium", "a much faster renderer: the biggest FPS gain"),
+    ("c2me-fabric", "C2ME", "loads and builds chunks on every CPU core"),
     ("lithium", "Lithium", "faster game logic: mobs, physics, block ticks"),
     ("ferrite-core", "FerriteCore", "less memory, so fewer garbage-collector stutters"),
-    ("entityculling", "Entity Culling", "skips mobs and chests hidden behind walls"),
-    ("immediatelyfast", "ImmediatelyFast", "faster HUD, text, maps and entities"),
-    ("modernfix", "ModernFix", "faster start-up and lower memory"),
-    ("moreculling", "More Culling", "skips hidden faces of leaves, glass and more"),
-    ("badoptimizations", "BadOptimizations", "caches lightmap, sky and clouds work every frame"),
-    ("scalablelux", "ScalableLux", "a faster lighting engine: smoother chunk loading"),
+    ("iris", "Iris Shaders", "shader packs, fast (with Sodium)"),
     ("clumps", "Clumps", "groups XP orbs together, so piles of XP don't drag FPS down"),
-    ("dynamic-fps", "Dynamic FPS", "slows down in the background to save power and heat"),
 ]
 SLUGS = [m[0] for m in MODS]
+
+# Bump when MODS changes: instances set up with an older list are moved to this one the
+# next time they're checked (mods dropped from the list are taken out; the player's own
+# copies are never touched, since only files we put there are tracked).
+SET_VERSION = 2
+# Mods that used to come with the extras and now come from here: their files move over
+# instead of being downloaded again.
+FROM_EXTRAS = ("iris",)
 
 CHECK_EVERY = 24 * 3600  # look for newer versions of the mods once a day
 
@@ -292,8 +294,45 @@ def _remove(mods: Path, names) -> None:
                 f.unlink()
 
 
+def migrate(inst) -> bool:
+    """Moves an instance set up with an older list of performance mods to the current one.
+    Returns True when something changed (the next sync then checks at once)."""
+    data = inst.data
+    if data.get("perf_set", 1) >= SET_VERSION:
+        return False
+    mods = inst.game_dir / "mods"
+    tracked = dict(data.get("perf_files") or {})
+    extra = dict(data.get("extra_files") or {})
+    # Libraries are fetched again as needed by the mods that stay.
+    gone = {k: v for k, v in tracked.items() if k.startswith("dep:") or k not in SLUGS}
+    keep_files = set(extra.values())
+    for slug in FROM_EXTRAS:
+        if slug in extra:
+            tracked[slug] = extra.pop(slug)
+    tracked = {k: v for k, v in tracked.items() if k not in gone}
+    _remove(mods, [n for n in gone.values() if n not in keep_files and n not in tracked.values()])
+    skip = data.get("perf_skip") or {}
+    skip = {s: v for s, v in skip.items() if s in SLUGS} if isinstance(skip, dict) else {}
+    off = [s for s in data.get("perf_off") or [] if s in SLUGS]
+    extra_skip = data.get("extra_skip") or {}
+    extra_off = list(data.get("extra_off") or [])
+    for slug in FROM_EXTRAS:
+        if isinstance(extra_skip, dict) and slug in extra_skip:
+            skip[slug] = extra_skip.pop(slug)
+        if slug in extra_off:
+            extra_off.remove(slug)
+            off.append(slug)
+    inst.update(perf_files=tracked, perf_skip=skip, perf_off=sorted(set(off)), perf_checked=0,
+                extra_files=extra, extra_skip=extra_skip, extra_off=extra_off, perf_set=SET_VERSION)
+    print(f"[peregrine] performance mods updated to the new set for {data.get('name', 'an instance')}"
+          f" (took out: {', '.join(k for k in gone if not k.startswith('dep:')) or 'nothing'})")
+    return True
+
+
 def sync(inst, progress=None, force: bool = False) -> dict:
     """Make the instance's performance mods match its version. Returns a summary."""
+    if migrate(inst):
+        force = True
     on = inst.data.get("performance", True) and inst.data.get("loader") == "fabric"
     extras = set((inst.data.get("extra_files") or {}).values())  # the extras give way to these, not the reverse
     return sync_set(inst, SLUGS, "perf", on, progress, force, ignore=extras)

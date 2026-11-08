@@ -16,7 +16,7 @@ play: more FPS, smoother frames and fewer lag spikes, out of the box.
 - **Home** for your instances, **Mods & packs** for mods, resource packs, shaders and modpacks, and a side panel
   that tucks away with the button at the bottom
 - **Peregrine extras on every Fabric instance**: AppleSkin, Enchantment Descriptions, Not Enough Animations,
-  Continuity, Simple Voice Chat and Iris, kept up to date like the performance mods, plus the MakeUp Ultra Fast shader pack
+  Continuity and Simple Voice Chat, kept up to date like the performance mods, plus the MakeUp Ultra Fast shader pack
   ready to switch on (shaders start off). Turn the whole set off in Settings, or one mod off in Content
 - **One launcher at a time**: opening Peregrine again brings the open window to the front instead of starting a second copy
 - **Recommended mods** in one click: 3D Skin Layers, LambDynamicLights and Wavey Capes
@@ -34,8 +34,8 @@ play: more FPS, smoother frames and fewer lag spikes, out of the box.
 - **Seasonal touches**: bats and a harvest moon in October, snow in December
 
 **Makes the game faster**
-- **Performance mode, on for every instance**: Sodium, Lithium, FerriteCore, Entity Culling,
-  ImmediatelyFast, ModernFix, More Culling, BadOptimizations, ScalableLux, Clumps and Dynamic FPS, picked for the instance's exact
+- **Performance mode, on for every instance**: Sodium, C2ME, Lithium, FerriteCore, Iris and
+  Clumps (one mod for each job, none doing the same thing twice), picked for the instance's exact
   Minecraft version, checked for updates daily, and swapped automatically when you change version
 - **Fast game settings** the first time you play: Fast graphics, no clouds or entity shadows,
   smooth lighting and biome blend off, V-Sync off, render distance 10 (your later changes are kept)
