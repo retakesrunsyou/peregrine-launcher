@@ -112,7 +112,8 @@ public final class Peregrine {
         modules.add(new PotionCountHud());
         modules.add(new PacksHud());
         modules.add(new OptionModule("toggle_sneak", "Toggle sneak",
-                "Press sneak once to stay crouched, again to stand", Module.Category.UTILITY, Platform.Option.TOGGLE_SNEAK));
+                "Press sneak once to stay crouched, again to stand. Stays crouched in menus and when you tab out",
+                Module.Category.UTILITY, Platform.Option.TOGGLE_SNEAK));
         modules.add(new OptionModule("static_fov", "Static FOV",
                 "Sprinting and speed effects don't stretch your view", Module.Category.VISUALS, Platform.Option.STATIC_FOV));
         modules.add(new OptionModule("steady_camera", "Steady camera",
