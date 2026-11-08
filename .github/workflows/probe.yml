@@ -1,0 +1,28 @@
+name: probe
+on: push
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '25'
+      - run: chmod +x client/build.sh client/gradlew && client/build.sh 26.1.2 || true
+      - name: list
+        run: |
+          mkdir out
+          find ~/.gradle client -name "*.jar" -path "*minecraft*" 2>/dev/null | grep -iv sources > out/jars.txt || true
+          J=$(grep -E "minecraft-(merged|client)" out/jars.txt | grep -iv "intermediary\|official" | head -1)
+          [ -z "$J" ] && J=$(grep -i "named\|mojmap\|loom.mappings" out/jars.txt | grep -i minecraft | head -1)
+          echo "$J" > out/used.txt
+          unzip -l "$J" | awk '{print $4}' | grep '\.class$' > out/classes.txt
+          for c in net/minecraft/client/gui/components/ChatComponent net/minecraft/client/GuiMessage 'net/minecraft/client/GuiMessage$Line' net/minecraft/client/gui/screens/ChatScreen net/minecraft/client/gui/Gui net/minecraft/client/renderer/GameRenderer net/minecraft/client/renderer/debug/DebugRenderer net/minecraft/client/renderer/debug/ChunkBorderRenderer net/minecraft/client/renderer/ScreenEffectRenderer net/minecraft/client/renderer/entity/EntityRenderer net/minecraft/client/Options net/minecraft/client/KeyMapping net/minecraft/client/player/LocalPlayer net/minecraft/client/player/KeyboardInput net/minecraft/client/Camera net/minecraft/client/gui/screens/Screen net/minecraft/client/gui/GuiGraphics net/minecraft/client/gui/components/PlayerFaceRenderer net/minecraft/client/multiplayer/chat/ChatListener net/minecraft/client/renderer/LevelRenderer net/minecraft/client/gui/components/ChatComponent\$State net/minecraft/client/CameraType net/minecraft/client/renderer/entity/state/EntityRenderState net/minecraft/client/renderer/SubmitNodeCollector net/minecraft/client/renderer/entity/player/AvatarRenderer net/minecraft/client/gui/render/state/GuiRenderState net/minecraft/client/Minecraft net/minecraft/client/gui/components/debug/DebugScreenEntries net/minecraft/client/gui/components/DebugScreenOverlay; do
+            echo "== $c" >> out/api.txt; javap -p -cp "$J" "$c" >> out/api.txt 2>&1 || true
+          done
+          ls client/versions/26.1/.gradle 2>/dev/null >> out/used.txt || true
+      - uses: actions/upload-artifact@v4
+        with:
+          name: api
+          path: out
