@@ -11,6 +11,7 @@ import net.peregrine.client.core.settings.ChoiceSetting;
 import net.peregrine.client.core.settings.ColorSetting;
 import net.peregrine.client.core.settings.KeySetting;
 import net.peregrine.client.core.settings.PixelGridSetting;
+import net.peregrine.client.core.settings.PlayerListSetting;
 import net.peregrine.client.core.settings.Setting;
 import net.peregrine.client.core.settings.SliderSetting;
 import net.peregrine.client.core.settings.TextSetting;
@@ -1275,6 +1276,8 @@ public final class Menu {
         for (Setting st : list) {
             if (st instanceof PixelGridSetting) {
                 contentH += GRID_H - SET_H;
+            } else if (st instanceof PlayerListSetting) {
+                contentH += Math.max(1, ((PlayerListSetting) st).rows.get().size()) * (SET_H + 1);
             }
         }
         if (!list.isEmpty()) {
@@ -1418,6 +1421,33 @@ public final class Menu {
                 d.roundOutline(bx, y + 3, bw2, 16, waiting || bhv ? Theme.withAlpha(a, 0xC0) : Theme.HAIRLINE);
                 d.text(val, bx + (bw2 - d.width(val)) / 2, y + 7, waiting ? a : ks.key >= 0 ? Theme.TEXT : Theme.FAINT, false);
                 hit(id, bx, y + 3, bw2, 16, st);
+            } else if (st instanceof PlayerListSetting) {
+                // players near you, each with Hide / Show and Report
+                List<String[]> rows = ((PlayerListSetting) st).rows.get();
+                int ry = y + SET_H + 1;
+                if (rows.isEmpty()) {
+                    d.text(((PlayerListSetting) st).empty, x + 14, ry + 7, Theme.FAINT, false);
+                    ry += SET_H + 1;
+                }
+                for (String[] r : rows) {
+                    boolean hidden = "hidden".equals(r[2]);
+                    d.text(d.trim(r[1], w / 2), x + 14, ry + 7, hidden ? Theme.FAINT : Theme.TEXT, false);
+                    int bx2 = x + w - 8;
+                    String[][] btns = {{"report", "Report"}, {"hide", hidden ? "Show" : "Hide"}};
+                    for (String[] b : btns) {
+                        int bw2 = d.width(b[1]) + 14;
+                        bx2 -= bw2;
+                        boolean pbh = inView && in(mx, my, bx2, ry + 3, bw2, 16);
+                        boolean danger = b[0].equals("report");
+                        d.roundRect(bx2, ry + 3, bw2, 16, pbh ? Theme.withAlpha(danger ? Theme.BAD : a, 0x50) : Theme.CARD);
+                        d.roundOutline(bx2, ry + 3, bw2, 16, pbh ? (danger ? Theme.BAD : a) : Theme.HAIRLINE);
+                        d.text(b[1], bx2 + 7, ry + 7, pbh ? Theme.TEXT : Theme.MUTED, false);
+                        hit("cape-" + b[0] + ":" + r[0], bx2, ry + 3, bw2, 16, st);
+                        bx2 -= 4;
+                    }
+                    ry += SET_H + 1;
+                }
+                y = ry - (SET_H + 1);
             } else if (st instanceof PixelGridSetting) {
                 // a grid of pixels to click, with the result at real size beside it
                 PixelGridSetting pg = (PixelGridSetting) st;
@@ -1617,6 +1647,10 @@ public final class Menu {
                         hm.scale = sc;
                     }
                 }
+            } else if (h.id.startsWith("cape-hide:")) {
+                net.peregrine.client.core.modules.Cosmetics.toggleHidden(h.id.substring(10));
+            } else if (h.id.startsWith("cape-report:")) {
+                net.peregrine.client.core.modules.Cosmetics.report(h.id.substring(12));
             } else if (h.id.startsWith("px:")) {
                 int i = Integer.parseInt(h.id.substring(3));
                 ((PixelGridSetting) h.setting).toggle(i % PixelGridSetting.N, i / PixelGridSetting.N);
@@ -1663,7 +1697,7 @@ public final class Menu {
         String q = search.trim().toLowerCase();
         if (m != allHud) {
             for (Setting st : m.settings()) {
-                if (q.isEmpty() || st.label.toLowerCase().contains(q)) {
+                if (st.visible() && (q.isEmpty() || st.label.toLowerCase().contains(q))) {
                     out.add(st);
                 }
             }

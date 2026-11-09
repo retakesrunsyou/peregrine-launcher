@@ -238,6 +238,31 @@ final class GamePlatform implements Platform {
     }
 
     @Override
+    public java.util.Map<String, String> nearbyPlayers() {
+        java.util.Map<String, String> out = new java.util.LinkedHashMap<String, String>();
+        var mc = mc();
+        if (mc.level == null) {
+            return out;
+        }
+        for (var pl : mc.level.players()) {
+            if (pl != mc.player) {
+                out.put(pl.getUUID().toString().replace("-", ""), pl.getName().getString());
+            }
+        }
+        return out;
+    }
+
+    @Override
+    public void showMessage(String text) {
+        var mc = mc();
+        mc.execute(() -> {
+            if (mc.gui != null) {
+                mc.gui.getChat().addClientSystemMessage(net.minecraft.network.chat.Component.literal(text));
+            }
+        });
+    }
+
+    @Override
     public String customCapeTexture(String name, java.nio.file.Path png) {
         net.minecraft.resources.Identifier id = CustomCape.id(name, png);
         return id == null ? null : id.toString();

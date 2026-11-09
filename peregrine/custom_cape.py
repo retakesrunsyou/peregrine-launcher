@@ -302,6 +302,7 @@ def make(source_frames, name: str, progress=None) -> dict:
                        Qt.TransformationMode.SmoothTransformation).save(str(tmp / f"small_{i:03d}.png"), "PNG")
         if progress:
             progress(f"Making your cape… {i + 1} of {len(fr)}")
+    _write_share(tmp, fr, s)
     meta = {"v": int(time.time() * 1000) % 2_000_000_000, "frames": len(fr),
             "ms": [int(ms) for _, ms in fr] if len(fr) > 1 else [0],
             "size": [64 * s, 32 * s], "name": name}
@@ -309,6 +310,48 @@ def make(source_frames, name: str, progress=None) -> dict:
     shutil.rmtree(DIR, ignore_errors=True)
     tmp.rename(DIR)
     return meta
+
+
+SHARE_STILL = 512       # the copy other players get: a still up to 512 x 256,
+SHARE_MOVING = 256      # a moving one up to 256 x 128 with at most 12 frames
+SHARE_FRAMES = 12
+
+
+def _write_share(folder, fr, s):
+    """The small copy that's shared with other players (share_000.png ... and share.json): the
+    service checks every picture of it before anyone else sees it."""
+    from PySide6.QtCore import Qt
+    n = len(fr)
+    width = SHARE_STILL if n == 1 else SHARE_MOVING
+    picks = list(range(n)) if n <= SHARE_FRAMES else [round(i * (n - 1) / (SHARE_FRAMES - 1)) for i in range(SHARE_FRAMES)]
+    ms = []
+    for k, i in enumerate(picks):
+        end = picks[k + 1] if k + 1 < len(picks) else n
+        ms.append(max(20, sum(int(fr[j][1]) for j in range(i, end)) if n > 1 else 0))
+        tex = compose(fr[i][0], s)
+        w = min(width, tex.width())
+        tex.scaled(w, w // 2, Qt.AspectRatioMode.IgnoreAspectRatio,
+                   Qt.TransformationMode.SmoothTransformation).save(str(folder / f"share_{k:03d}.png"), "PNG")
+    (folder / "share.json").write_text(json.dumps({"frames": len(picks), "ms": ms}))
+
+
+def ensure_share() -> None:
+    """Capes made before sharing existed get their small shared copy now (from their frames)."""
+    if not exists() or (DIR / "share.json").is_file():
+        return
+    from PySide6.QtGui import QImage
+    meta = info()
+    files = frames()
+    ms = meta.get("ms") or [0]
+    fr = []
+    for i, f in enumerate(files):
+        img = QImage(str(f))
+        if img.isNull():
+            return
+        fr.append((img, ms[i] if i < len(ms) else 100))
+    if fr:
+        s = max(1, fr[0][0].width() // 64)
+        _write_share(DIR, fr, s)
 
 
 def make_from_file(path, progress=None) -> dict:

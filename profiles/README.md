@@ -48,6 +48,20 @@ cd profiles
 npx --yes wrangler@3 deploy
 ```
 
+## Players' own capes
+
+A cape made from your own picture, GIF or video in the Locker is shared too, once it passes a
+safety check. The game sends a small copy (a still up to 512 px wide, or up to 12 frames up to
+256 px wide); the service shows every picture to Cloudflare Workers AI (free plan, a vision model)
+and keeps it only if it finds no nudity, sexual content, gore or hate symbols. Anything flagged, or
+anything the check can't answer, isn't shared, and the player is told in their chat (they still
+see their cape themselves). Each account can send 5 capes a day. In game, anyone can hide a
+player's cape or report it (Cosmetics → "Own capes around you"); three different players
+reporting a cape hide it from everyone until its owner makes a new one. Players can also turn
+other players' own capes off altogether.
+
+The check makes mistakes sometimes, both ways, so the reports are there too.
+
 ## Voice parties
 
 The same service runs voice parties: a small room per party code (a Cloudflare Durable Object,
@@ -59,9 +73,9 @@ day. Cloudflare's $5 a month plan lifts that far beyond what a client like this 
 
 ## Check it's working
 
-Open the address in a browser: it should say `{"service":"peregrine-profiles","version":3,"voice":true,"ok":true}`. If it shows an
-older version or `"voice":false`, the service is still the old one: update it as above (with the new
-`wrangler.toml` too).
+Open the address in a browser: it should say `{"service":"peregrine-profiles","version":4,"voice":true,"capes":true,"ok":true}`. If it
+shows an older version, `"voice":false` or `"capes":false`, the service is still the old one: update it
+as above (with the new `wrangler.toml` too).
 
 ## Tests
 

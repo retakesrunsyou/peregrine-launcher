@@ -19,6 +19,11 @@ public abstract class Setting {
 
     public abstract void reset();
 
+    /** Whether it has a row on the feature's page. */
+    public boolean visible() {
+        return true;
+    }
+
     /** Whether it's as it came (no reset arrow then). */
     public boolean isDefault() {
         return true;

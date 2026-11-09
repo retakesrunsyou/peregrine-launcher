@@ -14,3 +14,7 @@ class_name = "VoiceRoom"
 [[migrations]]
 tag = "voice-v1"
 new_sqlite_classes = ["VoiceRoom"]
+
+# The safety check for players' own capes (Workers AI, on the free plan)
+[ai]
+binding = "AI"

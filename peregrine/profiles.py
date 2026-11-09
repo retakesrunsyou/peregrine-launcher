@@ -208,6 +208,13 @@ def chosen_cape() -> str:
         if m.get("enabled") is False:
             return ""
         i = int((m.get("settings") or {}).get("cape", 1))
+        if i == 7:   # your own: "custom" once the service has it (passed its safety check)
+            from . import custom_cape
+            try:
+                shared = (custom_cape.DIR / "shared.txt").read_text().strip()
+                return "custom" if custom_cape.exists() and shared == str(custom_cape.info().get("v")) else ""
+            except OSError:
+                return ""
         return CAPE_FILES[i] if 0 <= i < len(CAPE_FILES) else ""
     except (OSError, ValueError, TypeError):
         return CAPE_FILES[1]  # the default: Falcon

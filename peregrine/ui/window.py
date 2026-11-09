@@ -964,6 +964,11 @@ def main():
         sys.exit(0)
     install_crash_handler(app)
     try:
+        from .. import custom_cape
+        custom_cape.ensure_share()   # capes made before sharing get their small shared copy
+    except Exception as e:
+        print(f"[peregrine] couldn't prepare your cape for sharing: {e}")
+    try:
         from .. import game as game_mod
         game_mod.accent_from_game()   # a colour picked in game last time
     except Exception as e:

@@ -14,6 +14,22 @@ public final class Capes {
 
     /** Null for a frame of your own cape that isn't ready yet. */
     public static ClientAsset.Texture texture(String name) {
+        if (name.startsWith("remote_")) {   // another player's own cape
+            ClientAsset.Texture t = IDS.get(name);
+            if (t != null) {
+                return t;
+            }
+            net.minecraft.resources.Identifier id = RemoteCape.id(name, net.peregrine.client.core.modules.Cosmetics.remoteFile(name));
+            if (id == null) {
+                return null;
+            }
+            t = new ClientAsset.ResourceTexture(id, id);
+            if (IDS.size() > 2000) {
+                IDS.clear();
+            }
+            IDS.put(name, t);
+            return t;
+        }
         if (name.startsWith("custom_")) {
             ClientAsset.Texture t = IDS.get(name);
             if (t != null) {

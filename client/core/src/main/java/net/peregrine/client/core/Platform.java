@@ -323,6 +323,15 @@ public interface Platform {
         return false;
     }
 
+    /** Other players in your world: account id (no dashes) -> name. */
+    default java.util.Map<String, String> nearbyPlayers() {
+        return java.util.Collections.emptyMap();
+    }
+
+    /** A line in your chat that only you see. */
+    default void showMessage(String text) {
+    }
+
     /** How see-through the chat's background is (0 - 1), or -1 for Minecraft's own setting. */
     default void setChatBackground(float opacity) {
     }

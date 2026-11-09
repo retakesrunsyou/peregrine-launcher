@@ -38,7 +38,8 @@ public final class Cosmetics extends Module {
     public static final String[] CAPES = {"None", "Falcon", "Violet", "Ember", "Starry night", "Pumpkin", "Frost", "Your own"};
     /** Texture names, under assets/peregrine-client/textures/cape/ ("custom" is your own, made in the launcher). */
     public static final String[] FILES = {null, "falcon", "violet", "ember", "starry", "pumpkin", "frost", "custom"};
-    /** "Your own" cape: a picture, GIF or video made into a cape in the launcher's Locker. Only you see it. */
+    /** "Your own" cape: a picture, GIF or video made into a cape in the launcher's Locker. Shared with other
+     *  Peregrine players once the service's safety check has passed it. */
     public static final int CUSTOM = 7;
     /** Animated capes: frames (files name_0.png ...) and how long each shows. */
     static final java.util.Map<String, Integer> FRAMES = new java.util.HashMap<String, Integer>();
@@ -185,6 +186,13 @@ public final class Cosmetics extends Module {
     private final ChoiceSetting cape = add(new ChoiceSetting("cape", "Your cape", 1, CAPES));
     private final BoolSetting others = add(new BoolSetting("others", "Other players' capes", true));
     private final BoolSetting badges = add(new BoolSetting("badges", "Badges next to names", true));
+    private final ChoiceSetting ownOthers = add(new ChoiceSetting("own_others", "Other players' own capes", 0, "Everyone", "Nobody"));
+    private final net.peregrine.client.core.settings.ListSetting hiddenOwn = add(new net.peregrine.client.core.settings.ListSetting("hidden_own"));
+    private final net.peregrine.client.core.settings.PlayerListSetting nearby = add(new net.peregrine.client.core.settings.PlayerListSetting(
+            "own_nearby", "Own capes around you", "Nobody near you is wearing their own cape", Cosmetics::ownNearby));
+
+    /** hash -> {frames, total ms, ms of each frame...} for other players' own capes. */
+    private static final Map<String, int[]> OWN = new ConcurrentHashMap<String, int[]>();
 
     private static volatile Cosmetics instance;
     /** uuid (no dashes, lower case) -> {cape file or null, badge glyph}. */
@@ -218,7 +226,104 @@ public final class Cosmetics extends Module {
             return frame(p[0]);
         }
         String live = live(uuid);
+        if (live != null && live.startsWith("own:")) {
+            return ownFrame(m, key(uuid), live.substring(4));
+        }
         return live == null || live.isEmpty() || live.startsWith("custom") ? null : frame(live);
+    }
+
+    /** Which frame of another player's own cape shows now ("remote_<hash>_<frame>"), or null. */
+    private static String ownFrame(Cosmetics m, String uuid, String hash) {
+        net.peregrine.client.core.Peregrine pg = net.peregrine.client.core.Peregrine.get();
+        if (m.ownOthers.index != 0 || m.hiddenOwn.items.contains(uuid) || pg == null || !pg.platform().supportsCustomCape()) {
+            return null;
+        }
+        int[] c = OWN.get(hash);
+        if (c == null) {
+            return null;
+        }
+        int i = 0;
+        if (c[0] > 1 && c[1] > 0) {
+            long t = System.currentTimeMillis() % c[1];
+            while (i < c[0] - 1 && t >= c[2 + i]) {
+                t -= c[2 + i];
+                i++;
+            }
+        }
+        return net.peregrine.client.core.RemoteCapes.frame(hash, i) == null ? null : "remote_" + hash + "_" + i;
+    }
+
+    /** The PNG of a frame of someone's own cape ("remote_<hash>_<frame>"). */
+    public static java.nio.file.Path remoteFile(String name) {
+        String[] parts = name.split("_");
+        if (parts.length != 3) {
+            return null;
+        }
+        try {
+            return net.peregrine.client.core.RemoteCapes.frame(parts[1], Integer.parseInt(parts[2]));
+        } catch (NumberFormatException e) {
+            return null;
+        }
+    }
+
+    /** Players near you wearing their own cape: {uuid, name, "shown" / "hidden"}. */
+    static List<String[]> ownNearby() {
+        Cosmetics m = instance;
+        List<String[]> out = new ArrayList<String[]>();
+        net.peregrine.client.core.Peregrine pg = net.peregrine.client.core.Peregrine.get();
+        if (m == null || pg == null) {
+            return out;
+        }
+        for (Map.Entry<String, String> e : pg.platform().nearbyPlayers().entrySet()) {
+            Object[] l = LIVE.get(key(e.getKey()));
+            if (l != null && l[0] instanceof String && ((String) l[0]).startsWith("own:")) {
+                out.add(new String[] {key(e.getKey()), e.getValue(), m.hiddenOwn.items.contains(key(e.getKey())) ? "hidden" : "shown"});
+            }
+        }
+        return out;
+    }
+
+    /** Hide (or show again) one player's own cape, just for you. */
+    public static void toggleHidden(String uuid) {
+        Cosmetics m = instance;
+        if (m == null) {
+            return;
+        }
+        String k = key(uuid);
+        if (!m.hiddenOwn.items.remove(k)) {
+            m.hiddenOwn.items.add(k);
+        }
+        net.peregrine.client.core.Peregrine.get().markDirty();
+    }
+
+    /** Reports a player's own cape (three different players hide it for everyone) and hides it for you. */
+    public static void report(final String uuid) {
+        Cosmetics m = instance;
+        if (m == null) {
+            return;
+        }
+        m.hiddenOwn.items.add(key(uuid));
+        final net.peregrine.client.core.Peregrine pg = net.peregrine.client.core.Peregrine.get();
+        pg.markDirty();
+        final net.peregrine.client.core.Platform p = pg.platform();
+        final String token = p.accessToken();
+        final String me = key(p.playerUuid());
+        if (SERVICE == null || SERVICE.isEmpty() || token == null || token.length() < 20 || me.length() != 32) {
+            return;
+        }
+        Thread t = new Thread(() -> {
+            try {
+                String base = SERVICE.replaceAll("/+$", "");
+                JsonObject body = prove(base, token, me);
+                body.addProperty("target", key(uuid));
+                http("POST", base + "/v1/cape/report", body.toString(), null);
+                p.showMessage("Peregrine: thanks, that cape is reported and hidden for you.");
+            } catch (Exception e) {
+                System.out.println("[Peregrine] cape report not sent: " + e.getMessage());
+            }
+        }, "Peregrine report");
+        t.setDaemon(true);
+        t.start();
     }
 
     /** What the service said about this player: their cape file, "" (Peregrine, no cape) or null. */
@@ -272,7 +377,8 @@ public final class Cosmetics extends Module {
         Thread t = new Thread(() -> {
             try {
                 String base = SERVICE.replaceAll("/+$", "");
-                String file = FILES[index] == null || index == CUSTOM ? "" : FILES[index];   // your own stays private
+                // your own cape is "custom" only once the service has it (checked); until then, none
+                String file = FILES[index] == null ? "" : index == CUSTOM ? (customShared() ? "custom" : "") : FILES[index];
                 JsonObject body = prove(base, token, uuid);
                 body.addProperty("cape", file);
                 http("PUT", base + "/v1/presence", body.toString(), null);
@@ -283,6 +389,11 @@ public final class Cosmetics extends Module {
         }, "Peregrine cape");
         t.setDaemon(true);
         t.start();
+    }
+
+    private static boolean customShared() {
+        int[] c = custom();
+        return c != null && String.valueOf(c[0]).equals(sharedVersion);
     }
 
     /** {uuid, nonce, cert, sig}: what the service checks to know a request is from this account. */
@@ -409,6 +520,12 @@ public final class Cosmetics extends Module {
                             JsonObject o = found.getAsJsonObject(k);
                             String c2 = o.has("cape") && o.get("cape").isJsonPrimitive() ? capeFile(o.get("cape").getAsString()) : null;
                             cape = c2 == null ? "" : c2;
+                            if (o.has("own") && o.get("own").isJsonObject()) {
+                                String hash = readOwn(o.getAsJsonObject("own"));
+                                if (hash != null) {
+                                    cape = "own:" + hash;
+                                }
+                            }
                         }
                         LIVE.put(k, new Object[] {cape, now});
                         WANTED.remove(k);
@@ -422,6 +539,131 @@ public final class Cosmetics extends Module {
         }, "Peregrine players");
         t.setDaemon(true);
         t.start();
+    }
+
+    /** {"hash", "n", "ms": [...]} from the service: remembered, and its hash returned (null if odd). */
+    static String readOwn(JsonObject own) {
+        try {
+            String hash = own.get("hash").getAsString();
+            int n = own.get("n").getAsInt();
+            if (!hash.matches("[0-9a-f]{24}") || n < 1 || n > 64) {
+                return null;
+            }
+            int[] c = new int[2 + n];
+            c[0] = n;
+            com.google.gson.JsonArray ms = own.has("ms") ? own.getAsJsonArray("ms") : null;
+            for (int i = 0; i < n; i++) {
+                c[2 + i] = Math.max(20, ms != null && i < ms.size() ? ms.get(i).getAsInt() : 100);
+                c[1] += c[2 + i];
+            }
+            OWN.put(hash, c);
+            return hash;
+        } catch (RuntimeException e) {
+            return null;
+        }
+    }
+
+    // ---- sharing your own cape (the launcher writes a small copy: share_000.png ... and share.json)
+
+    private static volatile String sharedVersion;   // the cape version the service has
+    private static volatile String refusedVersion;  // one it turned down (not sent again)
+    private static volatile boolean sharing;
+    private static volatile long shareTriedAt;
+
+    /** Sends your own cape to the service when it's new (checked there before anyone sees it). */
+    private void shareOwn(net.peregrine.client.core.Platform p) {
+        int[] c = cape.index == CUSTOM && hasCustom() ? custom() : null;
+        if (c == null || sharing || SERVICE == null || SERVICE.isEmpty() || System.currentTimeMillis() - shareTriedAt < 60_000L) {
+            return;
+        }
+        final String version = String.valueOf(c[0]);
+        java.nio.file.Path dir = customDir();
+        if (dir == null || !java.nio.file.Files.isRegularFile(dir.resolve("share.json"))) {
+            return;
+        }
+        if (sharedVersion == null) {   // what happened before this game started
+            sharedVersion = note(dir, "shared.txt");
+            refusedVersion = note(dir, "refused.txt");
+        }
+        if (version.equals(sharedVersion) || version.equals(refusedVersion)) {
+            return;
+        }
+        final String token = p.accessToken();
+        final String uuid = key(p.playerUuid());
+        if (token == null || token.length() < 20 || uuid.length() != 32) {
+            return;
+        }
+        sharing = true;
+        shareTriedAt = System.currentTimeMillis();
+        Thread t = new Thread(() -> {
+            try {
+                JsonObject meta = JsonParser.parseString(new String(java.nio.file.Files.readAllBytes(dir.resolve("share.json")),
+                        StandardCharsets.UTF_8)).getAsJsonObject();
+                int n = meta.get("frames").getAsInt();
+                List<byte[]> pngs = new ArrayList<byte[]>();
+                List<Integer> ms = new ArrayList<Integer>();
+                for (int i = 0; i < n && i < 12; i++) {
+                    pngs.add(java.nio.file.Files.readAllBytes(dir.resolve(String.format("share_%03d.png", i))));
+                    ms.add(meta.getAsJsonArray("ms").get(i).getAsInt());
+                }
+                String base = SERVICE.replaceAll("/+$", "");
+                JsonObject proof = prove(base, token, uuid);
+                HttpURLConnection h = (HttpURLConnection) new URL(base + "/v1/cape").openConnection();
+                h.setConnectTimeout(8000);
+                h.setReadTimeout(60000);
+                h.setRequestMethod("PUT");
+                h.setDoOutput(true);
+                h.setRequestProperty("Content-Type", "application/octet-stream");
+                h.setRequestProperty("User-Agent", "PeregrineClient");
+                h.setRequestProperty("X-Peregrine-Proof", java.util.Base64.getEncoder().encodeToString(
+                        proof.toString().getBytes(StandardCharsets.UTF_8)));
+                h.getOutputStream().write(net.peregrine.client.core.RemoteCapes.join(pngs, ms));
+                int code = h.getResponseCode();
+                String said = "";
+                try (InputStream in = code >= 400 ? h.getErrorStream() : h.getInputStream()) {
+                    if (in != null) {
+                        said = new String(in.readAllBytes(), StandardCharsets.UTF_8);
+                    }
+                }
+                if (code == 200) {
+                    remember(dir, "shared.txt", version);
+                    sharedVersion = version;
+                    announce(CUSTOM);
+                    p.showMessage("Peregrine: your own cape is shared. Other Peregrine players see it now.");
+                } else if (code == 422 || code == 400 || code == 413) {
+                    remember(dir, "refused.txt", version);   // don't send the same one again
+                    refusedVersion = version;
+                    String why = said.contains("\"error\"") ? JsonParser.parseString(said).getAsJsonObject().get("error").getAsString()
+                            : "it wasn't accepted";
+                    p.showMessage("Peregrine: your cape isn't shared with others: " + why + " You still see it yourself.");
+                } else {
+                    System.out.println("[Peregrine] cape not shared yet (" + code + "): " + said);
+                }
+            } catch (Exception e) {
+                System.out.println("[Peregrine] cape not shared yet: " + e.getMessage());
+            } finally {
+                sharing = false;
+            }
+        }, "Peregrine share cape");
+        t.setDaemon(true);
+        t.start();
+    }
+
+    private static void remember(java.nio.file.Path dir, String file, String version) {
+        try {
+            java.nio.file.Files.write(dir.resolve(file), version.getBytes(StandardCharsets.UTF_8));
+        } catch (Exception ignored) {
+            // it's sent again next time
+        }
+    }
+
+    private static String note(java.nio.file.Path dir, String file) {
+        try {
+            java.nio.file.Path f = dir.resolve(file);
+            return java.nio.file.Files.isRegularFile(f) ? new String(java.nio.file.Files.readAllBytes(f), StandardCharsets.UTF_8).trim() : "";
+        } catch (Exception e) {
+            return "";
+        }
     }
 
     /** The badge glyph to put before a player's name, or null. */
@@ -532,5 +774,6 @@ public final class Cosmetics extends Module {
         if (others.value || badges.value) {
             ask();
         }
+        shareOwn(p);
     }
 }
