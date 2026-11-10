@@ -302,8 +302,9 @@ def make(source_frames, name: str, progress=None) -> dict:
                        Qt.TransformationMode.SmoothTransformation).save(str(tmp / f"small_{i:03d}.png"), "PNG")
         if progress:
             progress(f"Making your cape… {i + 1} of {len(fr)}")
-    _write_share(tmp, fr, s)
-    meta = {"v": int(time.time() * 1000) % 2_000_000_000, "frames": len(fr),
+    v = int(time.time() * 1000) % 2_000_000_000
+    _write_share(tmp, fr, s, v)
+    meta = {"v": v, "frames": len(fr),
             "ms": [int(ms) for _, ms in fr] if len(fr) > 1 else [0],
             "size": [64 * s, 32 * s], "name": name}
     (tmp / "cape.json").write_text(json.dumps(meta))
@@ -312,33 +313,72 @@ def make(source_frames, name: str, progress=None) -> dict:
     return meta
 
 
-SHARE_STILL = 512       # the copy other players get: a still up to 512 x 256,
-SHARE_MOVING = 256      # a moving one up to 256 x 128 with at most 12 frames
-SHARE_FRAMES = 12
+SHARE_STILL = 1024      # the copy other players get: a still up to 1024 x 512,
+SHARE_MOVING = 512      # a moving one up to 512 x 256, every frame at its own speed (up to 160)
+SHARE_FRAMES = 160
+SHARE_MAX_BYTES = 20 * 1024 * 1024
+SHARE_QUALITY = 2       # bumped when the shared copy gets better: capes are shared again
 
 
-def _write_share(folder, fr, s):
-    """The small copy that's shared with other players (share_000.png ... and share.json): the
-    service checks every picture of it before anyone else sees it."""
+def share_id(v) -> str:
+    """What the shared copy is known by (shared.txt holds it once the service has it)."""
+    return f"{v}-q{SHARE_QUALITY}"
+
+
+def is_shared() -> bool:
+    """Whether the service has this cape (the current copy, or the one before it)."""
+    try:
+        shared = (DIR / "shared.txt").read_text().strip()
+        v = info().get("v")
+        return exists() and shared in (str(v), share_id(v))
+    except OSError:
+        return False
+
+
+def _write_share(folder, fr, s, v):
+    """The copy that's shared with other players (share_000.png ... and share.json), checked by
+    the service before anyone else sees it. Frames are dropped evenly only if it would be too big."""
     from PySide6.QtCore import Qt
     n = len(fr)
     width = SHARE_STILL if n == 1 else SHARE_MOVING
-    picks = list(range(n)) if n <= SHARE_FRAMES else [round(i * (n - 1) / (SHARE_FRAMES - 1)) for i in range(SHARE_FRAMES)]
-    ms = []
-    for k, i in enumerate(picks):
-        end = picks[k + 1] if k + 1 < len(picks) else n
-        ms.append(max(20, sum(int(fr[j][1]) for j in range(i, end)) if n > 1 else 0))
-        tex = compose(fr[i][0], s)
-        w = min(width, tex.width())
-        tex.scaled(w, w // 2, Qt.AspectRatioMode.IgnoreAspectRatio,
-                   Qt.TransformationMode.SmoothTransformation).save(str(folder / f"share_{k:03d}.png"), "PNG")
-    (folder / "share.json").write_text(json.dumps({"frames": len(picks), "ms": ms}))
+    layout = is_layout(fr[0][0])
+    ss = max(1, min(width // 64, s, (fr[0][0].width() // 64) if layout else s))
+    keep = min(n, SHARE_FRAMES)
+    (folder / "share.json").unlink(missing_ok=True)   # the game waits until the new copy is whole
+    for old in folder.glob("share_*.png"):
+        old.unlink()
+    while True:
+        picks = list(range(n)) if keep >= n else sorted({round(i * (n - 1) / (keep - 1)) for i in range(keep)})
+        ms, total = [], 0
+        for k, i in enumerate(picks):
+            end = picks[k + 1] if k + 1 < len(picks) else n
+            ms.append(max(20, sum(int(fr[j][1]) for j in range(i, end))) if n > 1 else 0)
+            out = folder / f"share_{k:03d}.png"
+            tex = compose(fr[i][0], ss)   # made straight at the shared size: sharper than shrinking
+            if tex.width() > width:
+                tex = tex.scaled(width, width // 2, Qt.AspectRatioMode.IgnoreAspectRatio,
+                                 Qt.TransformationMode.SmoothTransformation)
+            tex.save(str(out), "PNG")
+            total += out.stat().st_size
+            if total > SHARE_MAX_BYTES and keep > 2:
+                break
+        if total <= SHARE_MAX_BYTES or keep <= 2:
+            break
+        for old in folder.glob("share_*.png"):
+            old.unlink()
+        keep = max(2, keep // 2)
+    (folder / "share.json").write_text(json.dumps({"frames": len(picks), "ms": ms, "id": share_id(v)}))
 
 
 def ensure_share() -> None:
-    """Capes made before sharing existed get their small shared copy now (from their frames)."""
-    if not exists() or (DIR / "share.json").is_file():
+    """Capes made before the current shared copy get theirs now (from their frames)."""
+    if not exists():
         return
+    try:
+        if json.loads((DIR / "share.json").read_text()).get("id") == share_id(info().get("v")):
+            return
+    except (OSError, ValueError):
+        pass
     from PySide6.QtGui import QImage
     meta = info()
     files = frames()
@@ -351,7 +391,7 @@ def ensure_share() -> None:
         fr.append((img, ms[i] if i < len(ms) else 100))
     if fr:
         s = max(1, fr[0][0].width() // 64)
-        _write_share(DIR, fr, s)
+        _write_share(DIR, fr, s, meta.get("v"))
 
 
 def make_from_file(path, progress=None) -> dict:

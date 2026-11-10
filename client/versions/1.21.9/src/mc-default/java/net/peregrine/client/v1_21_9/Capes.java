@@ -4,48 +4,30 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import net.minecraft.core.ClientAsset;
 
-/** Peregrine cape textures (assets/peregrine-client/textures/cape/). */
+/** Peregrine cape textures (assets/peregrine-client/textures/cape/), your own cape and other players' own capes. */
 public final class Capes {
 
     private static final Map<String, ClientAsset.Texture> IDS = new ConcurrentHashMap<>();
+    /** Own capes' frames, by the texture they're registered as (a frame still loading shows the one before). */
+    private static final Map<ResourceLocation, ClientAsset.Texture> FRAMES = new ConcurrentHashMap<>();
 
     private Capes() {
     }
 
-    /** Null for a frame of your own cape that isn't ready yet. */
+    /** Null for a frame of an own cape that isn't ready yet. */
     public static ClientAsset.Texture texture(String name) {
-        if (name.startsWith("remote_")) {   // another player's own cape
-            ClientAsset.Texture t = IDS.get(name);
-            if (t != null) {
-                return t;
-            }
-            net.minecraft.resources.ResourceLocation id = RemoteCape.id(name, net.peregrine.client.core.modules.Cosmetics.remoteFile(name));
+        if (name.startsWith("remote_") || name.startsWith("custom_")) {
+            ResourceLocation id = name.startsWith("remote_")
+                    ? RemoteCape.id(name, net.peregrine.client.core.modules.Cosmetics.remoteFile(name))
+                    : CustomCape.id(name, net.peregrine.client.core.modules.Cosmetics.customFile(name));
             if (id == null) {
                 return null;
             }
-            t = new ClientAsset.ResourceTexture(id, id);
-            if (IDS.size() > 2000) {
-                IDS.clear();
+            if (FRAMES.size() > 4000) {
+                FRAMES.clear();
             }
-            IDS.put(name, t);
-            return t;
+            return FRAMES.computeIfAbsent(id, i -> new ClientAsset.ResourceTexture(i, i));
         }
-        if (name.startsWith("custom_")) {
-            ClientAsset.Texture t = IDS.get(name);
-            if (t != null) {
-                return t;
-            }
-            net.minecraft.resources.ResourceLocation id = CustomCape.id(name, net.peregrine.client.core.modules.Cosmetics.customFile(name));
-            if (id == null) {
-                return null;
-            }
-            t = new ClientAsset.ResourceTexture(id, id);
-            if (IDS.size() > 2000) {
-                IDS.clear();
-            }
-            IDS.put(name, t);
-            return t;
-        }
-        return IDS.computeIfAbsent(name, n -> new ClientAsset.ResourceTexture(net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("peregrine-client", "cape/" + n)));
+        return IDS.computeIfAbsent(name, n -> new ClientAsset.ResourceTexture(ResourceLocation.fromNamespaceAndPath("peregrine-client", "cape/" + n)));
     }
 }

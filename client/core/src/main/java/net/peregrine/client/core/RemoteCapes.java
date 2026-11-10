@@ -21,6 +21,9 @@ import java.util.concurrent.ConcurrentHashMap;
 public final class RemoteCapes {
 
     private static final int KEEP = 60;
+    /** The most a shared cape can be: 160 frames, 24 MB (a still is up to 1024 x 512, a moving one 512 x 256). */
+    public static final int MAX_FRAMES = 160;
+    static final int MAX_BYTES = 24 * 1024 * 1024;
     private static final Set<String> FETCHING = ConcurrentHashMap.newKeySet();
     private static final Map<String, Long> FAILED = new ConcurrentHashMap<String, Long>();
 
@@ -57,7 +60,7 @@ public final class RemoteCapes {
             try {
                 HttpURLConnection c = (HttpURLConnection) new URL(service.replaceAll("/+$", "") + "/v1/cape/" + hash).openConnection();
                 c.setConnectTimeout(8000);
-                c.setReadTimeout(20000);
+                c.setReadTimeout(60000);
                 c.setRequestProperty("User-Agent", "PeregrineClient");
                 if (c.getResponseCode() != 200) {
                     throw new java.io.IOException("answered " + c.getResponseCode());
@@ -69,7 +72,7 @@ public final class RemoteCapes {
                     int n;
                     while ((n = in.read(buf)) > 0) {
                         b.write(buf, 0, n);
-                        if (b.size() > 3 * 1024 * 1024) {
+                        if (b.size() > MAX_BYTES) {
                             throw new java.io.IOException("too big");
                         }
                     }
@@ -104,7 +107,7 @@ public final class RemoteCapes {
         ByteBuffer b = ByteBuffer.wrap(all);
         b.position(4);
         int n = b.getInt();
-        if (n < 1 || n > 64) {
+        if (n < 1 || n > MAX_FRAMES) {
             return null;
         }
         List<byte[]> out = new ArrayList<byte[]>();

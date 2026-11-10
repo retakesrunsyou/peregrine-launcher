@@ -393,8 +393,33 @@ public final class Cosmetics extends Module {
 
     private static boolean customShared() {
         int[] c = custom();
-        return c != null && String.valueOf(c[0]).equals(sharedVersion);
+        String s = sharedVersion;
+        return c != null && s != null && (s.equals(String.valueOf(c[0])) || s.equals(shareKey(c)));
     }
+
+    /** What the launcher's shared copy is known by: share.json's "id" (a better copy gets a new one), else the cape's version. */
+    static String shareKey(int[] c) {
+        java.nio.file.Path dir = customDir();
+        try {
+            java.nio.file.Path f = dir.resolve("share.json");
+            long stamp = java.nio.file.Files.getLastModifiedTime(f).toMillis();
+            if (stamp != keyStamp) {
+                JsonObject meta = JsonParser.parseString(new String(java.nio.file.Files.readAllBytes(f),
+                        StandardCharsets.UTF_8)).getAsJsonObject();
+                keyId = meta.has("id") ? meta.get("id").getAsString() : null;
+                keyStamp = stamp;
+            }
+            if (keyId != null) {
+                return keyId;
+            }
+        } catch (Exception ignored) {
+            // an older copy
+        }
+        return String.valueOf(c[0]);
+    }
+
+    private static volatile long keyStamp = -1;
+    private static volatile String keyId;
 
     /** {uuid, nonce, cert, sig}: what the service checks to know a request is from this account. */
     public static JsonObject prove(String base, String token, String uuid) throws Exception {
@@ -546,7 +571,7 @@ public final class Cosmetics extends Module {
         try {
             String hash = own.get("hash").getAsString();
             int n = own.get("n").getAsInt();
-            if (!hash.matches("[0-9a-f]{24}") || n < 1 || n > 64) {
+            if (!hash.matches("[0-9a-f]{24}") || n < 1 || n > net.peregrine.client.core.RemoteCapes.MAX_FRAMES) {
                 return null;
             }
             int[] c = new int[2 + n];
@@ -578,11 +603,11 @@ public final class Cosmetics extends Module {
         if (c == null || sharing || SERVICE == null || SERVICE.isEmpty() || System.currentTimeMillis() - shareTriedAt < shareWait) {
             return;
         }
-        final String version = String.valueOf(c[0]);
         java.nio.file.Path dir = customDir();
         if (dir == null || !java.nio.file.Files.isRegularFile(dir.resolve("share.json"))) {
             return;
         }
+        final String version = shareKey(c);
         if (sharedVersion == null) {   // what happened before this game started
             sharedVersion = note(dir, "shared.txt");
             refusedVersion = note(dir, "refused.txt");
@@ -604,7 +629,7 @@ public final class Cosmetics extends Module {
                 int n = meta.get("frames").getAsInt();
                 List<byte[]> pngs = new ArrayList<byte[]>();
                 List<Integer> ms = new ArrayList<Integer>();
-                for (int i = 0; i < n && i < 12; i++) {
+                for (int i = 0; i < n && i < net.peregrine.client.core.RemoteCapes.MAX_FRAMES; i++) {
                     pngs.add(java.nio.file.Files.readAllBytes(dir.resolve(String.format("share_%03d.png", i))));
                     ms.add(meta.getAsJsonArray("ms").get(i).getAsInt());
                 }
@@ -612,7 +637,7 @@ public final class Cosmetics extends Module {
                 JsonObject proof = prove(base, token, uuid);
                 HttpURLConnection h = (HttpURLConnection) new URL(base + "/v1/cape").openConnection();
                 h.setConnectTimeout(8000);
-                h.setReadTimeout(60000);
+                h.setReadTimeout(120000);
                 h.setRequestMethod("PUT");
                 h.setDoOutput(true);
                 h.setRequestProperty("Content-Type", "application/octet-stream");
@@ -632,8 +657,12 @@ public final class Cosmetics extends Module {
                     sharedVersion = version;
                     announce(CUSTOM);
                     p.showMessage("Peregrine: your own cape is shared. Other Peregrine players see it now.");
-                } else if (code == 422 || code == 400 || code == 413) {
-                    remember(dir, "refused.txt", version);   // don't send the same one again
+                } else if (code == 400 || code == 413) {
+                    // turned away for its size or shape (e.g. the service isn't updated yet): try again in a while
+                    shareWait = 6 * 3600_000L;
+                    System.out.println("[Peregrine] cape not shared (" + code + "): " + said);
+                } else if (code == 422) {
+                    remember(dir, "refused.txt", version);   // flagged by the safety check: don't send the same one again
                     refusedVersion = version;
                     String why = said.contains("\"error\"") ? JsonParser.parseString(said).getAsJsonObject().get("error").getAsString()
                             : "it wasn't accepted";

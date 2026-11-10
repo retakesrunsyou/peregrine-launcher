@@ -120,14 +120,18 @@ async function proven(env, body) {
 // ------------------------------------------------------------------ players' own capes
 //
 // A player's own cape (a picture, GIF or video made in the Locker) can be shared: the game sends
-// a small copy (a still up to 512 px wide, or up to 12 frames up to 256 px wide) as one block of
-// PNGs. Before it's kept, every picture goes through a safety check (Cloudflare Workers AI looks
+// a copy (a still up to 1024 px wide, or up to 160 frames up to 512 px wide) as one block of
+// PNGs. Before it's kept, it goes through a safety check (Cloudflare Workers AI looks
 // at it for nudity, sexual content, gore and hate symbols); anything flagged, or anything that
 // can't be checked, isn't shared. Players can also report a cape: three different players
 // reporting it hides it from everyone until its owner makes a new one.
 
-const MAX_CAPE_BYTES = 2 * 1024 * 1024;
-const MAX_CAPE_FRAMES = 12;
+const MAX_CAPE_BYTES = 24 * 1024 * 1024;
+const MAX_CAPE_FRAMES = 160;
+const MAX_STILL_WIDTH = 1024;   // 1024 x 512
+const MAX_MOVING_WIDTH = 512;   // 512 x 256
+// Moving capes: the first frame and frames picked at random are checked (the uploader can't know which).
+const CHECKED_FRAMES = 8;
 const CAPE_UPLOADS_A_DAY = 5;
 const CAPE_REPORTS_TO_HIDE = 3;
 const CHECK_PROMPT =
@@ -235,9 +239,16 @@ async function capeSelfTest(env) {
   return new Response(out, { headers: { "content-type": "application/json" } });
 }
 
-async function hashHex(bytes) {
-  const d = new Uint8Array(await crypto.subtle.digest("SHA-256", bytes));
-  return [...d.subarray(0, 12)].map((b) => b.toString(16).padStart(2, "0")).join("");
+/** Which frames the safety check looks at: all of a few, else the first and some picked at random. */
+function framesToCheck(n) {
+  if (n <= CHECKED_FRAMES) return [...Array(n).keys()];
+  const picked = new Set([0]);
+  const r = new Uint32Array(64);
+  while (picked.size < CHECKED_FRAMES) {
+    crypto.getRandomValues(r);
+    for (const x of r) { if (picked.size < CHECKED_FRAMES) picked.add(x % n); }
+  }
+  return [...picked];
 }
 
 async function capeUpload(request, env) {
@@ -255,20 +266,18 @@ async function capeUpload(request, env) {
   if (!block) return reply({ error: "bad cape" }, 400);
   for (const png of block.frames) {
     const s = pngSize(png);
-    const maxW = block.frames.length > 1 ? 256 : 512;
+    const maxW = block.frames.length > 1 ? MAX_MOVING_WIDTH : MAX_STILL_WIDTH;
     if (!s || s.w !== s.h * 2 || s.w < 64 || s.w > maxW) return reply({ error: "bad cape size" }, 400);
   }
-  for (const png of block.frames) {
-    const { verdict } = await checkPicture(env, png);
-    if (verdict !== "safe" && verdict !== "unsafe")   // couldn't check: not counted, try again later
-      return reply({ error: "The safety check isn't working right now, so the cape wasn't shared. Try again later." }, 503);
-    if (verdict === "unsafe") {
-      await env.PROFILES.put(countKey, String(count + 1), { expirationTtl: 2 * 86400 });
-      return reply({ error: "This cape can't be shared: the safety check found nudity, sexual content, gore or a hate symbol in it.", flagged: true }, 422);
-    }
+  const verdicts = await Promise.all(framesToCheck(block.frames.length).map((i) => checkPicture(env, block.frames[i])));
+  if (verdicts.some((v) => v.verdict === "unsafe")) {
+    await env.PROFILES.put(countKey, String(count + 1), { expirationTtl: 2 * 86400 });
+    return reply({ error: "This cape can't be shared: the safety check found nudity, sexual content, gore or a hate symbol in it.", flagged: true }, 422);
   }
+  if (verdicts.some((v) => v.verdict !== "safe"))   // couldn't check: not counted, try again later
+    return reply({ error: "The safety check isn't working right now, so the cape wasn't shared. Try again later." }, 503);
   await env.PROFILES.put(countKey, String(count + 1), { expirationTtl: 2 * 86400 });
-  const hash = await hashHex(bytes);
+  const hash = randomHex(12);   // each upload gets its own name (no need to read through all of it)
   await env.PROFILES.put(`capeblob:${hash}`, bytes, { expirationTtl: PRESENCE_DAYS * 86400 });
   await env.PROFILES.put(`cape:${uuid}`, JSON.stringify({ hash, n: block.frames.length, ms: block.ms }),
                          { expirationTtl: PRESENCE_DAYS * 86400 });
@@ -529,7 +538,7 @@ export default {
       return env.VOICE.get(env.VOICE.idFromName(code)).fetch(request);
     }
 
-    if (path === "" || path === "/v1") return reply({ service: "peregrine-profiles", version: 5, voice: !!env.VOICE, capes: !!env.AI, ok: true });
+    if (path === "" || path === "/v1") return reply({ service: "peregrine-profiles", version: 6, voice: !!env.VOICE, capes: !!env.AI, ok: true });
     return reply({ error: "not found" }, 404);
   },
 };

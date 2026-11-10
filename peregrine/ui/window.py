@@ -963,11 +963,14 @@ def main():
         print("[peregrine] already open; showing that window")
         sys.exit(0)
     install_crash_handler(app)
-    try:
-        from .. import custom_cape
-        custom_cape.ensure_share()   # capes made before sharing get their small shared copy
-    except Exception as e:
-        print(f"[peregrine] couldn't prepare your cape for sharing: {e}")
+    def _share_copy():
+        try:
+            from .. import custom_cape
+            custom_cape.ensure_share()   # capes made before the current shared copy get theirs (in the background)
+        except Exception as e:
+            print(f"[peregrine] couldn't prepare your cape for sharing: {e}")
+    import threading
+    threading.Thread(target=_share_copy, name="cape share copy", daemon=True).start()
     try:
         from .. import game as game_mod
         game_mod.accent_from_game()   # a colour picked in game last time
