@@ -130,7 +130,6 @@ const MAX_CAPE_BYTES = 2 * 1024 * 1024;
 const MAX_CAPE_FRAMES = 12;
 const CAPE_UPLOADS_A_DAY = 5;
 const CAPE_REPORTS_TO_HIDE = 3;
-const CHECK_MODEL = "@cf/meta/llama-4-scout-17b-16e-instruct";
 const CHECK_PROMPT =
   "You check pictures that players put on their Minecraft capes, which everyone (including children) sees. " +
   "Does this picture show nudity, exposed private parts, sexual or pornographic content, sexually suggestive poses, " +
@@ -171,26 +170,69 @@ function base64(bytes) {
   return btoa(s);
 }
 
-/** "safe", "unsafe", or null when the check couldn't run (then nothing is shared). */
+// Vision models tried in turn: if one isn't available or fails, the next one looks instead.
+const CHECK_MODELS = [
+  { id: "@cf/meta/llama-4-scout-17b-16e-instruct",
+    input: (png) => ({ messages: [{ role: "user", content: [
+      { type: "text", text: CHECK_PROMPT },
+      { type: "image_url", image_url: { url: "data:image/png;base64," + base64(png) } },
+    ] }], max_tokens: 8, temperature: 0 }) },
+  { id: "@cf/meta/llama-3.2-11b-vision-instruct", agree: true,
+    input: (png) => ({ messages: [{ role: "user", content: CHECK_PROMPT }], image: [...png], max_tokens: 8, temperature: 0 }) },
+  { id: "@cf/llava-hf/llava-1.5-7b-hf",
+    input: (png) => ({ image: [...png], prompt: CHECK_PROMPT, max_tokens: 8 }) },
+];
+
+/** A small plain picture (64 x 32, one colour) for the self-test. */
+const TEST_PNG = Uint8Array.from(atob(
+  "iVBORw0KGgoAAAANSUhEUgAAAEAAAAAgCAIAAAAt/+nTAAAAN0lEQVR42u3PQQkAAAgEsMtpJiMaxgw+hcEKLNXzWgQEBAQEBAQEBAQEBAQEBAQEBAQEBAQErhb42hDTvL4T4wAAAABJRU5ErkJggg=="),
+  (c) => c.charCodeAt(0));
+
+function verdictOf(r) {
+  let text = r && (r.response ?? r.description ?? r.result?.response ?? r.result?.description);
+  if (text && typeof text !== "string") text = JSON.stringify(text);
+  text = String(text || "").toUpperCase();
+  if (text.includes("UNSAFE")) return "unsafe";
+  if (text.includes("SAFE")) return "safe";
+  return null;
+}
+
+/** {verdict: "safe" | "unsafe" | null (couldn't check: nothing is shared), model, errors}. */
 async function checkPicture(env, png) {
-  if (!env.AI) return null;
-  try {
-    const r = await env.AI.run(CHECK_MODEL, {
-      messages: [{ role: "user", content: [
-        { type: "text", text: CHECK_PROMPT },
-        { type: "image_url", image_url: { url: "data:image/png;base64," + base64(png) } },
-      ] }],
-      max_tokens: 4,
-      temperature: 0,
-    });
-    const text = String((r && (r.response ?? r.result?.response)) || "").toUpperCase();
-    if (text.includes("UNSAFE")) return "unsafe";
-    if (text.includes("SAFE")) return "safe";
-    return null;
-  } catch (e) {
-    console.log("cape check failed: " + e);
-    return null;
+  const errors = [];
+  if (!env.AI) return { verdict: null, model: null, errors: ["no AI binding"] };
+  for (const m of CHECK_MODELS) {
+    for (let attempt = 0; attempt < 2; attempt++) {
+      try {
+        const verdict = verdictOf(await env.AI.run(m.id, m.input(png)));
+        if (verdict) return { verdict, model: m.id, errors };
+        errors.push(m.id + ": no clear answer");
+        break;
+      } catch (e) {
+        const msg = String((e && e.message) || e);
+        // Meta's vision model asks once for its licence to be accepted
+        if (m.agree && attempt === 0 && /agree|licen[cs]e/i.test(msg)) {
+          try { await env.AI.run(m.id, { prompt: "agree" }); } catch {}
+          continue;
+        }
+        errors.push(m.id + ": " + msg.slice(0, 200));
+        break;
+      }
+    }
   }
+  console.log("cape check failed: " + errors.join(" | "));
+  return { verdict: null, model: null, errors };
+}
+
+/** Is the safety check working? (a plain test picture; the answer is kept for 10 minutes) */
+async function capeSelfTest(env) {
+  const cached = await env.PROFILES.get("capeselftest");
+  if (cached) return new Response(cached, { headers: { "content-type": "application/json" } });
+  const r = await checkPicture(env, TEST_PNG);
+  const out = JSON.stringify({ ok: r.verdict === "safe", verdict: r.verdict, model: r.model, errors: r.errors,
+                               checked: new Date().toISOString() });
+  await env.PROFILES.put("capeselftest", out, { expirationTtl: 600 });
+  return new Response(out, { headers: { "content-type": "application/json" } });
 }
 
 async function hashHex(bytes) {
@@ -216,14 +258,16 @@ async function capeUpload(request, env) {
     const maxW = block.frames.length > 1 ? 256 : 512;
     if (!s || s.w !== s.h * 2 || s.w < 64 || s.w > maxW) return reply({ error: "bad cape size" }, 400);
   }
-  await env.PROFILES.put(countKey, String(count + 1), { expirationTtl: 2 * 86400 });
   for (const png of block.frames) {
-    const verdict = await checkPicture(env, png);
-    if (verdict === "unsafe")
-      return reply({ error: "This cape can't be shared: the safety check found nudity, sexual content, gore or a hate symbol in it.", flagged: true }, 422);
-    if (verdict !== "safe")
+    const { verdict } = await checkPicture(env, png);
+    if (verdict !== "safe" && verdict !== "unsafe")   // couldn't check: not counted, try again later
       return reply({ error: "The safety check isn't working right now, so the cape wasn't shared. Try again later." }, 503);
+    if (verdict === "unsafe") {
+      await env.PROFILES.put(countKey, String(count + 1), { expirationTtl: 2 * 86400 });
+      return reply({ error: "This cape can't be shared: the safety check found nudity, sexual content, gore or a hate symbol in it.", flagged: true }, 422);
+    }
   }
+  await env.PROFILES.put(countKey, String(count + 1), { expirationTtl: 2 * 86400 });
   const hash = await hashHex(bytes);
   await env.PROFILES.put(`capeblob:${hash}`, bytes, { expirationTtl: PRESENCE_DAYS * 86400 });
   await env.PROFILES.put(`cape:${uuid}`, JSON.stringify({ hash, n: block.frames.length, ms: block.ms }),
@@ -459,6 +503,7 @@ export default {
       return reply({ ok: true, removed: true });
     }
     if (path === "/v1/cape/report" && request.method === "POST") return capeReport(request, env);
+    if (path === "/v1/cape/selftest" && request.method === "GET") return capeSelfTest(env);
     const blob = path.match(/^\/v1\/cape\/([0-9a-f]{24})$/);
     if (blob && request.method === "GET") {
       const bytes = await env.PROFILES.get(`capeblob:${blob[1]}`, { type: "arrayBuffer" });
@@ -484,7 +529,7 @@ export default {
       return env.VOICE.get(env.VOICE.idFromName(code)).fetch(request);
     }
 
-    if (path === "" || path === "/v1") return reply({ service: "peregrine-profiles", version: 4, voice: !!env.VOICE, capes: !!env.AI, ok: true });
+    if (path === "" || path === "/v1") return reply({ service: "peregrine-profiles", version: 5, voice: !!env.VOICE, capes: !!env.AI, ok: true });
     return reply({ error: "not found" }, 404);
   },
 };

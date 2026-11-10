@@ -73,9 +73,13 @@ day. Cloudflare's $5 a month plan lifts that far beyond what a client like this 
 
 ## Check it's working
 
-Open the address in a browser: it should say `{"service":"peregrine-profiles","version":4,"voice":true,"capes":true,"ok":true}`. If it
+Open the address in a browser: it should say `{"service":"peregrine-profiles","version":5,"voice":true,"capes":true,"ok":true}`. If it
 shows an older version, `"voice":false` or `"capes":false`, the service is still the old one: update it
 as above (with the new `wrangler.toml` too).
+
+To check the cape safety check, open `/v1/cape/selftest` on the same address: it shows a plain test
+picture to the check and should say `"ok":true`. If it says `"ok":false`, the `errors` it lists say
+why (the answer is kept for 10 minutes).
 
 ## Tests
 

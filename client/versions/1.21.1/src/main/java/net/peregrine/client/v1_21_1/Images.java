@@ -36,7 +36,7 @@ final class Images {
     }
 
     @SuppressWarnings("unchecked")
-    private static Object newTexture(NativeImage img) throws Exception {
+    static Object newTexture(NativeImage img) throws Exception {
         for (Constructor<?> c : DynamicTexture.class.getConstructors()) {
             Class<?>[] p = c.getParameterTypes();
             if (p.length == 1 && p[0] == NativeImage.class) {

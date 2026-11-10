@@ -1042,4 +1042,15 @@ final class GamePlatform implements Platform {
         int a = s.indexOf('{'), b = s.indexOf('}');
         return a >= 0 && b > a ? s.substring(a + 1, b) + s.substring(b + 1) : s;
     }
+
+    @Override
+    public boolean supportsCustomCape() {
+        return true;
+    }
+
+    @Override
+    public String customCapeTexture(String name, java.nio.file.Path png) {
+        Object id = CustomCape.id(name, png);
+        return id == null ? null : id.toString();
+    }
 }

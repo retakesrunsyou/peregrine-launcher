@@ -569,11 +569,13 @@ public final class Cosmetics extends Module {
     private static volatile String refusedVersion;  // one it turned down (not sent again)
     private static volatile boolean sharing;
     private static volatile long shareTriedAt;
+    private static volatile long shareWait = 60_000L;   // longer while the service's check is down
+    private static volatile boolean toldWaiting;
 
     /** Sends your own cape to the service when it's new (checked there before anyone sees it). */
     private void shareOwn(net.peregrine.client.core.Platform p) {
         int[] c = cape.index == CUSTOM && hasCustom() ? custom() : null;
-        if (c == null || sharing || SERVICE == null || SERVICE.isEmpty() || System.currentTimeMillis() - shareTriedAt < 60_000L) {
+        if (c == null || sharing || SERVICE == null || SERVICE.isEmpty() || System.currentTimeMillis() - shareTriedAt < shareWait) {
             return;
         }
         final String version = String.valueOf(c[0]);
@@ -638,6 +640,13 @@ public final class Cosmetics extends Module {
                     p.showMessage("Peregrine: your cape isn't shared with others: " + why + " You still see it yourself.");
                 } else {
                     System.out.println("[Peregrine] cape not shared yet (" + code + "): " + said);
+                    // the check is down (503) or today's uploads are used up (429): wait longer, say so once
+                    shareWait = code == 429 ? 6 * 3600_000L : 10 * 60_000L;
+                    if (!toldWaiting && (code == 503 || code == 429)) {
+                        toldWaiting = true;
+                        p.showMessage(code == 429 ? "Peregrine: that's enough new capes for today, yours is shared tomorrow. You still see it yourself."
+                                : "Peregrine: the cape safety check isn't working right now, your cape is shared as soon as it is. You still see it yourself.");
+                    }
                 }
             } catch (Exception e) {
                 System.out.println("[Peregrine] cape not shared yet: " + e.getMessage());
