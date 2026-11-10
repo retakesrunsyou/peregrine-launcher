@@ -3,6 +3,7 @@ package net.peregrine.client.v1_21_9;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import net.minecraft.core.ClientAsset;
+import net.minecraft.resources.Identifier;
 
 /** Peregrine cape textures (assets/peregrine-client/textures/cape/), your own cape and other players' own capes. */
 public final class Capes {
