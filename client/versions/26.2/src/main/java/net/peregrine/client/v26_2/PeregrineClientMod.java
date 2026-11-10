@@ -34,6 +34,7 @@ public final class PeregrineClientMod implements ClientModInitializer {
                 KeyMapping.Category.MISC));
 
         ClientTickEvents.END_CLIENT_TICK.register(mc -> {
+            SneakKeeper.tick(mc, Screens.current() != null);
             if (menuPressed(mc, Screens.current() == null) && Screens.current() == null) {
                 Screens.open(new PeregrineScreen());
             }

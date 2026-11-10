@@ -9,6 +9,7 @@
 		"BorderlessMixin",
 		"BossBarMixin",
 		"CapeMixin",
+		"KeepSneakMixin",
 		"ClockMixin",
 		"CloudsMixin",
 		"ContainerScreenAccessor",
